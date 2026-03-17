@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FNAF 1 Clone - Menu</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script defer src="js/SoundManager.js"></script>
+    <script defer src="js/AnimatedSprite.js"></script>
+    <script defer src="js/main.js"></script>
+  </head>
+  <body>
+    <div id="game-wrapper">
+      <!-- Нижний слой — картинка Freddy -->
+      <canvas id="freddy-canvas" width="1920" height="1080"></canvas>
+      <!-- Шум -->
+      <canvas id="static-canvas" width="1920" height="1080"></canvas>
+
+      <!-- Толстые scanlines -->
+      <canvas id="scanlines-thick-canvas" width="1920" height="1080"></canvas>
+
+      <!-- Тонкие scanlines (самый верхний визуальный слой) -->
+      <canvas id="scanlines-thin-canvas" width="1920" height="1080"></canvas>
+
+      <!-- Меню-текст и кнопки — теперь поверх всего -->
+      <div id="menu-content">
+        <!-- Верхний левый заголовок -->
+        <h1 class="title">Пять ночей<br />с Эпштейном</h1>
+
+        <!-- Блок кнопок — будет центрироваться по вертикали слева -->
+        <div class="start-buttons">
+          <button class="menu-btn" data-action="new">New Game</button>
+          <button class="menu-btn" data-action="continue">Continue</button>
+        </div>
+
+        <div class="about">
+          <div class="version">V. 1.0</div>
+          <div class="copyright">©2026 Scott Cawthon/OlegSashKa</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

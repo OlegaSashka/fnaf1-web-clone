@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Сборка / временные файлы
+*.log
+*.cache
+node_modules/
+dist/
+
+# Локальные настройки
+.vscode/
+.idea/

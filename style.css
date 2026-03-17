@@ -1,0 +1,164 @@
+:root {
+  /* Цвета — без теней */
+  --color-primary:     #f5fff5;        /* основной зелёный */
+  --color-primary-glow: #00aa00;
+  --color-text:        #e0ffe0;
+  --color-text-hover:  #ffffff;
+  --color-bg:          #111;
+
+  /* Размеры шрифтов */
+  --font-title:        4.8vw;
+  --font-button:       2.4vw;
+  --font-small:        1.8vw;
+
+  /* Отступы */
+  --spacing-small:     0.8em;
+  --spacing-medium:    1.5em;
+  --spacing-large:     4vh;
+  --padding-side:      10%;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  font-family: 'Courier New', Courier, monospace;
+  cursor: auto;
+}
+
+#game-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+#menu-content {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  color: var(--color-primary);
+}
+
+#menu-content > * {
+  pointer-events: auto;
+}
+
+#static-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;                             /* выше Freddy, ниже текста */
+  opacity: 0.6;                          /* общая сила шума — подкрути 0.08–0.18 */
+  mix-blend-mode: screen;                 /* ключевой режим: чёрный становится прозрачным, белый светится */
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+.title {
+  position: absolute;
+  top: 8%;
+  left: 8%;
+  font-size: var(--font-title);
+  line-height: 1.05;
+  letter-spacing: 0.12em;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.start-buttons {
+  position: absolute;
+  top: 55%;
+  left: 3%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4vh;
+  pointer-events: auto;
+}
+
+.start-buttons .menu-btn {
+  font-size: var(--font-button);
+  text-align: left;
+  padding: 0.4em 1em 0.4em 2.8em;
+}
+
+.menu-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 0.4em 1em 0.4em 3.5em;
+  transition: color 0.22s ease-out;
+}
+
+.menu-btn::after {
+  content: ">>";
+  position: absolute;
+  left: 1.4em;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-primary);
+  font-size: inherit;
+  opacity: 0;
+  transition: 
+    opacity 0.24s ease-out,
+    left 0.24s ease-out;
+}
+
+.menu-btn:hover::after {
+  opacity: 1;
+  left: 0.8em;
+}
+
+.menu-btn:hover {
+  color: var(--color-text-hover);
+}
+
+.about {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5% 3% 5%;
+  font-size: var(--font-small);
+  color: var(--color-primary);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.about .version {
+  text-align: left;
+}
+
+.about .copyright {
+  text-align: right;
+}
