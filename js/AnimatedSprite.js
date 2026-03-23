@@ -1,12 +1,9 @@
 class AnimatedSprite {
   constructor(canvas, src, fps = 8) {
-    console.log('[AnimatedSprite] Конструктор вызван');
-    console.log('[AnimatedSprite] Получен src:', src);
-
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.img = new Image();
-    this.img.src = src;
+
     this.frameHeight = 720;       // фиксированная высота одного кадра
     this.totalFrames = 0;         // посчитаем после загрузки
     this.currentFrame = 0;
@@ -15,32 +12,68 @@ class AnimatedSprite {
     this.lastTime = 0;
     this.running = false;
     this.ready = false;           // флаг готовности (изображение загружено и totalFrames вычислено)
-
-    // Если изображение уже загружено (из кэша), сразу вычисляем кадры
-    if (this.img.complete && this.img.naturalHeight !== 0) {
-      this.#calcFrames();
-      return;
-    }
-
+    this.failed = false;
+    
     this.img.onload = () => {
       this.#calcFrames();
     };
 
     this.img.onerror = () => {
-      console.error('[AnimatedSprite] ОШИБКА ЗАГРУЗКИ ИЗОБРАЖЕНИЯ!');
-      console.error('[AnimatedSprite] Путь:', src);
+      this.failed = true;
+      console.error('[AnimatedSprite] Ошибка загрузки:', src);
     };
+
+    this.img.src = src;
+
+    // Если изображение уже загружено (из кэша), сразу вычисляем кадры
+    if (this.img.complete && this.img.naturalHeight !== 0) {
+      this.#calcFrames();
+    }
   }
 
   #calcFrames() {
     if (this.img.height <= 0 || this.frameHeight <= 0) {
-      console.warn('[AnimatedSprite] Некорректные размеры');
       this.ready = false;
+      this.failed = true;
       return;
     }
+    
     this.totalFrames = Math.floor(this.img.height / this.frameHeight);
     if (this.totalFrames < 1) this.totalFrames = 1;
-    this.ready = true; // Помечаем, что готово к использованию
+    this.ready = true;
+  }
+
+  async #waitForReady() {
+    if (this.ready) return;
+    if (this.failed) throw new Error('Картинка не загрузилась');
+
+    return new Promise((resolve, reject) => {
+      const check = () => {
+        if (this.ready) {
+          resolve();
+          return;
+        } 
+
+        if (this.failed) {
+          reject(new Error('Картинка не загрузилась'));
+          return;
+        }
+
+        setTimeout(check, 50);
+      };
+
+      check();
+    });
+  }
+
+    // Перейти на конкретный кадр
+  async showFrame(frameIndex) {
+    await this.#waitForReady();
+
+    // Убедимся, что frameIndex в допустимых пределах
+    const maxFrame = this.totalFrames - 1;
+    this.currentFrame = Math.max(0, Math.min(frameIndex, maxFrame));
+    this.#draw();
   }
 
   // Начать анимацию
@@ -50,45 +83,12 @@ class AnimatedSprite {
       return;
     }
     this.running = true;
-    
     this.animate(performance.now());
   }
 
   // Остановить
   stop() {
     this.running = false;
-  }
-
-  // Перейти на конкретный кадр
-  async showFrame(frameIndex) {
-
-    await this.#waitForReady();
-
-    // Убедимся, что frameIndex в допустимых пределах
-    const maxFrame = this.totalFrames - 1;
-    this.currentFrame = Math.max(0, Math.min(frameIndex, maxFrame));
-    this.#draw();
-  }
-
-  async #waitForReady() {
-    if (this.ready) {
-      return;
-    }
-
-    return new Promise((resolve, reject) => {
-      const check = () => {
-        if (this.ready) {
-          resolve();
-        } else if (this.img.naturalHeight === 0 && this.img.src) {
-          // Если изображение не загрузилось (ошибка)
-          reject(new Error('Картинка не загрузилась'));
-        } else {
-          setTimeout(check, 50); // проверяем каждые 50 мс
-        }
-      };
-
-      check();
-    });
   }
 
   animate(time) {
@@ -120,7 +120,6 @@ class AnimatedSprite {
 
   // Асинхронный метод для случайного поведения в меню
   async randomMenuBehavior() {
-    
     await this.#waitForReady(); // Ждём готовности
 
     if (this.running) {

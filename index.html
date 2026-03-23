@@ -7,12 +7,39 @@
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+
+    <script defer src="js/managers/LoadingScreen.js"></script>
+    <script defer src="js/managers/StateManager.js"></script>
+    <script defer src="js/config/SceneNames.js"></script>
+    <script defer src="js/scenes/BaseScene.js"></script>
+    <script defer src="js/scenes/MenuScene.js"></script>
+    <script defer src="js/scenes/TestScene.js"></script>
     <script defer src="js/SoundManager.js"></script>
     <script defer src="js/AnimatedSprite.js"></script>
+    <script defer src="js/Preloader.js"></script>
+    <script defer src="js/managers/SceneTransitionManager.js"></script>
     <script defer src="js/main.js"></script>
   </head>
   <body>
     <div id="game-wrapper">
+      <div id="loading-screen">
+        <img
+          id="loading-image"
+          src="assets/images/ui/loading/disclaimer.png"
+          alt="Loading Screen"
+        />
+
+        <div id="loading-overlay">
+          <div id="loading-continue-hint" hidden></div>
+          <div id="loading-title">WARNING</div>
+          <div id="loading-text">
+            This game contains loud sounds, flashing lights and jump scares.
+          </div>
+          <div id="loading-progress">Loading... 0%</div>
+          <button id="loading-continue-btn" hidden>Continue</button>
+        </div>
+      </div>
+
       <!-- Нижний слой — картинка Freddy -->
       <canvas id="freddy-canvas" width="1920" height="1080"></canvas>
       <!-- Шум -->

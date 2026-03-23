@@ -1,60 +1,42 @@
-// main.js
-
 const GAME_WIDTH = 1920;
 const GAME_HEIGHT = 1080;
 
-let freddySprite = null;
-let noiseStatic = null;
+const BOOT_ASSETS = [
+  { type: 'image', src: 'assets/images/ui/Background/Menu-freddy.png' },
+  { type: 'image', src: 'assets/images/ui/NoiseTV/Noise.png' },
 
-async function init() {
-  console.log('Игра инициализируется...');
+  { type: 'audio', src: 'assets/sounds/music/main-darkness-music.wav' },
+  { type: 'audio', src: 'assets/sounds/music/static2-menu.wav' },
+  { type: 'audio', src: 'assets/sounds/ui/blip3.wav' }
+];
 
-  const freddyCanvas = document.getElementById('freddy-canvas');
-  const staticCanvas = document.getElementById('static-canvas');
+const game = {
+  width: GAME_WIDTH,
+  height: GAME_HEIGHT,
+  state: new StateManager()
+};
 
+async function bootGame() {
+  const menuScene = new MenuScene(game);
 
-  Sound.add('music-menu', 'assets/sounds/music/main-darkness-music.wav', {loop: true, volume: 0.6 });
-  Sound.add('music-tv', 'assets/sounds/music/static2-menu.wav', { loop: true, volume: 0.3 });
-  Sound.add('menu-hover', 'assets/sounds/ui/blip3.wav', { volume: 0.3 });
+  await SceneTransitionManager.go({
+    game,
+    sceneName: SceneNames.MENU,
+    nextScene: menuScene,
 
-  if (!freddyCanvas || !staticCanvas ) { 
-    console.error('Canvas не найден!');
-    return;
-  }
+    preload: (onProgress) => Preloader.loadAssets(BOOT_ASSETS, onProgress),
 
-  document.querySelectorAll('.menu-btn').forEach(btn => {
-    btn.addEventListener('mouseenter', () => Sound.play('menu-hover') );
+    loading: {
+      background: '#000',
+      title: 'WARNING',
+      text: 'This game contains loud sounds, flashing lights and jump scares.'
+    },
+
+    confirm: {
+      mode: 'button',
+      buttonText: 'Start'
+    }
   });
-
-  Sound.play('music-menu');
-
-  Sound.play('music-tv');
-
-  freddyCanvas.width = GAME_WIDTH;
-  freddyCanvas.height = GAME_HEIGHT;
-  staticCanvas.width = GAME_WIDTH;
-  staticCanvas.height = GAME_HEIGHT;
-  
-  console.log('Canvas установлен:', GAME_WIDTH, '×', GAME_HEIGHT);
-
-  freddySprite = new AnimatedSprite(
-    freddyCanvas,
-    'assets/images/ui/Background/Menu-freddy.png',
-    2
-  );
-
-noiseStatic = new AnimatedSprite(
-    staticCanvas,
-    'assets/images/ui/NoiseTV/Noise.png',
-    40
-  );
-
-  await freddySprite.showFrame(0);
-  await freddySprite.randomMenuBehavior(); // теперь асинхронно
-
-  await noiseStatic.showFrame(0); 
-  await noiseStatic.play();
 }
 
-// Запуск после загрузки DOM
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', bootGame);
