@@ -1,3 +1,11 @@
+import BaseScene from './BaseScene.js';
+import MenuScene from './MenuScene.js';
+
+import Preloader from '../Preloader.js';
+import SceneTransitionManager from '../managers/SceneTransitionManager.js';
+
+import { SceneNames } from '../config/SceneNames.js';
+
 class TestScene extends BaseScene {
   constructor(game) {
     super(game);
@@ -39,26 +47,27 @@ class TestScene extends BaseScene {
 
   async onBackClick() {
     const menuScene = new MenuScene(this.game);
-    
+
     await SceneTransitionManager.go({
-        game: this.game,
-        sceneName: SceneNames.MENU,
-        nextScene: menuScene,
+      game: this.game,
+      sceneName: SceneNames.MENU,
+      nextScene: menuScene,
 
-        preload: (onProgress) => menuScene.preload(onProgress),
+      preload: (onProgress) => menuScene.preload(onProgress),
 
-        loading: {
-            background: '#000',
-            title: '',
-            text: ''
-        },
+      loading: {
+        background: '#000',
+        title: '',
+        text: ''
+      },
 
-        confirm: {
-            mode: 'auto',
-            continueText: 'Click anywhere to continue'
-        },
+      confirm: {
+        mode: 'auto'
+      },
 
-        disposeCurrentSceneOnStart: false
+      disposeCurrentSceneOnStart: false
     });
   }
 }
+
+export default TestScene;

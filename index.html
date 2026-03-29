@@ -8,63 +8,102 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 
-    <script defer src="js/managers/LoadingScreen.js"></script>
-    <script defer src="js/managers/StateManager.js"></script>
-    <script defer src="js/config/SceneNames.js"></script>
-    <script defer src="js/scenes/BaseScene.js"></script>
-    <script defer src="js/scenes/MenuScene.js"></script>
-    <script defer src="js/scenes/TestScene.js"></script>
-    <script defer src="js/SoundManager.js"></script>
-    <script defer src="js/AnimatedSprite.js"></script>
-    <script defer src="js/Preloader.js"></script>
-    <script defer src="js/managers/SceneTransitionManager.js"></script>
-    <script defer src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
   </head>
   <body>
     <div id="game-wrapper">
-      <div id="loading-screen">
-        <img
-          id="loading-image"
-          src="assets/images/ui/loading/disclaimer.png"
-          alt="Loading Screen"
-        />
+      <!-- Глобальные overlay -->
+      <div id="global-overlays">
+        <div id="loading-screen">
+          <img id="loading-image" />
 
-        <div id="loading-overlay">
-          <div id="loading-continue-hint" hidden></div>
-          <div id="loading-title">WARNING</div>
-          <div id="loading-text">
-            This game contains loud sounds, flashing lights and jump scares.
+          <canvas id="loading-effect-canvas"></canvas>
+
+          <div id="loading-overlay">
+            <div id="loading-title"></div>
+            <div id="loading-text"></div>
+            <div id="loading-progress"></div>
+            <button id="loading-continue-btn"></button>
           </div>
-          <div id="loading-progress">Loading... 0%</div>
-          <button id="loading-continue-btn" hidden>Continue</button>
+
+          <div id="loading-continue-hint"></div>
         </div>
       </div>
 
-      <!-- Нижний слой — картинка Freddy -->
-      <canvas id="freddy-canvas" width="1920" height="1080"></canvas>
-      <!-- Шум -->
-      <canvas id="static-canvas" width="1920" height="1080"></canvas>
+      <!-- Слой экранов -->
+      <div id="screens">
+        <!-- Экран меню -->
+        <div id="menu-screen" class="screen">
+          <canvas id="freddy-canvas" width="1920" height="1080"></canvas>
+          <canvas id="static-canvas" width="1920" height="1080"></canvas>
+          <div id="scanline-sweep" width="1920" height="1080"></div>
+          <canvas id="blink-canvas" width="1920" height="1080"></canvas>
 
-      <!-- Толстые scanlines -->
-      <canvas id="scanlines-thick-canvas" width="1920" height="1080"></canvas>
+          <div id="menu-content">
+            <h1 class="title">Пять ночей<br />с Эпштейном</h1>
 
-      <!-- Тонкие scanlines (самый верхний визуальный слой) -->
-      <canvas id="scanlines-thin-canvas" width="1920" height="1080"></canvas>
+            <div class="start-buttons">
+              <button class="menu-btn " data-action="new">New Game</button>
+              <button class="menu-btn menu-btn--disabled" data-action="continue">Continue</button>
+            </div>
 
-      <!-- Меню-текст и кнопки — теперь поверх всего -->
-      <div id="menu-content">
-        <!-- Верхний левый заголовок -->
-        <h1 class="title">Пять ночей<br />с Эпштейном</h1>
-
-        <!-- Блок кнопок — будет центрироваться по вертикали слева -->
-        <div class="start-buttons">
-          <button class="menu-btn" data-action="new">New Game</button>
-          <button class="menu-btn" data-action="continue">Continue</button>
+            <div class="about">
+              <div class="version">V. 1.0</div>
+              <div class="copyright">©2026 Scott Cawthon/OlegSashKa</div>
+            </div>
+          </div>
         </div>
 
-        <div class="about">
-          <div class="version">V. 1.0</div>
-          <div class="copyright">©2026 Scott Cawthon/OlegSashKa</div>
+        <!-- Игровой экран -->
+        <div id="game-screen" class="screen" hidden>
+          <!-- 1. Сам офис -->
+          <div id="office-layer" class="layer">
+            <canvas id="office-canvas" width="1920" height="1080"></canvas>
+          </div>
+
+          <!-- 2. HUD поверх офиса -->
+          <div id="office-ui-layer" class="layer">
+            <div id="office-ui">
+              <div id="night-hud">
+                <!-- часы, энергия, usage -->
+              </div>
+
+              <button id="monitor-toggle-btn" hidden></button>
+            </div>
+          </div>
+
+          <!-- 3. Анимация поднятия планшета -->
+          <div id="monitor-transition-layer" class="layer" hidden>
+            <canvas
+              id="monitor-transition-canvas"
+              width="1920"
+              height="1080"
+            ></canvas>
+          </div>
+
+          <!-- 4. Экран планшета -->
+          <div id="monitor-screen-layer" class="layer" hidden>
+            <canvas id="camera-canvas" width="1920" height="1080"></canvas>
+            <canvas
+              id="camera-static-canvas"
+              width="1920"
+              height="1080"
+            ></canvas>
+            <canvas
+              id="camera-blink-canvas"
+              width="1920"
+              height="1080"
+            ></canvas>
+          </div>
+
+          <!-- 5. UI планшета -->
+          <div id="monitor-ui-layer" class="layer" hidden>
+            <div id="monitor-ui">
+              <div id="camera-map">
+                <!-- карта и кнопки камер -->
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

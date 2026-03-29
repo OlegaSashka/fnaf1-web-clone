@@ -21,9 +21,16 @@ class Preloader {
     });
   }
 
-  static async loadAssets(assets, onProgress = null) {
-    let loaded = 0;
+  static async loadAssets(assets, onProgress = null, options = {}) {
+    const { continueOnError = false } = options;
     const total = assets.length;
+
+    if (total === 0) {
+      if (onProgress) onProgress(100, 0, 0);
+      return [];
+    }
+
+    let loaded = 0;
 
     const updateProgress = () => {
       loaded++;
@@ -32,20 +39,33 @@ class Preloader {
     };
 
     const tasks = assets.map(async (asset) => {
-      let result;
+      try {
+        let result;
 
-      if (asset.type === 'image') {
-        result = await Preloader.loadImage(asset.src);
-      } else if (asset.type === 'audio') {
-        result = await Preloader.loadAudio(asset.src);
-      } else {
-        throw new Error(`Неизвестный тип ассета: ${asset.type}`);
+        if (asset.type === 'image') {
+          result = await Preloader.loadImage(asset.src);
+        } else if (asset.type === 'audio') {
+          result = await Preloader.loadAudio(asset.src);
+        } else {
+          throw new Error(`Неизвестный тип ассета: ${asset.type}`);
+        }
+
+        updateProgress();
+        return { ok: true, asset, result };
+      } catch (error) {
+        updateProgress();
+
+        if (!continueOnError) {
+          throw error;
+        }
+
+        console.warn('[Preloader] Не удалось загрузить ассет, пропускаем:', asset.src, error);
+        return { ok: false, asset, error };
       }
-
-      updateProgress();
-      return result;
     });
 
     return Promise.all(tasks);
   }
 }
+
+export default Preloader;

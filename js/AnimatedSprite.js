@@ -4,16 +4,29 @@ class AnimatedSprite {
     this.ctx = canvas.getContext('2d');
     this.img = new Image();
 
-    this.frameHeight = 720;       // фиксированная высота одного кадра
-    this.totalFrames = 0;         // посчитаем после загрузки
+    this.frameHeight = 720;
+    this.totalFrames = 0;
     this.currentFrame = 0;
+
     this.fps = fps;
     this.frameTime = 1000 / fps;
     this.lastTime = 0;
+
     this.running = false;
-    this.ready = false;           // флаг готовности (изображение загружено и totalFrames вычислено)
+    this.ready = false;
     this.failed = false;
-    
+
+    this.behaviorRunning = false;
+    this.behaviorTimeouts = [];
+
+    this.rafId = null;
+    this.activePlayToken = 0;
+    this.onComplete = null;
+    this.loop = true;
+    this.playToFrame = 0;
+    this.holdLastFrame = true;
+    this.clearOnFinish = false;
+
     this.img.onload = () => {
       this.#calcFrames();
     };
@@ -25,7 +38,6 @@ class AnimatedSprite {
 
     this.img.src = src;
 
-    // Если изображение уже загружено (из кэша), сразу вычисляем кадры
     if (this.img.complete && this.img.naturalHeight !== 0) {
       this.#calcFrames();
     }
@@ -37,7 +49,7 @@ class AnimatedSprite {
       this.failed = true;
       return;
     }
-    
+
     this.totalFrames = Math.floor(this.img.height / this.frameHeight);
     if (this.totalFrames < 1) this.totalFrames = 1;
     this.ready = true;
@@ -52,7 +64,7 @@ class AnimatedSprite {
         if (this.ready) {
           resolve();
           return;
-        } 
+        }
 
         if (this.failed) {
           reject(new Error('Картинка не загрузилась'));
@@ -66,33 +78,116 @@ class AnimatedSprite {
     });
   }
 
-    // Перейти на конкретный кадр
+  #draw() {
+    if (!this.ready) return;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.drawImage(
+      this.img,
+      0,
+      this.currentFrame * this.frameHeight,
+      this.img.width,
+      this.frameHeight,
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    );
+  }
+
+  #addBehaviorTimeout(callback, delay) {
+    const id = setTimeout(() => {
+      this.behaviorTimeouts = this.behaviorTimeouts.filter((x) => x !== id);
+      callback();
+    }, delay);
+
+    this.behaviorTimeouts.push(id);
+    return id;
+  }
+
+  #clearBehaviorTimeouts() {
+    for (const id of this.behaviorTimeouts) {
+      clearTimeout(id);
+    }
+    this.behaviorTimeouts = [];
+  }
+
+  #randomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  #finishPlayback(token) {
+    if (token !== this.activePlayToken) return;
+
+    this.running = false;
+
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+
+    if (this.clearOnFinish) {
+      this.clear();
+    } else if (this.holdLastFrame) {
+      this.#draw();
+    }
+
+    const callback = this.onComplete;
+    this.onComplete = null;
+
+    if (typeof callback === 'function') {
+      callback();
+    }
+  }
+
   async showFrame(frameIndex) {
     await this.#waitForReady();
 
-    // Убедимся, что frameIndex в допустимых пределах
     const maxFrame = this.totalFrames - 1;
     this.currentFrame = Math.max(0, Math.min(frameIndex, maxFrame));
     this.#draw();
   }
 
-  // Начать анимацию
-  play() {
-    if (!this.ready) {
-      console.warn('[play] Спрайт ещё не готов');
-      return;
-    }
-    this.running = true;
-    this.animate(performance.now());
+  clear() {
+    if (!this.ctx) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
-  // Остановить
-  stop() {
+  stop({ clear = false } = {}) {
     this.running = false;
+    this.onComplete = null;
+    this.activePlayToken++;
+
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+
+    if (clear) {
+      this.clear();
+    }
   }
 
-  animate(time) {
-    if (!this.running || !this.ready) return;
+  async play() {
+    await this.#waitForReady();
+
+    this.stop();
+    this.stopBehavior();
+
+    this.loop = true;
+    this.holdLastFrame = true;
+    this.clearOnFinish = false;
+    this.playToFrame = this.totalFrames - 1;
+    this.lastTime = 0;
+    this.running = true;
+
+    const token = ++this.activePlayToken;
+    this.#animateLoop(performance.now(), token);
+  }
+
+  #animateLoop(time, token) {
+    if (!this.running || !this.ready || token !== this.activePlayToken) return;
 
     const delta = time - this.lastTime;
     if (delta >= this.frameTime) {
@@ -101,72 +196,190 @@ class AnimatedSprite {
       this.#draw();
     }
 
-    requestAnimationFrame(t => this.animate(t));
+    this.rafId = requestAnimationFrame((t) => this.#animateLoop(t, token));
   }
 
-  #draw() {
-    if (!this.ready) return; // защита
+  async playOnce({
+    fromFrame = 0,
+    toFrame = null,
+    holdLastFrame = true,
+    clearOnFinish = false,
+    onComplete = null
+  } = {}) {
+    await this.#waitForReady();
 
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.stop();
+    this.stopBehavior();
 
-    this.ctx.drawImage(
-      this.img,
-      0, this.currentFrame * this.frameHeight,
-      this.img.width, this.frameHeight,
-      0, 0,
-      this.canvas.width, this.canvas.height
-    );
-  }
+    const maxFrame = this.totalFrames - 1;
+    const safeFrom = Math.max(0, Math.min(fromFrame, maxFrame));
+    const safeTo = Math.max(safeFrom, Math.min(toFrame ?? maxFrame, maxFrame));
 
-  // Асинхронный метод для случайного поведения в меню
-  async randomMenuBehavior() {
-    await this.#waitForReady(); // Ждём готовности
-
-    if (this.running) {
-      return;
-    }
+    this.currentFrame = safeFrom;
+    this.loop = false;
+    this.playToFrame = safeTo;
+    this.holdLastFrame = holdLastFrame;
+    this.clearOnFinish = clearOnFinish;
+    this.lastTime = 0;
     this.running = true;
 
-    const scheduleNextGlitch = () => {
-      if (!this.running) {
+    this.#draw();
+
+    return new Promise((resolve) => {
+      this.onComplete = () => {
+        if (typeof onComplete === 'function') {
+          onComplete();
+        }
+        resolve();
+      };
+
+      const token = ++this.activePlayToken;
+
+      if (safeFrom >= safeTo) {
+        this.#finishPlayback(token);
         return;
       }
 
-      const delayToNext = 500 + Math.random() * 8000;
+      this.#animateOnce(performance.now(), token);
+    });
+  }
 
-      setTimeout(() => {
-        if (!this.running) return;
+  #animateOnce(time, token) {
+    if (!this.running || !this.ready || token !== this.activePlayToken) return;
 
-        // Выбираем случайный кадр от 1 до (totalFrames-1), но не более 3 (если кадров меньше, то до max)
-        const maxGlitchFrame = Math.min(3, this.totalFrames - 1);
-        if (maxGlitchFrame < 1) {
-          return;
+    const delta = time - this.lastTime;
+    if (delta >= this.frameTime) {
+      if (this.currentFrame >= this.playToFrame) {
+        this.#finishPlayback(token);
+        return;
+      }
+
+      this.currentFrame += 1;
+      this.lastTime = time;
+      this.#draw();
+
+      if (this.currentFrame >= this.playToFrame) {
+        this.#finishPlayback(token);
+        return;
+      }
+    }
+
+    this.rafId = requestAnimationFrame((t) => this.#animateOnce(t, token));
+  }
+
+  async startRandomBurstBehavior({
+    idleFrame = 0,
+    minPause = 2000,
+    maxPause = 8000,
+    minBurstFrames = 1,
+    maxBurstFrames = null,
+    minFrame = 1,
+    maxFrame = null,
+    frameDuration = null,
+    uniqueFrames = false
+  } = {}) {
+    await this.#waitForReady();
+
+    this.stop();
+    this.stopBehavior();
+
+    this.behaviorRunning = true;
+
+    const actualMaxFrame = maxFrame ?? (this.totalFrames - 1);
+    const actualMaxBurstFrames = maxBurstFrames ?? Math.max(1, actualMaxFrame);
+    const actualFrameDuration = frameDuration ?? this.frameTime;
+
+    await this.showFrame(idleFrame);
+
+    const runCycle = () => {
+      if (!this.behaviorRunning) return;
+
+      const pause = this.#randomInt(minPause, maxPause);
+
+      this.#addBehaviorTimeout(async () => {
+        if (!this.behaviorRunning) return;
+
+        const burstCount = this.#randomInt(
+          minBurstFrames,
+          Math.min(actualMaxBurstFrames, Math.max(1, actualMaxFrame - minFrame + 1))
+        );
+
+        const sequence = [];
+        const used = new Set();
+
+        for (let i = 0; i < burstCount; i++) {
+          let frame;
+
+          if (uniqueFrames) {
+            const available = [];
+            for (let f = minFrame; f <= actualMaxFrame; f++) {
+              if (!used.has(f)) available.push(f);
+            }
+
+            if (available.length === 0) break;
+
+            frame = available[this.#randomInt(0, available.length - 1)];
+            used.add(frame);
+          } else {
+            frame = this.#randomInt(minFrame, actualMaxFrame);
+          }
+
+          sequence.push(frame);
         }
-        const randomFrame = 1 + Math.floor(Math.random() * maxGlitchFrame);
-        this.currentFrame = randomFrame;
-        this.#draw();
 
-        // Длительность глитча: 200-800 мс
-        const glitchDuration = 200 + Math.random() * 600;
+        const playSequence = (index = 0) => {
+          if (!this.behaviorRunning) return;
 
-        setTimeout(() => {
-          if (!this.running) return;
+          if (index >= sequence.length) {
+            this.showFrame(idleFrame);
+            runCycle();
+            return;
+          }
 
-          this.currentFrame = 0;
+          this.currentFrame = sequence[index];
           this.#draw();
 
-          // После возврата планируем следующий глитч
-          scheduleNextGlitch();
-        }, glitchDuration);
-      }, delayToNext);
+          this.#addBehaviorTimeout(() => {
+            playSequence(index + 1);
+          }, actualFrameDuration);
+        };
+
+        if (sequence.length === 0) {
+          this.showFrame(idleFrame);
+          runCycle();
+          return;
+        }
+
+        playSequence(0);
+      }, pause);
     };
 
-    // Запускаем цикл
-    scheduleNextGlitch();
+    runCycle();
   }
 
-  // Остановить цикл меню
+  async randomMenuBehavior() {
+    await this.startRandomBurstBehavior({
+      idleFrame: 0,
+      minPause: 500,
+      maxPause: 8000,
+      minBurstFrames: 1,
+      maxBurstFrames: 1,
+      minFrame: 1,
+      maxFrame: Math.min(3, this.totalFrames - 1),
+      frameDuration: 250,
+      uniqueFrames: false
+    });
+  }
+
+  stopBehavior() {
+    this.behaviorRunning = false;
+    this.#clearBehaviorTimeouts();
+  }
+
   stopMenuBehavior() {
-    this.running = false;
+    this.stopBehavior();
+    this.stop();
   }
 }
+
+export default AnimatedSprite;

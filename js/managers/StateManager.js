@@ -54,3 +54,5 @@ class StateManager {
     await this.change(this.currentSceneName, nextScene);
   }
 }
+
+export default StateManager;

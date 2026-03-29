@@ -7,3 +7,5 @@ class BaseScene {
   async enter() {}
   async exit() {}
 }
+
+export default BaseScene;

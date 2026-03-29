@@ -138,3 +138,5 @@ class SoundManager {
 
 // Создаём глобальный менеджер (или экспортируем, если используешь modules)
 const Sound = new SoundManager();
+
+export default Sound;
