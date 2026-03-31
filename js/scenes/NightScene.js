@@ -5,12 +5,28 @@ import { COMMON_NIGHT_ASSETS } from '../config/NightAssets.js';
 
 import LoadingScreen from '../managers/LoadingScreen.js';
 
+import AnimatedSprite from '../AnimatedSprite.js';
 
 class NightScene extends BaseScene {
   constructor(game, config) {
     super(game);
     this.root = null;
     this.config = config;
+
+    this.officeBaseSprite = null;
+    this.fanSprite = null;
+
+    this.lookDirection = 0; // -1 = влево, 0 = стоп, 1 = вправо
+    this.lookSpeed = 8;
+    this.lookRafId = null;
+
+    this.onLookLeftEnter = this.onLookLeftEnter.bind(this);
+    this.onLookCenterEnter = this.onLookCenterEnter.bind(this);
+    this.onLookRightEnter = this.onLookRightEnter.bind(this);
+
+    this.onLookLeftLeave = this.onLookLeftLeave.bind(this);
+    this.onLookCenterLeave = this.onLookCenterLeave.bind(this);
+    this.onLookRightLeave = this.onLookRightLeave.bind(this);
   }
 
   async preload(onProgress) {
@@ -18,10 +34,6 @@ class NightScene extends BaseScene {
       ...COMMON_NIGHT_ASSETS,
       ...(this.config?.extraAssets ?? [])
     ];
-
-    if (this.config?.officeBackground) {
-      assets.push({ type: 'image', src: this.config.officeBackground });
-    }
 
     if (this.config?.phoneGuy) {
       assets.push({ type: 'audio', src: this.config.phoneGuy });
@@ -125,124 +137,244 @@ class NightScene extends BaseScene {
     });
   }
 
-  async enter() {
-    const gameScreen = document.getElementById('game-screen');
-    const menuScreen = document.getElementById('menu-screen');
+async enter() {
+  const gameScreen = document.getElementById('game-screen');
+  const menuScreen = document.getElementById('menu-screen');
 
-    const officeCanvas = document.getElementById('office-canvas');
-    const officeUiLayer = document.getElementById('office-ui-layer');
-    const officeUi = document.getElementById('office-ui');
+  const officeWorld = document.getElementById('office-world');
+  const officeCanvas = document.getElementById('office-world-canvas');
+  const officeFanCanvas = document.getElementById('office-fan-canvas');
+  const officeUiLayer = document.getElementById('office-ui-layer');
 
-    const monitorTransitionLayer = document.getElementById('monitor-transition-layer');
-    const monitorTransitionCanvas = document.getElementById('monitor-transition-canvas');
+  if (!officeWorld || !officeCanvas || !officeFanCanvas) {
+    console.error('[NightScene] Не найдены office-элементы');
+    return;
+  }
 
-    const monitorScreenLayer = document.getElementById('monitor-screen-layer');
-    const cameraCanvas = document.getElementById('camera-canvas');
-    const cameraStaticCanvas = document.getElementById('camera-static-canvas');
-    const cameraBlinkCanvas = document.getElementById('camera-blink-canvas');
+  if (menuScreen) menuScreen.hidden = true;
+  if (gameScreen) gameScreen.hidden = false;
 
-    const monitorUiLayer = document.getElementById('monitor-ui-layer');
+  const worldWidth = Math.round(officeWorld.offsetWidth);
+  const worldHeight = Math.round(officeWorld.offsetHeight);
 
-    if (menuScreen) menuScreen.hidden = true;
-    if (gameScreen) gameScreen.hidden = false;
+  officeCanvas.style.display = 'block';
+  officeCanvas.width = worldWidth;
+  officeCanvas.height = worldHeight;
 
-    officeCanvas.style.display = 'block';
-    officeCanvas.width = this.game.width;
-    officeCanvas.height = this.game.height;
+  officeFanCanvas.style.display = 'block';
+  officeFanCanvas.width = worldWidth;
+  officeFanCanvas.height = worldHeight;
 
+  if (officeUiLayer) {
     officeUiLayer.hidden = false;
-    monitorTransitionLayer.hidden = true;
-    monitorScreenLayer.hidden = true;
-    monitorUiLayer.hidden = true;
-
-    monitorTransitionCanvas.width = this.game.width;
-    monitorTransitionCanvas.height = this.game.height;
-
-    cameraCanvas.width = this.game.width;
-    cameraCanvas.height = this.game.height;
-
-    cameraStaticCanvas.width = this.game.width;
-    cameraStaticCanvas.height = this.game.height;
-
-    cameraBlinkCanvas.width = this.game.width;
-    cameraBlinkCanvas.height = this.game.height;
-
-    this.root = officeCanvas;
-
-    // const ctx = officeCanvas.getContext('2d');
-    // const img = new Image();
-
-    // const officeBackground =
-    //   this.config?.officeBackground ?? 'assets/images/night/night-office-placeholder.png';
-
-    // await new Promise((resolve, reject) => {
-    //   img.onload = resolve;
-    //   img.onerror = reject;
-    //   img.src = officeBackground;
-    // });
-
-    // ctx.clearRect(0, 0, officeCanvas.width, officeCanvas.height);
-    // ctx.drawImage(img, 0, 0, officeCanvas.width, officeCanvas.height);
-
-    await this.runIntroAndPreload();
   }
 
-  async exit() {
-    const gameScreen = document.getElementById('game-screen');
+  this.root = officeCanvas;
 
-    const officeCanvas = document.getElementById('office-canvas');
-    const officeUiLayer = document.getElementById('office-ui-layer');
-    const officeUi = document.getElementById('office-ui');
+  await this.runIntroAndPreload();
+  await this.setupOfficeScene();
 
-    const monitorTransitionLayer = document.getElementById('monitor-transition-layer');
-    const monitorTransitionCanvas = document.getElementById('monitor-transition-canvas');
+  const lookZoneLeft = document.getElementById('look-zone-left');
+  const lookZoneCenter = document.getElementById('look-zone-center');
+  const lookZoneRight = document.getElementById('look-zone-right');
 
-    const monitorScreenLayer = document.getElementById('monitor-screen-layer');
-    const cameraCanvas = document.getElementById('camera-canvas');
-    const cameraStaticCanvas = document.getElementById('camera-static-canvas');
-    const cameraBlinkCanvas = document.getElementById('camera-blink-canvas');
+  if (lookZoneLeft) {
+    lookZoneLeft.addEventListener('mouseenter', this.onLookLeftEnter);
+    lookZoneLeft.addEventListener('mouseleave', this.onLookLeftLeave);
+  }
 
-    const monitorUiLayer = document.getElementById('monitor-ui-layer');
+  if (lookZoneCenter) {
+    lookZoneCenter.addEventListener('mouseenter', this.onLookCenterEnter);
+    lookZoneCenter.addEventListener('mouseleave', this.onLookCenterLeave);
+  }
 
-    if (gameScreen) gameScreen.hidden = true;
+  if (lookZoneRight) {
+    lookZoneRight.addEventListener('mouseenter', this.onLookRightEnter);
+    lookZoneRight.addEventListener('mouseleave', this.onLookRightLeave);
+  }
 
-    if (officeCanvas) {
-      const ctx = officeCanvas.getContext('2d');
-      ctx.clearRect(0, 0, officeCanvas.width, officeCanvas.height);
-      officeCanvas.style.display = 'none';
-    }
+  this.setOfficeOffset(0);
+}
 
-    if (monitorTransitionCanvas) {
-      const ctx = monitorTransitionCanvas.getContext('2d');
-      ctx.clearRect(0, 0, monitorTransitionCanvas.width, monitorTransitionCanvas.height);
-    }
+async exit() {
+  const gameScreen = document.getElementById('game-screen');
 
-    if (cameraCanvas) {
-      const ctx = cameraCanvas.getContext('2d');
-      ctx.clearRect(0, 0, cameraCanvas.width, cameraCanvas.height);
-    }
+  const officeCanvas = document.getElementById('office-world-canvas');
+  const officeFanCanvas = document.getElementById('office-fan-canvas');
+  const officeUiLayer = document.getElementById('office-ui-layer');
 
-    if (cameraStaticCanvas) {
-      const ctx = cameraStaticCanvas.getContext('2d');
-      ctx.clearRect(0, 0, cameraStaticCanvas.width, cameraStaticCanvas.height);
-    }
+  const lookZoneLeft = document.getElementById('look-zone-left');
+  const lookZoneCenter = document.getElementById('look-zone-center');
+  const lookZoneRight = document.getElementById('look-zone-right');
 
-    if (cameraBlinkCanvas) {
-      const ctx = cameraBlinkCanvas.getContext('2d');
-      ctx.clearRect(0, 0, cameraBlinkCanvas.width, cameraBlinkCanvas.height);
-    }
+  if (gameScreen) gameScreen.hidden = true;
 
-    if (officeUi) {
-      officeUi.innerHTML = '';
-    }
+  if (officeCanvas) {
+    const ctx = officeCanvas.getContext('2d');
+    ctx.clearRect(0, 0, officeCanvas.width, officeCanvas.height);
+    officeCanvas.style.display = 'none';
+  }
 
+  if (officeFanCanvas) {
+    const ctx = officeFanCanvas.getContext('2d');
+    ctx.clearRect(0, 0, officeFanCanvas.width, officeFanCanvas.height);
+    officeFanCanvas.style.display = 'none';
+  }
+
+  if (this.fanSprite) {
+    this.fanSprite.stop({ clear: false });
+    this.fanSprite = null;
+  }
+
+  if (lookZoneLeft) {
+    lookZoneLeft.removeEventListener('mouseenter', this.onLookLeftEnter);
+    lookZoneLeft.removeEventListener('mouseleave', this.onLookLeftLeave);
+  }
+
+  if (lookZoneCenter) {
+    lookZoneCenter.removeEventListener('mouseenter', this.onLookCenterEnter);
+    lookZoneCenter.removeEventListener('mouseleave', this.onLookCenterLeave);
+  }
+
+  if (lookZoneRight) {
+    lookZoneRight.removeEventListener('mouseenter', this.onLookRightEnter);
+    lookZoneRight.removeEventListener('mouseleave', this.onLookRightLeave);
+  }
+
+  this.lookDirection = 0;
+  this.stopLookMovement();
+
+  if (officeUiLayer) {
     officeUiLayer.hidden = true;
-    monitorTransitionLayer.hidden = true;
-    monitorScreenLayer.hidden = true;
-    monitorUiLayer.hidden = true;
-
-    this.root = null;
   }
+
+  this.root = null;
+}
+
+  async setupOfficeScene() {
+    const officeCanvas = document.getElementById('office-world-canvas');
+    const officeFanCanvas = document.getElementById('office-fan-canvas');
+
+    if (!officeCanvas || !officeFanCanvas) {
+      console.error('[NightScene] Не найдены canvas офиса');
+      return;
+    }
+
+    const ctx = officeCanvas.getContext('2d');
+
+    const bg = new Image();
+    bg.src = 'assets/images/office/Office_Base.png';
+
+    await new Promise((resolve, reject) => {
+      bg.onload = resolve;
+      bg.onerror = reject;
+    });
+
+    console.log('[NightScene] Office_Base loaded:', bg.width, bg.height);
+    console.log('[NightScene] officeCanvas size:', officeCanvas.width, officeCanvas.height);
+
+    ctx.clearRect(0, 0, officeCanvas.width, officeCanvas.height);
+
+    ctx.drawImage(
+      bg,
+      0,
+      0,
+      bg.width,
+      bg.height,
+      0,
+      0,
+      officeCanvas.width,
+      officeCanvas.height
+    );
+
+    this.fanSprite = new AnimatedSprite(
+      officeFanCanvas,
+      'assets/images/Fan/Fan.png',
+      12,
+      {
+        frameWidth: 1600,
+        frameHeight: 720,
+        drawX: 0,
+        drawY: 0,
+        drawWidth: officeFanCanvas.width,
+        drawHeight: officeFanCanvas.height
+      }
+    );
+
+    await this.fanSprite.showFrame(0);
+    this.fanSprite.play();
+  }
+
+  setOfficeOffset(offsetX = 0) {
+    const officeWorld = document.getElementById('office-world');
+    if (!officeWorld) return;
+
+    const maxOffset = this.getOfficeMaxOffset();
+    const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, offsetX));
+
+    this.officeOffsetX = clampedOffset;
+    officeWorld.style.transform = `translateX(calc(-50% + ${clampedOffset}px))`;
+  }
+
+  onLookLeftEnter() {
+    this.lookDirection = 1;
+    this.startLookMovement();
+  }
+
+  onLookCenterEnter() {
+    this.lookDirection = 0;
+  }
+
+  onLookRightEnter() {
+    this.lookDirection = -1;
+    this.startLookMovement();
+  }
+
+  onLookRightLeave() {
+    this.lookDirection = 0;
+  }
+  
+  onLookLeftLeave() {
+    this.lookDirection = 0;
+  }
+
+  onLookCenterLeave() {
+    this.lookDirection = 0;
+  }
+
+  getOfficeMaxOffset() {
+    const officeWorld = document.getElementById('office-world');
+    const officeViewport = document.getElementById('office-viewport');
+
+    if (!officeWorld || !officeViewport) return 0;
+
+    return Math.max(
+      0,
+      (officeWorld.offsetWidth - officeViewport.offsetWidth) / 2
+    );
+  }
+
+  startLookMovement() {
+    if (this.lookRafId) return;
+
+    const step = () => {
+      if (this.lookDirection !== 0) {
+        this.setOfficeOffset(this.officeOffsetX + this.lookDirection * this.lookSpeed);
+      }
+
+      this.lookRafId = requestAnimationFrame(step);
+    };
+
+    this.lookRafId = requestAnimationFrame(step);
+  }
+
+  stopLookMovement() {
+    if (this.lookRafId) {
+      cancelAnimationFrame(this.lookRafId);
+      this.lookRafId = null;
+    }
+  }
+
 }
 
 export default NightScene;

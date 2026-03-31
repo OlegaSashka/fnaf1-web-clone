@@ -1,10 +1,18 @@
 class AnimatedSprite {
-  constructor(canvas, src, fps = 8) {
+  constructor(canvas, src, fps = 8, options = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.img = new Image();
 
-    this.frameHeight = 720;
+    this.frameWidth = options.frameWidth ?? null;
+    this.frameHeight = options.frameHeight ?? 720;
+    this.direction = options.direction ?? 'vertical'; // 'vertical' | 'horizontal'
+
+    this.drawX = options.drawX ?? 0;
+    this.drawY = options.drawY ?? 0;
+    this.drawWidth = options.drawWidth ?? this.canvas.width;
+    this.drawHeight = options.drawHeight ?? this.canvas.height;
+
     this.totalFrames = 0;
     this.currentFrame = 0;
 
@@ -44,13 +52,26 @@ class AnimatedSprite {
   }
 
   #calcFrames() {
-    if (this.img.height <= 0 || this.frameHeight <= 0) {
+    this.frameWidth ??= this.img.width;
+    this.frameHeight ??= this.img.height;
+
+    if (this.frameWidth <= 0 || this.frameHeight <= 0) {
       this.ready = false;
       this.failed = true;
       return;
     }
 
-    this.totalFrames = Math.floor(this.img.height / this.frameHeight);
+    if (this.direction === 'vertical') {
+      this.totalFrames = Math.floor(this.img.height / this.frameHeight);
+    } else if (this.direction === 'horizontal') {
+      this.totalFrames = Math.floor(this.img.width / this.frameWidth);
+    } else {
+      this.ready = false;
+      this.failed = true;
+      console.error('[AnimatedSprite] Неизвестное направление:', this.direction);
+      return;
+    }
+
     if (this.totalFrames < 1) this.totalFrames = 1;
     this.ready = true;
   }
@@ -83,16 +104,26 @@ class AnimatedSprite {
 
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    let sx = 0;
+    let sy = 0;
+    let sw = this.frameWidth;
+    let sh = this.frameHeight;
+
+    if (this.direction === 'vertical') {
+      sy = this.currentFrame * this.frameHeight;
+    } else if (this.direction === 'horizontal') {
+      sx = this.currentFrame * this.frameWidth;
+    }
+
+    const dx = (this.canvas.width - this.drawWidth) / 2 + this.drawX;
+    const dy = (this.canvas.height - this.drawHeight) / 2 + this.drawY;
+
     this.ctx.drawImage(
       this.img,
-      0,
-      this.currentFrame * this.frameHeight,
-      this.img.width,
-      this.frameHeight,
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
+      sx,sy,
+      sw,sh,
+      dx, dy,
+      this.drawWidth, this.drawHeight
     );
   }
 

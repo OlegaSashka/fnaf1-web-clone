@@ -43,8 +43,13 @@
             <h1 class="title">Пять ночей<br />с Эпштейном</h1>
 
             <div class="start-buttons">
-              <button class="menu-btn " data-action="new">New Game</button>
-              <button class="menu-btn menu-btn--disabled" data-action="continue">Continue</button>
+              <button class="menu-btn" data-action="new">New Game</button>
+              <button
+                class="menu-btn menu-btn--disabled"
+                data-action="continue"
+              >
+                Continue
+              </button>
             </div>
 
             <div class="about">
@@ -58,7 +63,18 @@
         <div id="game-screen" class="screen" hidden>
           <!-- 1. Сам офис -->
           <div id="office-layer" class="layer">
-            <canvas id="office-canvas" width="1920" height="1080"></canvas>
+            <div id="office-viewport">
+              <div id="office-world">
+                  <canvas id="office-world-canvas" width="2600" height="1080"></canvas>
+                  <canvas id="office-fan-canvas" width="2600" height="1080"></canvas>
+              </div>
+
+              <div id="office-look-zones">
+                <div id="look-zone-left" class="look-zone"></div>
+                <div id="look-zone-center" class="look-zone"></div>
+                <div id="look-zone-right" class="look-zone"></div>
+              </div>
+            </div>
           </div>
 
           <!-- 2. HUD поверх офиса -->
@@ -67,41 +83,31 @@
               <div id="night-hud">
                 <!-- часы, энергия, usage -->
               </div>
-
-              <button id="monitor-toggle-btn" hidden></button>
             </div>
           </div>
 
           <!-- 3. Анимация поднятия планшета -->
           <div id="monitor-transition-layer" class="layer" hidden>
-            <canvas
-              id="monitor-transition-canvas"
-              width="1920"
-              height="1080"
-            ></canvas>
+            <canvas id="monitor-transition-canvas" width="1920" height="1080"></canvas>
           </div>
 
           <!-- 4. Экран планшета -->
           <div id="monitor-screen-layer" class="layer" hidden>
-            <canvas id="camera-canvas" width="1920" height="1080"></canvas>
-            <canvas
-              id="camera-static-canvas"
-              width="1920"
-              height="1080"
-            ></canvas>
-            <canvas
-              id="camera-blink-canvas"
-              width="1920"
-              height="1080"
-            ></canvas>
+            <div id="camera-viewport">
+              <div id="camera-world">
+                <canvas id="camera-world-canvas" width="2600" height="1080"></canvas>
+                <canvas id="camera-world-fx-canvas" width="2600" height="1080"></canvas>
+              </div>
+
+              <canvas id="camera-static-canvas" width="1920" height="1080"></canvas>
+              <canvas id="camera-blink-canvas" width="1920" height="1080"></canvas>
+            </div>
           </div>
 
           <!-- 5. UI планшета -->
           <div id="monitor-ui-layer" class="layer" hidden>
             <div id="monitor-ui">
-              <div id="camera-map">
-                <!-- карта и кнопки камер -->
-              </div>
+              <!-- карта и кнопки камер появятся позже -->
             </div>
           </div>
         </div>

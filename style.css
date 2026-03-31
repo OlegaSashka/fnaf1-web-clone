@@ -326,6 +326,231 @@ canvas {
 #monitor-screen-layer { z-index: 4; }
 #monitor-ui-layer { z-index: 5; }
 
+#office-ui-layer,
+#office-ui {
+  pointer-events: none;
+}
+
+#office-viewport {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#office-world {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 130%;
+  height: 100%;
+  transform: translateX(-50%);
+  will-change: transform;
+}
+
+#office-world-canvas,
+#office-fan-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+
+#office-world-canvas {
+  z-index: 1;
+}
+
+#office-fan-canvas {
+  z-index: 2;
+}
+
+#office-look-zones {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.look-zone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  pointer-events: auto;
+  background: transparent;
+}
+
+.look-zone:hover {
+  border: rgb(255, 255, 255) 1px solid;
+}
+
+#look-zone-left {
+  left: 0;
+  width: 33.3333%;
+  border: red 1px solid;
+}
+
+#look-zone-center {
+  left: 33.3333%;
+  width: 33.3333%;
+  border: rgb(0, 255, 42) 1px solid;
+}
+
+#look-zone-right {
+  right: 0;
+  width: 33.3333%;
+  border: red 1px solid;
+}
+
+#office-hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.office-hotspot {
+  position: absolute;
+  border: none;
+  background: rgba(255, 0, 0, 0.0);
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+}
+
+/* Временная отладка зон.
+   Потом можно убрать или закомментировать */
+.office-hotspot:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#office-screen-zones {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.screen-zone,
+#monitor-raise-zone {
+  position: absolute;
+  pointer-events: auto;
+  background: transparent;
+}
+
+/* 3 зоны поворота головы */
+#look-zone-left {
+  left: 0;
+  top: 0;
+  width: 33.3333%;
+  height: 100%;
+}
+
+#look-zone-center {
+  left: 33.3333%;
+  top: 0;
+  width: 33.3333%;
+  height: 100%;
+}
+
+#look-zone-right {
+  right: 0;
+  top: 0;
+  width: 33.3333%;
+  height: 100%;
+}
+
+/* Нижняя зона поднятия монитора */
+#monitor-raise-zone {
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 14%;
+}
+
+/* Базовые заготовки под кнопки офиса.
+   Координаты потом подгонишь точно */
+#left-light-btn {
+  left: 140px;
+  bottom: 250px;
+  width: 90px;
+  height: 140px;
+  border: orange 1px solid;
+}
+
+.office-hotspot {
+  position: absolute;
+  border: none;
+  background: rgba(255, 0, 0, 0.0);
+  cursor: pointer;
+  pointer-events: auto;
+  padding: 0;
+}
+
+/* Временная отладка зон.
+   Потом можно убрать или закомментировать */
+.office-hotspot:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.screen-zone,
+#monitor-raise-zone {
+  position: absolute;
+  pointer-events: auto;
+  background: transparent;
+}
+
+/* Нижняя зона поднятия монитора */
+#monitor-raise-zone {
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  height: 10%;
+  margin-left: 550px;
+  border: red 1px solid;
+}
+
+.monitor-trigger {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  z-index: 4;
+  border: #aa0069 1px solid;
+  pointer-events: auto;
+}
+
+.monitor-trigger img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+
+#left-door-btn {
+  left: 250px;
+  bottom: 250px;
+  width: 90px;
+  height: 140px;
+}
+
+#right-light-btn {
+  right: 250px;
+  bottom: 250px;
+  width: 90px;
+  height: 140px;
+
+}
+
+#right-door-btn {
+  right: 140px;
+  bottom: 250px;
+  width: 90px;
+  height: 140px;
+}
+
 #loading-effect-canvas {
   position: absolute;
   inset: 0;
