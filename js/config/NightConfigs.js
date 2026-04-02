@@ -18,7 +18,7 @@ export const NightConfigs = Object.freeze({
       chica: 0,
       foxy: 0
     },
-
+    
     power: {
       start: 100
     }

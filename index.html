@@ -45,7 +45,7 @@
             <div class="start-buttons">
               <button class="menu-btn" data-action="new">New Game</button>
               <button
-                class="menu-btn menu-btn--disabled"
+                class="menu-btn"
                 data-action="continue"
               >
                 Continue
@@ -66,13 +66,34 @@
             <div id="office-viewport">
               <div id="office-world">
                   <canvas id="office-world-canvas" width="2600" height="1080"></canvas>
+                  <canvas id="office-light-canvas" width="2600" height="1080"></canvas>
                   <canvas id="office-fan-canvas" width="2600" height="1080"></canvas>
-              </div>
 
-              <div id="office-look-zones">
-                <div id="look-zone-left" class="look-zone"></div>
-                <div id="look-zone-center" class="look-zone"></div>
-                <div id="look-zone-right" class="look-zone"></div>
+                  <button id="freddy-nose-hitbox" type="button" aria-label="Freddy nose"></button>
+
+                  <canvas id="office-left-door-canvas" width="2600" height="1080"></canvas>
+                  <canvas id="office-right-door-canvas" width="2600" height="1080"></canvas>
+
+                  <div id="left-panel-wrap" class="office-panel-wrap">
+                    <canvas id="office-left-panel-canvas" width="92" height="247"></canvas>
+
+                    <button id="left-door-hitbox" class="panel-hitbox panel-hitbox--door-l" type="button"></button>
+                    <button id="left-light-hitbox" class="panel-hitbox panel-hitbox--light-l" type="button"></button>
+                  </div>
+
+                  <div id="right-panel-wrap" class="office-panel-wrap">
+                    <canvas id="office-right-panel-canvas" width="92" height="247"></canvas>
+
+                    <button id="right-door-hitbox" class="panel-hitbox panel-hitbox--door-r" type="button"></button>
+                    <button id="right-light-hitbox" class="panel-hitbox panel-hitbox--light-r" type="button"></button>
+                  </div>
+                  
+                  <div id="office-look-zones">
+                    <div id="look-zone-left" class="look-zone"></div>
+                    <div id="look-zone-center" class="look-zone"></div>
+                    <div id="look-zone-right" class="look-zone"></div>
+                  </div>
+
               </div>
             </div>
           </div>
@@ -81,7 +102,7 @@
           <div id="office-ui-layer" class="layer">
             <div id="office-ui">
               <div id="night-hud">
-                <!-- часы, энергия, usage -->
+                <button id="phone-guy-mute-btn" type="button">Mute Call</button>
               </div>
             </div>
           </div>

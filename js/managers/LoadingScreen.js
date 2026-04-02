@@ -234,6 +234,89 @@ class LoadingScreen {
     await this.animateOpacity(screen, fadeIn);
   }
 
+  static setContent({
+    title,
+    text,
+    showProgress,
+    uiMode,
+    showButton,
+    buttonText,
+    waitForScreenClick,
+    continueText,
+    onContinue
+  } = {}) {
+    const {
+      screen,
+      overlay,
+      titleNode,
+      textNode,
+      progressNode,
+      button,
+      hint
+    } = this.getNodes();
+
+    this.cleanupHandlers();
+
+    if (!screen || !overlay) return;
+
+    if (uiMode !== undefined) {
+      overlay.classList.remove('loading-overlay--center', 'loading-overlay--bottom-right');
+      overlay.classList.add(
+        uiMode === 'bottom-right'
+          ? 'loading-overlay--bottom-right'
+          : 'loading-overlay--center'
+      );
+    }
+
+    if (title !== undefined && titleNode) {
+      titleNode.textContent = title;
+    }
+
+    if (text !== undefined && textNode) {
+      textNode.textContent = text;
+    }
+
+    if (showProgress !== undefined && progressNode) {
+      progressNode.hidden = !showProgress;
+      if (!showProgress) {
+        progressNode.textContent = '';
+      }
+    }
+
+    if (showButton !== undefined && button) {
+      button.hidden = !showButton;
+    }
+
+    if (buttonText !== undefined && button) {
+      button.textContent = buttonText;
+    }
+
+    if (waitForScreenClick !== undefined && hint) {
+      hint.hidden = !waitForScreenClick;
+    }
+
+    if (continueText !== undefined && hint) {
+      hint.textContent = continueText;
+    }
+
+    if (showButton && onContinue && button) {
+      button.onclick = onContinue;
+    }
+
+    if (waitForScreenClick && onContinue) {
+      this.screenClickHandler = async (event) => {
+        if (event.target === button) return;
+
+        screen.removeEventListener('click', this.screenClickHandler);
+        this.screenClickHandler = null;
+
+        await onContinue();
+      };
+
+      screen.addEventListener('click', this.screenClickHandler);
+    }
+  }
+
   static setProgress(progress) {
     const { progressNode } = this.getNodes();
     if (progressNode) {

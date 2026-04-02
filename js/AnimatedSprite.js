@@ -13,6 +13,8 @@ class AnimatedSprite {
     this.drawWidth = options.drawWidth ?? this.canvas.width;
     this.drawHeight = options.drawHeight ?? this.canvas.height;
 
+    this.flipX = options.flipX ?? false;
+
     this.totalFrames = 0;
     this.currentFrame = 0;
 
@@ -118,13 +120,30 @@ class AnimatedSprite {
     const dx = (this.canvas.width - this.drawWidth) / 2 + this.drawX;
     const dy = (this.canvas.height - this.drawHeight) / 2 + this.drawY;
 
-    this.ctx.drawImage(
-      this.img,
-      sx,sy,
-      sw,sh,
-      dx, dy,
-      this.drawWidth, this.drawHeight
-    );
+    this.ctx.save();
+
+    if (this.flipX) {
+      this.ctx.translate(dx + this.drawWidth, dy);
+      this.ctx.scale(-1, 1);
+
+      this.ctx.drawImage(
+        this.img,
+        sx, sy,
+        sw, sh,
+        0, 0,
+        this.drawWidth, this.drawHeight
+      );
+    } else {
+      this.ctx.drawImage(
+        this.img,
+        sx, sy,
+        sw, sh,
+        dx, dy,
+        this.drawWidth, this.drawHeight
+      );
+    }
+
+    this.ctx.restore();
   }
 
   #addBehaviorTimeout(callback, delay) {
@@ -275,6 +294,51 @@ class AnimatedSprite {
     });
   }
 
+  async playOnceReverse({
+    fromFrame = null,
+    toFrame = 0,
+    holdLastFrame = true,
+    clearOnFinish = false,
+    onComplete = null
+  } = {}) {
+    await this.#waitForReady();
+
+    this.stop();
+    this.stopBehavior();
+
+    const maxFrame = this.totalFrames - 1;
+    const safeFrom = Math.max(0, Math.min(fromFrame ?? maxFrame, maxFrame));
+    const safeTo = Math.max(0, Math.min(toFrame, safeFrom));
+
+    this.currentFrame = safeFrom;
+    this.loop = false;
+    this.playToFrame = safeTo;
+    this.holdLastFrame = holdLastFrame;
+    this.clearOnFinish = clearOnFinish;
+    this.lastTime = 0;
+    this.running = true;
+
+    this.#draw();
+
+    return new Promise((resolve) => {
+      this.onComplete = () => {
+        if (typeof onComplete === 'function') {
+          onComplete();
+        }
+        resolve();
+      };
+
+      const token = ++this.activePlayToken;
+
+      if (safeFrom <= safeTo) {
+        this.#finishPlayback(token);
+        return;
+      }
+
+      this.#animateReverse(performance.now(), token);
+    });
+  }
+
   #animateOnce(time, token) {
     if (!this.running || !this.ready || token !== this.activePlayToken) return;
 
@@ -296,6 +360,29 @@ class AnimatedSprite {
     }
 
     this.rafId = requestAnimationFrame((t) => this.#animateOnce(t, token));
+  }
+
+  #animateReverse(time, token) {
+    if (!this.running || !this.ready || token !== this.activePlayToken) return;
+
+    const delta = time - this.lastTime;
+    if (delta >= this.frameTime) {
+      if (this.currentFrame <= this.playToFrame) {
+        this.#finishPlayback(token);
+        return;
+      }
+
+      this.currentFrame -= 1;
+      this.lastTime = time;
+      this.#draw();
+
+      if (this.currentFrame <= this.playToFrame) {
+        this.#finishPlayback(token);
+        return;
+      }
+    }
+
+    this.rafId = requestAnimationFrame((t) => this.#animateReverse(t, token));
   }
 
   async startRandomBurstBehavior({

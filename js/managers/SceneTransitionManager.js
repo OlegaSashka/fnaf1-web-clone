@@ -5,56 +5,28 @@ class SceneTransitionManager {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  /**
-   * Выполняет переход между сценами через LoadingScreen.
-   *
-   * @param {Object} params
-   * @param {Object} params.game
-   * @param {string} params.sceneName
-   * @param {Object} params.nextScene
-   * @param {(onProgress: (progress: number) => void) => Promise<void>} [params.preload]
-   *
-   * @param {Object} [params.loading]
-   * @param {string|null} [params.loading.image=null]
-   * @param {string} [params.loading.background='#000']
-   * @param {string} [params.loading.title='LOADING']
-   * @param {string} [params.loading.text='']
-   * @param {number} [params.loading.beforePreloadDelay=0]
-   * @param {string} [params.loading.uiMode='center']
-   * @param {boolean} [params.loading.showProgress=true]
-   * @param {Object} [params.loading.fadeIn]
-   * @param {Object} [params.loading.fadeOut]
-   *
-   * @param {Object} [params.confirm]
-   * @param {'auto'|'button'|'screen'} [params.confirm.mode='auto']
-   * @param {number} [params.confirm.minDuration=0]
-   * @param {string} [params.confirm.buttonText='Continue']
-   * @param {string} [params.confirm.continueText='Click anywhere to continue']
-   *
-   * @param {Function|null} [params.afterShow=null]
-   * @param {Function|null} [params.beforeHide=null]
-   * @param {Function|null} [params.beforeSceneChange=null]
-   * @param {Function|null} [params.afterSceneChange=null]
-   *
-   * @param {boolean} [params.disposeCurrentSceneOnStart=false]
-   *
-   * @returns {Promise<void>}
-   */
   static async go({
     game,
-    sceneName,
-    nextScene,
+    sceneName = null,
+    nextScene = null,
 
     preload = null,
     loading = {},
     confirm = {},
 
+    beforeShow = null,
     afterShow = null,
+    beforePreload = null,
+    afterPreload = null,
     beforeHide = null,
     beforeSceneChange = null,
     afterSceneChange = null,
 
-    disposeCurrentSceneOnStart = false
+    onFadeOutStart = null,
+    onFadeOutComplete = null,
+
+    disposeCurrentSceneOnStart = false,
+    skipSceneChange = false
   }) {
     const {
       image = null,
@@ -88,7 +60,11 @@ class SceneTransitionManager {
     const startedAt = performance.now();
 
     try {
-      // 1. Показываем экран загрузки
+      // 1. Первый показ overlay
+      if (typeof beforeShow === 'function') {
+        await beforeShow();
+      }
+
       await LoadingScreen.show({
         image,
         background,
@@ -99,29 +75,71 @@ class SceneTransitionManager {
         fadeIn
       });
 
-      // 2. Хук после полного показа overlay
+      // 2. После полного показа overlay
       if (typeof afterShow === 'function') {
         await afterShow();
       }
 
-      // 3. При необходимости удаляем текущую сцену сразу
+      // 3. Если нужно, сразу удалить текущую сцену
       if (disposeCurrentSceneOnStart) {
         await game.state.disposeCurrentScene();
       }
 
-      // 4. Доп. пауза до preload
+      // 4. Перед preload
+      if (typeof beforePreload === 'function') {
+        await beforePreload();
+      }
+
+      // 5. Доп. пауза
       if (beforePreloadDelay > 0) {
         await this.wait(beforePreloadDelay);
       }
 
-      // 5. Грузим ассеты следующей сцены
+      // 6. preload ассетов
       if (typeof preload === 'function') {
         await preload((progress) => {
           LoadingScreen.setProgress(progress);
         });
       }
 
-      // 6. Автопереход
+      // 7. После preload
+      if (typeof afterPreload === 'function') {
+        await afterPreload();
+      }
+
+      const runSceneChangeIfNeeded = async () => {
+        if (typeof beforeSceneChange === 'function') {
+          await beforeSceneChange();
+        }
+
+        if (!skipSceneChange && sceneName && nextScene) {
+          await game.state.change(sceneName, nextScene);
+        }
+
+        if (typeof afterSceneChange === 'function') {
+          await afterSceneChange();
+        }
+      };
+
+      const runHidePhase = async () => {
+        if (typeof beforeHide === 'function') {
+          await beforeHide();
+        }
+
+        const hidePromise = LoadingScreen.hide({ fadeOut });
+
+        if (typeof onFadeOutStart === 'function') {
+          await onFadeOutStart();
+        }
+
+        await hidePromise;
+
+        if (typeof onFadeOutComplete === 'function') {
+          await onFadeOutComplete();
+        }
+      };
+
+      // 8. Автопереход
       if (mode === 'auto') {
         const elapsed = performance.now() - startedAt;
         const remaining = Math.max(0, minDuration - elapsed);
@@ -130,94 +148,40 @@ class SceneTransitionManager {
           await this.wait(remaining);
         }
 
-        if (typeof beforeHide === 'function') {
-          await beforeHide();
-        }
-
-        await LoadingScreen.hide({ fadeOut });
-
-        if (typeof beforeSceneChange === 'function') {
-          await beforeSceneChange();
-        }
-
-        await game.state.change(sceneName, nextScene);
-
-        if (typeof afterSceneChange === 'function') {
-          await afterSceneChange();
-        }
-
+        await runHidePhase();
+        await runSceneChangeIfNeeded();
         return;
       }
 
-      // 7. Переход по кнопке
+      // 9. Переход по кнопке
       if (mode === 'button') {
         await new Promise(async (resolve) => {
-          await LoadingScreen.show({
-            image,
-            background,
-            title,
-            text,
-            showButton: true,
+          LoadingScreen.setContent({
             showProgress: false,
-            uiMode,
+            showButton: true,
             buttonText,
-            onContinue: resolve,
-            fadeIn: { enabled: false, from: 1, to: 1, duration: 0 }
+            onContinue: resolve
           });
         });
 
-        if (typeof beforeHide === 'function') {
-          await beforeHide();
-        }
-
-        await LoadingScreen.hide({ fadeOut });
-
-        if (typeof beforeSceneChange === 'function') {
-          await beforeSceneChange();
-        }
-
-        await game.state.change(sceneName, nextScene);
-
-        if (typeof afterSceneChange === 'function') {
-          await afterSceneChange();
-        }
-
+        await runHidePhase();
+        await runSceneChangeIfNeeded();
         return;
       }
 
-      // 8. Переход по клику по экрану
+      // 10. Переход по клику по экрану
       if (mode === 'screen') {
         await new Promise(async (resolve) => {
-          await LoadingScreen.show({
-            image,
-            background,
-            title,
-            text,
-            waitForScreenClick: true,
+          LoadingScreen.setContent({
             showProgress: false,
-            uiMode,
+            waitForScreenClick: true,
             continueText,
-            onContinue: resolve,
-            fadeIn: { enabled: false, from: 1, to: 1, duration: 0 }
+            onContinue: resolve
           });
         });
 
-        if (typeof beforeHide === 'function') {
-          await beforeHide();
-        }
-
-        await LoadingScreen.hide({ fadeOut });
-
-        if (typeof beforeSceneChange === 'function') {
-          await beforeSceneChange();
-        }
-
-        await game.state.change(sceneName, nextScene);
-
-        if (typeof afterSceneChange === 'function') {
-          await afterSceneChange();
-        }
-
+        await runHidePhase();
+        await runSceneChangeIfNeeded();
         return;
       }
 
@@ -225,6 +189,7 @@ class SceneTransitionManager {
     } catch (error) {
       console.error('[SceneTransitionManager.go] Ошибка перехода:', error);
       LoadingScreen.setError('Ошибка перехода. Проверь консоль и пути к файлам.');
+      throw error;
     }
   }
 }

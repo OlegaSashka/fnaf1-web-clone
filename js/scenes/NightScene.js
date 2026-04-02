@@ -2,10 +2,15 @@ import BaseScene from './BaseScene.js';
 import Preloader from '../Preloader.js';
 
 import { COMMON_NIGHT_ASSETS } from '../config/NightAssets.js';
+  
+import { NightAssetPaths } from '../config/NightAssets.js';
 
+import SceneTransitionManager from '../managers/SceneTransitionManager.js';
 import LoadingScreen from '../managers/LoadingScreen.js';
 
 import AnimatedSprite from '../AnimatedSprite.js';
+
+import Sound from '../managers/SoundManager.js';
 
 class NightScene extends BaseScene {
   constructor(game, config) {
@@ -16,17 +21,54 @@ class NightScene extends BaseScene {
     this.officeBaseSprite = null;
     this.fanSprite = null;
 
-    this.lookDirection = 0; // -1 = влево, 0 = стоп, 1 = вправо
+    this.lookDirection = 0;
     this.lookSpeed = 8;
     this.lookRafId = null;
 
-    this.onLookLeftEnter = this.onLookLeftEnter.bind(this);
-    this.onLookCenterEnter = this.onLookCenterEnter.bind(this);
-    this.onLookRightEnter = this.onLookRightEnter.bind(this);
+    this.phoneGuySoundId = null;
+    this.isPhoneGuyMuted = false;
+    this.isPhoneGuyStarted = false;
+    this.phoneGuyMuteShowTimeout = null;
 
-    this.onLookLeftLeave = this.onLookLeftLeave.bind(this);
-    this.onLookCenterLeave = this.onLookCenterLeave.bind(this);
-    this.onLookRightLeave = this.onLookRightLeave.bind(this);
+    this.leftDoorSprite = null
+    this.rightDoorSprite = null
+
+    this.leftDoorClosed = false
+    this.rightDoorClosed = false
+
+    this.isLeftDoorAnimating = false;
+    this.isRightDoorAnimating = false;
+
+    this.leftControlPanelSprite = null;
+    this.rightControlPanelSprite = null;
+
+    this.leftLightOn = false;
+    this.rightLightOn = false;
+
+    this.lightSoundId = 'light-on';
+    this.backgroundAmbienceSoundId = 'night-ambience';
+    this.fanHumSoundId = 'fan-hum';
+
+    this.lightFlickerRunning = false;
+
+    this.officeLightSprite = null;
+
+    this.isLeftLightAnimating = false;
+    this.isRightLightAnimating = false;
+
+    this.lightFlickerTimeouts = [];
+    this.activeLightSide = null;
+
+    this.onLeftDoorHitboxClick = this.onLeftDoorHitboxClick.bind(this);
+    this.onLeftLightHitboxClick = this.onLeftLightHitboxClick.bind(this);
+    this.onRightDoorHitboxClick = this.onRightDoorHitboxClick.bind(this);
+    this.onRightLightHitboxClick = this.onRightLightHitboxClick.bind(this);
+
+    this.onOfficeViewportMouseMove = this.onOfficeViewportMouseMove.bind(this);
+    this.onOfficeViewportMouseLeave = this.onOfficeViewportMouseLeave.bind(this);
+
+    this.onPhoneGuyMuteClick = this.onPhoneGuyMuteClick.bind(this);
+    this.onFreddyNoseClick = this.onFreddyNoseClick.bind(this);
   }
 
   async preload(onProgress) {
@@ -53,256 +95,563 @@ class NightScene extends BaseScene {
     }
   }
 
-  async runIntroAndPreload() {
-    const title = this.config?.intro?.title ?? '12:00 AM';
-    const subtitle = this.config?.intro?.subtitle ?? `Night ${this.config?.nightNumber ?? 1}`;
+  async enter() {
+    const gameScreen = document.getElementById('game-screen');
+    const menuScreen = document.getElementById('menu-screen');
 
-    // 1. Открываем loading screen пустым, только как фон под blink
-    await LoadingScreen.show({
-      background: '#000',
-      title: '',
-      text: '',
-      uiMode: 'center',
-      showProgress: false,
-      fadeIn: {
-        enabled: true,
-        from: 0,
-        to: 1,
-        duration: 300
-      }
-    });
+    const leftDoorHitbox = document.getElementById('left-door-hitbox');
+    const leftLightHitbox = document.getElementById('left-light-hitbox');
+    const rightDoorHitbox = document.getElementById('right-door-hitbox');
+    const rightLightHitbox = document.getElementById('right-light-hitbox');
 
-    // 2. Проигрываем blink-эффект поверх loading screen
-    await LoadingScreen.playEffect({
-      spriteSheet: 'assets/images/ui/Blink/Menu-blink-camera.png',
-      fps: 30,
-      holdLastFrame: false,
-      clearOnFinish: true,
-      sound: {
-        id: 'camera-intro-blip',
-        src: 'assets/sounds/ui/blip3.wav',
-        volume: 1,
-        playOnce: true
-      }
-    });
+    const freddyNoseHitbox = document.getElementById('freddy-nose-hitbox');
 
-    // 3. После blink показываем, какая сейчас ночь
-    await LoadingScreen.show({
-      background: '#000',
-      title,
-      text: subtitle,
-      uiMode: 'center',
-      showProgress: true,
-      fadeIn: {
-        enabled: false,
-        from: 1,
-        to: 1,
-        duration: 0
-      }
-    });
+    if (menuScreen) menuScreen.hidden = true;
+    if (gameScreen) gameScreen.hidden = false;
 
-    // 4. Грузим ассеты ночи
-    await this.preload((progress) => {
-      LoadingScreen.setProgress(progress);
-    });
+    await SceneTransitionManager.go({
+      game: this.game,
+      skipSceneChange: true,
 
-    // 5. После загрузки ждем клик
-    await new Promise(async (resolve) => {
-      await LoadingScreen.show({
+      loading: {
         background: '#000',
-        title,
-        text: subtitle,
+        title: '',
+        text: '',
         uiMode: 'center',
         showProgress: false,
-        waitForScreenClick: true,
-        continueText: 'Click anywhere to continue',
-        onContinue: resolve,
         fadeIn: {
           enabled: false,
           from: 1,
           to: 1,
           duration: 0
+        },
+        fadeOut: {
+          enabled: true,
+          from: 1,
+          to: 0,
+          duration: 1500
         }
-      });
-    });
+      },
 
-    // 6. Убираем loading screen
-    await LoadingScreen.hide({
-      fadeOut: {
-        enabled: true,
-        from: 1,
-        to: 0,
-        duration: 300
+      afterShow: async () => {
+        await LoadingScreen.playEffect({
+          spriteSheet: 'assets/images/ui/Blink/Menu-blink-camera.png',
+          fps: 30,
+          holdLastFrame: false,
+          clearOnFinish: true,
+          sound: {
+            id: 'camera-intro-blip',
+            src: 'assets/sounds/ui/blip3.wav',
+            volume: 1,
+            playOnce: true
+          }
+        });
+      },
+
+      beforePreload: async () => {
+        LoadingScreen.setContent({
+          title: this.config?.intro?.title ?? '12:00 AM',
+          text: this.config?.intro?.subtitle ?? `Night ${this.config?.nightNumber ?? 1}`,
+          uiMode: 'center',
+          showProgress: true
+        });
+      },
+
+      preload: (onProgress) => this.preload(onProgress),
+
+      afterPreload: async () => {
+        await this.setupOfficeScene();
+        this.setOfficeOffset(0);
+      },
+      
+      confirm: {
+        mode: 'screen',
+        continueText: 'Click anywhere to continue'
+      },
+
+      onFadeOutStart: async () => {
+        this.playPhoneGuy();
+        this.playBackgroundAmbience();
+        this.playFanHum();
+        this.fanSprite.play();
       }
     });
+
+    const officeViewport = document.getElementById('office-viewport');
+
+    if (officeViewport) {
+      officeViewport.addEventListener('mousemove', this.onOfficeViewportMouseMove);
+      officeViewport.addEventListener('mouseleave', this.onOfficeViewportMouseLeave);
+    }
+
+    if (leftDoorHitbox) {
+      leftDoorHitbox.addEventListener('click', this.onLeftDoorHitboxClick);
+    }
+
+    if (leftLightHitbox) {
+      leftLightHitbox.addEventListener('click', this.onLeftLightHitboxClick);
+    }
+
+    if (rightDoorHitbox) {
+      rightDoorHitbox.addEventListener('click', this.onRightDoorHitboxClick);
+    }
+
+    if (rightLightHitbox) {
+      rightLightHitbox.addEventListener('click', this.onRightLightHitboxClick);
+    }
+
+    if (freddyNoseHitbox) {
+      freddyNoseHitbox.addEventListener('click', this.onFreddyNoseClick);
+    }
+
+    const phoneGuyMuteBtn = document.getElementById('phone-guy-mute-btn');
+
+    if (phoneGuyMuteBtn) {
+      phoneGuyMuteBtn.addEventListener('click', this.onPhoneGuyMuteClick);
+    }
+
+    this.updatePhoneGuyMuteButton();
   }
+  
+  async exit() {
+    const gameScreen = document.getElementById('game-screen');
 
-async enter() {
-  const gameScreen = document.getElementById('game-screen');
-  const menuScreen = document.getElementById('menu-screen');
+    const officeCanvas = document.getElementById('office-world-canvas');
+    const officeFanCanvas = document.getElementById('office-fan-canvas');
+    const officeUiLayer = document.getElementById('office-ui-layer');
 
-  const officeWorld = document.getElementById('office-world');
-  const officeCanvas = document.getElementById('office-world-canvas');
-  const officeFanCanvas = document.getElementById('office-fan-canvas');
-  const officeUiLayer = document.getElementById('office-ui-layer');
+    const leftDoorHitbox = document.getElementById('left-door-hitbox');
+    const leftLightHitbox = document.getElementById('left-light-hitbox');
+    const rightDoorHitbox = document.getElementById('right-door-hitbox');
+    const rightLightHitbox = document.getElementById('right-light-hitbox');
 
-  if (!officeWorld || !officeCanvas || !officeFanCanvas) {
-    console.error('[NightScene] Не найдены office-элементы');
-    return;
+    const officeLightCanvas = document.getElementById('office-light-canvas');
+
+    const officeViewport = document.getElementById('office-viewport');
+
+    const phoneGuyMuteBtn = document.getElementById('phone-guy-mute-btn');
+
+    const freddyNoseHitbox = document.getElementById('freddy-nose-hitbox');
+
+    if (freddyNoseHitbox) {
+      freddyNoseHitbox.removeEventListener('click', this.onFreddyNoseClick);
+    }
+
+    if (phoneGuyMuteBtn) {
+      phoneGuyMuteBtn.removeEventListener('click', this.onPhoneGuyMuteClick);
+    }
+
+    if (officeViewport) {
+      officeViewport.removeEventListener('mousemove', this.onOfficeViewportMouseMove);
+      officeViewport.removeEventListener('mouseleave', this.onOfficeViewportMouseLeave);
+    }
+
+    if (gameScreen) gameScreen.hidden = true;
+
+    if (officeCanvas) {
+      const ctx = officeCanvas.getContext('2d');
+      ctx.clearRect(0, 0, officeCanvas.width, officeCanvas.height);
+      officeCanvas.style.display = 'none';
+    }
+
+    if (officeFanCanvas) {
+      const ctx = officeFanCanvas.getContext('2d');
+      ctx.clearRect(0, 0, officeFanCanvas.width, officeFanCanvas.height);
+      officeFanCanvas.style.display = 'none';
+    }
+
+    if (this.officeBaseSprite) {
+      this.officeBaseSprite.stop({ clear: false });
+      this.officeBaseSprite = null;
+    }
+
+    if (this.fanSprite) {
+      this.fanSprite.stop({ clear: false });
+      this.fanSprite = null;
+    }
+
+    if (leftDoorHitbox) {
+      leftDoorHitbox.removeEventListener('click', this.onLeftDoorHitboxClick);
+    }
+
+    if (leftLightHitbox) {
+      leftLightHitbox.removeEventListener('click', this.onLeftLightHitboxClick);
+    }
+
+    if (rightDoorHitbox) {
+      rightDoorHitbox.removeEventListener('click', this.onRightDoorHitboxClick);
+    }
+
+    if (rightLightHitbox) {
+      rightLightHitbox.removeEventListener('click', this.onRightLightHitboxClick);
+    }
+
+    this.lookDirection = 0;
+    this.stopLookMovement();
+
+    if (officeUiLayer) {
+      officeUiLayer.hidden = true;
+    }
+
+    if (officeLightCanvas) {
+      const ctx = officeLightCanvas.getContext('2d');
+      ctx.clearRect(0, 0, officeLightCanvas.width, officeLightCanvas.height);
+      officeLightCanvas.style.display = 'none';
+    }
+
+    if (this.officeLightSprite) {
+      this.officeLightSprite.stop({ clear: true });
+      this.officeLightSprite = null;
+    }
+
+    this.clearLightFlicker();
+
+    this.stopBackgroundAmbience();
+    this.stopFanHum();
+    this.stopPhoneGuy();
+
+    this.root = null;
   }
-
-  if (menuScreen) menuScreen.hidden = true;
-  if (gameScreen) gameScreen.hidden = false;
-
-  const worldWidth = Math.round(officeWorld.offsetWidth);
-  const worldHeight = Math.round(officeWorld.offsetHeight);
-
-  officeCanvas.style.display = 'block';
-  officeCanvas.width = worldWidth;
-  officeCanvas.height = worldHeight;
-
-  officeFanCanvas.style.display = 'block';
-  officeFanCanvas.width = worldWidth;
-  officeFanCanvas.height = worldHeight;
-
-  if (officeUiLayer) {
-    officeUiLayer.hidden = false;
-  }
-
-  this.root = officeCanvas;
-
-  await this.runIntroAndPreload();
-  await this.setupOfficeScene();
-
-  const lookZoneLeft = document.getElementById('look-zone-left');
-  const lookZoneCenter = document.getElementById('look-zone-center');
-  const lookZoneRight = document.getElementById('look-zone-right');
-
-  if (lookZoneLeft) {
-    lookZoneLeft.addEventListener('mouseenter', this.onLookLeftEnter);
-    lookZoneLeft.addEventListener('mouseleave', this.onLookLeftLeave);
-  }
-
-  if (lookZoneCenter) {
-    lookZoneCenter.addEventListener('mouseenter', this.onLookCenterEnter);
-    lookZoneCenter.addEventListener('mouseleave', this.onLookCenterLeave);
-  }
-
-  if (lookZoneRight) {
-    lookZoneRight.addEventListener('mouseenter', this.onLookRightEnter);
-    lookZoneRight.addEventListener('mouseleave', this.onLookRightLeave);
-  }
-
-  this.setOfficeOffset(0);
-}
-
-async exit() {
-  const gameScreen = document.getElementById('game-screen');
-
-  const officeCanvas = document.getElementById('office-world-canvas');
-  const officeFanCanvas = document.getElementById('office-fan-canvas');
-  const officeUiLayer = document.getElementById('office-ui-layer');
-
-  const lookZoneLeft = document.getElementById('look-zone-left');
-  const lookZoneCenter = document.getElementById('look-zone-center');
-  const lookZoneRight = document.getElementById('look-zone-right');
-
-  if (gameScreen) gameScreen.hidden = true;
-
-  if (officeCanvas) {
-    const ctx = officeCanvas.getContext('2d');
-    ctx.clearRect(0, 0, officeCanvas.width, officeCanvas.height);
-    officeCanvas.style.display = 'none';
-  }
-
-  if (officeFanCanvas) {
-    const ctx = officeFanCanvas.getContext('2d');
-    ctx.clearRect(0, 0, officeFanCanvas.width, officeFanCanvas.height);
-    officeFanCanvas.style.display = 'none';
-  }
-
-  if (this.fanSprite) {
-    this.fanSprite.stop({ clear: false });
-    this.fanSprite = null;
-  }
-
-  if (lookZoneLeft) {
-    lookZoneLeft.removeEventListener('mouseenter', this.onLookLeftEnter);
-    lookZoneLeft.removeEventListener('mouseleave', this.onLookLeftLeave);
-  }
-
-  if (lookZoneCenter) {
-    lookZoneCenter.removeEventListener('mouseenter', this.onLookCenterEnter);
-    lookZoneCenter.removeEventListener('mouseleave', this.onLookCenterLeave);
-  }
-
-  if (lookZoneRight) {
-    lookZoneRight.removeEventListener('mouseenter', this.onLookRightEnter);
-    lookZoneRight.removeEventListener('mouseleave', this.onLookRightLeave);
-  }
-
-  this.lookDirection = 0;
-  this.stopLookMovement();
-
-  if (officeUiLayer) {
-    officeUiLayer.hidden = true;
-  }
-
-  this.root = null;
-}
 
   async setupOfficeScene() {
     const officeCanvas = document.getElementById('office-world-canvas');
     const officeFanCanvas = document.getElementById('office-fan-canvas');
+    const officeLeftDoorCanvas = document.getElementById('office-left-door-canvas');
+    const officeRightDoorCanvas = document.getElementById('office-right-door-canvas');
+
+    const officeLightCanvas = document.getElementById('office-light-canvas');
+
+    const officeWorld = document.getElementById('office-world');
+    const officeUiLayer = document.getElementById('office-ui-layer');
+
+    const officeLeftPanelCanvas = document.getElementById('office-left-panel-canvas');
+    const officeRightPanelCanvas = document.getElementById('office-right-panel-canvas');
+
+    const worldWidth = Math.round(officeWorld.offsetWidth);
+    const worldHeight = Math.round(officeWorld.offsetHeight);
+
+    if (
+      !officeCanvas ||
+      !officeFanCanvas ||
+      !officeLeftDoorCanvas ||
+      !officeRightDoorCanvas ||
+      !officeLeftPanelCanvas ||
+      !officeRightPanelCanvas ||
+      !officeWorld || 
+      !officeUiLayer ||
+      !officeLightCanvas
+    ) {
+      console.error('[NightScene] Не найдены office-элементы');
+      return;
+    }
+
+    if (officeUiLayer) {
+      officeUiLayer.hidden = false;
+    }
+
+    this.root = officeCanvas;
+
+    officeCanvas.style.display = 'block';
+    officeCanvas.width = worldWidth;
+    officeCanvas.height = worldHeight;
+
+    officeLightCanvas.style.display = 'block';
+    officeLightCanvas.width = worldWidth;
+    officeLightCanvas.height = worldHeight;
+
+    officeFanCanvas.style.display = 'block';
+    officeFanCanvas.width = worldWidth;
+    officeFanCanvas.height = worldHeight;
+
+    officeLeftDoorCanvas.style.display = 'block';
+    officeLeftDoorCanvas.width = worldWidth;
+    officeLeftDoorCanvas.height = worldHeight;
+
+    officeRightDoorCanvas.style.display = 'block';
+    officeRightDoorCanvas.width = worldWidth;
+    officeRightDoorCanvas.height = worldHeight;
+
+    officeLeftPanelCanvas.style.display = 'block';
+    officeLeftPanelCanvas.width = 92;
+    officeLeftPanelCanvas.height = 247;
+
+    officeRightPanelCanvas.style.display = 'block';
+    officeRightPanelCanvas.width = 92;
+    officeRightPanelCanvas.height = 247;
+
+    if (!officeWorld || !officeCanvas || !officeFanCanvas) {
+      console.error('[NightScene] Не найдены office-элементы');
+      return;
+    }
 
     if (!officeCanvas || !officeFanCanvas) {
       console.error('[NightScene] Не найдены canvas офиса');
       return;
     }
 
-    const ctx = officeCanvas.getContext('2d');
-
-    const bg = new Image();
-    bg.src = 'assets/images/office/Office_Base.png';
-
-    await new Promise((resolve, reject) => {
-      bg.onload = resolve;
-      bg.onerror = reject;
-    });
-
-    console.log('[NightScene] Office_Base loaded:', bg.width, bg.height);
-    console.log('[NightScene] officeCanvas size:', officeCanvas.width, officeCanvas.height);
-
-    ctx.clearRect(0, 0, officeCanvas.width, officeCanvas.height);
-
-    ctx.drawImage(
-      bg,
-      0,
-      0,
-      bg.width,
-      bg.height,
-      0,
-      0,
-      officeCanvas.width,
-      officeCanvas.height
-    );
-
-    this.fanSprite = new AnimatedSprite(
-      officeFanCanvas,
-      'assets/images/Fan/Fan.png',
-      12,
+    this.officeLightSprite = new AnimatedSprite(
+      officeLightCanvas,
+      NightAssetPaths.OFFICE_LIGHT,
+      1,
       {
         frameWidth: 1600,
         frameHeight: 720,
+        direction: 'vertical',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: officeLightCanvas.width,
+        drawHeight: officeLightCanvas.height,
+      }
+    );
+
+    this.officeLightSprite.clear();
+
+    this.officeBaseSprite = new AnimatedSprite(
+      officeCanvas,
+      NightAssetPaths.OFFICE_BASE,
+      1,
+      {
+        frameWidth: 1600,
+        frameHeight: 720,
+        direction: 'vertical',
+
+        drawX: 0,
+        drawY: 0,
+        drawWidth: officeCanvas.width,
+        drawHeight: officeCanvas.height,
+      }
+    );
+
+    await this.officeBaseSprite.showFrame(0);
+
+    this.fanSprite = new AnimatedSprite(
+      officeFanCanvas,
+      NightAssetPaths.FAN,
+      30,
+      {
+        frameWidth: 1600,
+        frameHeight: 720,
+        direction: 'vertical',
+
         drawX: 0,
         drawY: 0,
         drawWidth: officeFanCanvas.width,
-        drawHeight: officeFanCanvas.height
+        drawHeight: officeFanCanvas.height,
       }
     );
 
     await this.fanSprite.showFrame(0);
-    this.fanSprite.play();
+
+    this.leftDoorSprite = new AnimatedSprite(
+      officeLeftDoorCanvas,
+      NightAssetPaths.DOOR_SHEET,
+      35,
+      {
+        frameWidth: 229,
+        frameHeight: 720,
+        direction: 'horizontal',
+        drawX: -950,
+        drawY: 0,
+        drawWidth: 229*1.4,
+        drawHeight: officeLeftDoorCanvas.height,
+        flipX: true
+      }
+    );
+    await this.leftDoorSprite.showFrame(0);
+
+    this.rightDoorSprite = new AnimatedSprite(
+      officeRightDoorCanvas,
+      NightAssetPaths.DOOR_SHEET,
+      35,
+      {
+        frameWidth: 229,
+        frameHeight: 720,
+        direction: 'horizontal',
+        drawX: 890,
+        drawY: 0,
+        drawWidth: 229*1.4,
+        drawHeight: officeRightDoorCanvas.height,
+      }
+    );
+    await this.rightDoorSprite.showFrame(0);
+
+    this.leftControlPanelSprite = new AnimatedSprite(
+      officeLeftPanelCanvas,
+      NightAssetPaths.LEFT_DOOR_BUTTON,
+      1,
+      {
+        frameWidth: 92,
+        frameHeight: 247,
+        direction: 'horizontal',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: 92,
+        drawHeight: 247
+      }
+    );
+
+    this.rightControlPanelSprite = new AnimatedSprite(
+      officeRightPanelCanvas,
+      NightAssetPaths.RIGHT_DOOR_BUTTON,
+      1,
+      {
+        frameWidth: 92,
+        frameHeight: 247,
+        direction: 'horizontal',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: 92,
+        drawHeight: 247
+      }
+    );
+
+    await this.updateControlPanels();
+  }
+
+  ensureBackgroundAmbienceSound() {
+    if (!NightAssetPaths.BACKGROUND_AMBIENCE) return;
+
+    if (!Sound.sounds[this.backgroundAmbienceSoundId]) {
+      Sound.add(this.backgroundAmbienceSoundId, NightAssetPaths.BACKGROUND_AMBIENCE, {
+        loop: true,
+        volume: 0.35
+      });
+    }
+  }
+
+  playBackgroundAmbience() {
+    if (!NightAssetPaths.BACKGROUND_AMBIENCE) return;
+    this.ensureBackgroundAmbienceSound();
+    Sound.play(this.backgroundAmbienceSoundId);
+  }
+
+  stopBackgroundAmbience() {
+    if (!Sound.sounds[this.backgroundAmbienceSoundId]) return;
+    Sound.stop(this.backgroundAmbienceSoundId);
+  }
+
+  ensureFanHumSound() {
+    if (!NightAssetPaths.FAN_HUM) return;
+
+    if (!Sound.sounds[this.fanHumSoundId]) {
+      Sound.add(this.fanHumSoundId, NightAssetPaths.FAN_HUM, {
+        loop: true,
+        volume: 0.25
+      });
+    }
+  }
+
+  playFanHum() {
+    if (!NightAssetPaths.FAN_HUM) return;
+    this.ensureFanHumSound();
+    Sound.play(this.fanHumSoundId);
+  }
+
+  stopFanHum() {
+    if (!Sound.sounds[this.fanHumSoundId]) return;
+    Sound.stop(this.fanHumSoundId);
+  }
+
+  updatePhoneGuyMuteButton() {
+    const phoneGuyMuteBtn = document.getElementById('phone-guy-mute-btn');
+    if (!phoneGuyMuteBtn) return;
+
+    phoneGuyMuteBtn.classList.toggle('is-muted', this.isPhoneGuyMuted);
+    phoneGuyMuteBtn.textContent = this.isPhoneGuyMuted ? 'Call Muted' : 'Mute Call';
+  }
+
+  schedulePhoneGuyMuteButton() {
+    const muteBtn = document.getElementById('phone-guy-mute-btn');
+    if (!muteBtn) return;
+
+    muteBtn.hidden = true;
+
+    if (this.phoneGuyMuteShowTimeout) {
+      clearTimeout(this.phoneGuyMuteShowTimeout);
+      this.phoneGuyMuteShowTimeout = null;
+    }
+
+    this.phoneGuyMuteShowTimeout = setTimeout(() => {
+      if (this.isPhoneGuyMuted) return;
+      muteBtn.hidden = false;
+    }, 8000);
+  }
+
+  hidePhoneGuyMuteButton() {
+    const muteBtn = document.getElementById('phone-guy-mute-btn');
+    if (!muteBtn) return;
+
+    muteBtn.hidden = true;
+
+    if (this.phoneGuyMuteShowTimeout) {
+      clearTimeout(this.phoneGuyMuteShowTimeout);
+      this.phoneGuyMuteShowTimeout = null;
+    }
+  }
+
+  onPhoneGuyMuteClick() {
+    if (!this.phoneGuySoundId && !this.isPhoneGuyStarted) return;
+
+    this.isPhoneGuyMuted = true;
+    this.stopPhoneGuy();
+    this.hidePhoneGuyMuteButton();
+  }
+
+  getPhoneGuySoundId() {
+    const nightNumber = this.config?.nightNumber ?? 'default';
+    console.log(`nightNumber ${nightNumber}`);
+    return `phone-guy-night-${nightNumber}`;
+  }
+
+  ensurePhoneGuySound() {
+    if (!this.config?.phoneGuy) return null;
+
+    const soundId = this.getPhoneGuySoundId();
+
+    this.phoneGuySoundId = soundId;
+
+    if (!Sound.sounds[soundId]) {
+      Sound.add(soundId, this.config.phoneGuy, {
+        loop: false,
+        volume: 0.3
+      });
+    }
+
+    return soundId;
+  }
+
+  playPhoneGuy() {
+    if (this.isPhoneGuyMuted) return;
+
+    const soundId = this.ensurePhoneGuySound();
+    if (!soundId) return;
+
+    Sound.play(soundId);
+    this.isPhoneGuyStarted = true;
+
+    this.schedulePhoneGuyMuteButton();
+  }
+
+  stopPhoneGuy() {
+    if (!this.phoneGuySoundId) return;
+    Sound.stop(this.phoneGuySoundId);
+    this.isPhoneGuyStarted = false;
+  }
+
+  ensureFreddyNoseSound() {
+    if (!NightAssetPaths.FREDDY_NOSE_SOUND) return;
+
+    if (!Sound.sounds['freddy-nose']) {
+      Sound.add('freddy-nose', NightAssetPaths.FREDDY_NOSE_SOUND, {
+        loop: false,
+        volume: 0.5
+      });
+    }
+  }
+
+  onFreddyNoseClick() {
+    this.ensureFreddyNoseSound();
+    Sound.play('freddy-nose');
   }
 
   setOfficeOffset(offsetX = 0) {
@@ -316,29 +665,30 @@ async exit() {
     officeWorld.style.transform = `translateX(calc(-50% + ${clampedOffset}px))`;
   }
 
-  onLookLeftEnter() {
-    this.lookDirection = 1;
-    this.startLookMovement();
-  }
+  onOfficeViewportMouseMove(event) {
+    const officeViewport = document.getElementById('office-viewport');
+    if (!officeViewport) return;
 
-  onLookCenterEnter() {
+    const rect = officeViewport.getBoundingClientRect();
+    const localX = event.clientX - rect.left;
+    const normalizedX = localX / rect.width;
+
+    if (normalizedX <= 0.33) {
+      this.lookDirection = 1;
+      this.startLookMovement();
+      return;
+    }
+
+    if (normalizedX >= 0.67) {
+      this.lookDirection = -1;
+      this.startLookMovement();
+      return;
+    }
+
     this.lookDirection = 0;
   }
 
-  onLookRightEnter() {
-    this.lookDirection = -1;
-    this.startLookMovement();
-  }
-
-  onLookRightLeave() {
-    this.lookDirection = 0;
-  }
-  
-  onLookLeftLeave() {
-    this.lookDirection = 0;
-  }
-
-  onLookCenterLeave() {
+  onOfficeViewportMouseLeave() {
     this.lookDirection = 0;
   }
 
@@ -374,7 +724,286 @@ async exit() {
       this.lookRafId = null;
     }
   }
+  
+  async onLeftDoorHitboxClick() {
+    if (!this.leftDoorSprite || this.isLeftDoorAnimating) return;
 
-}
+    this.isLeftDoorAnimating = true;
+
+    const nextClosed = !this.leftDoorClosed;
+    this.leftDoorClosed = nextClosed;
+    await this.updateControlPanels();
+
+    this.playDoorToggleSound();
+
+    try {
+      if (nextClosed) {
+        await this.leftDoorSprite.playOnce({
+          fromFrame: 0,
+          toFrame: this.leftDoorSprite.totalFrames - 1,
+          holdLastFrame: true
+        });
+      } else {
+        await this.leftDoorSprite.playOnceReverse({
+          fromFrame: this.leftDoorSprite.totalFrames - 1,
+          toFrame: 0,
+          holdLastFrame: true
+        });
+      }
+    } catch (error) {
+      this.leftDoorClosed = !nextClosed;
+      await this.updateControlPanels();
+      throw error;
+    } finally {
+      this.isLeftDoorAnimating = false;
+    }
+  }
+
+  async onRightDoorHitboxClick() {
+    if (!this.rightDoorSprite || this.isRightDoorAnimating) return;
+
+    this.isRightDoorAnimating = true;
+
+    const nextClosed = !this.rightDoorClosed;
+    this.rightDoorClosed = nextClosed;
+    await this.updateControlPanels();
+
+    this.playDoorToggleSound();
+
+    try {
+      if (nextClosed) {
+        await this.rightDoorSprite.playOnce({
+          fromFrame: 0,
+          toFrame: this.rightDoorSprite.totalFrames - 1,
+          holdLastFrame: true
+        });
+      } else {
+        await this.rightDoorSprite.playOnceReverse({
+          fromFrame: this.rightDoorSprite.totalFrames - 1,
+          toFrame: 0,
+          holdLastFrame: true
+        });
+      }
+    } catch (error) {
+      this.rightDoorClosed = !nextClosed;
+      await this.updateControlPanels();
+      throw error;
+    } finally {
+      this.isRightDoorAnimating = false;
+    }
+  }
+
+  getControlPanelFrame(isDoorClosed, isLightOn) {
+    if (isDoorClosed && isLightOn) return 3;
+    if (isLightOn) return 1;
+    if (isDoorClosed) return 2;
+    return 0;
+  }
+
+  async updateControlPanels() {
+    const leftFrame = this.getControlPanelFrame(this.leftDoorClosed, this.leftLightOn);
+    const rightFrame = this.getControlPanelFrame(this.rightDoorClosed, this.rightLightOn);
+
+    if (this.leftControlPanelSprite) {
+      await this.leftControlPanelSprite.showFrame(leftFrame);
+    }
+
+    if (this.rightControlPanelSprite) {
+      await this.rightControlPanelSprite.showFrame(rightFrame);
+    }
+  }
+
+  async onLeftLightHitboxClick() {
+    if (this.isLeftLightAnimating) return;
+
+    this.isLeftLightAnimating = true;
+
+    try {
+      const nextState = !this.leftLightOn;
+
+      this.leftLightOn = nextState;
+      this.rightLightOn = false;
+
+      await this.updateControlPanels();
+      await this.refreshOfficeLight();
+    } finally {
+      this.isLeftLightAnimating = false;
+    }
+  }
+
+  async onRightLightHitboxClick() {
+    if (this.isRightLightAnimating) return;
+
+    this.isRightLightAnimating = true;
+
+    try {
+      const nextState = !this.rightLightOn;
+
+      this.rightLightOn = nextState;
+      this.leftLightOn = false;
+
+      await this.updateControlPanels();
+      await this.refreshOfficeLight();
+    } finally {
+      this.isRightLightAnimating = false;
+    }
+  }
+
+  ensureDoorToggleSound() {
+    if (!Sound.sounds['door-toggle']) {
+      Sound.add('door-toggle', NightAssetPaths.DOOR_TOGGLE_SOUND, {
+        loop: false,
+        volume: 0.4
+      });
+    }
+  }
+
+  playDoorToggleSound() {
+    if (!NightAssetPaths.DOOR_TOGGLE_SOUND) return;
+
+    this.ensureDoorToggleSound();
+    Sound.play('door-toggle');
+  }
+
+  ensureLightSounds() {
+    if (!NightAssetPaths.LIGHT_ON_SOUND) return;
+
+    if (!Sound.sounds[this.lightSoundId]) {
+      Sound.add(this.lightSoundId, NightAssetPaths.LIGHT_ON_SOUND, {
+        loop: false,
+        volume: 0.35
+      });
+    }
+  }
+
+  playLightOnSound() {
+    if (!NightAssetPaths.LIGHT_ON_SOUND) return;
+    this.ensureLightSounds();
+    Sound.stop(this.lightSoundId);
+    Sound.play(this.lightSoundId);
+  }
+
+  stopLightSound() {
+    if (!Sound.sounds[this.lightSoundId]) return;
+    Sound.stop(this.lightSoundId);
+  }
+
+  clearLightFlicker() {
+  for (const id of this.lightFlickerTimeouts) {
+    clearTimeout(id);
+  }
+  this.lightFlickerTimeouts = [];
+  }
+
+  queueLightFlicker(callback, delay) {
+    const id = setTimeout(() => {
+      this.lightFlickerTimeouts = this.lightFlickerTimeouts.filter(x => x !== id);
+      callback();
+    }, delay);
+
+    this.lightFlickerTimeouts.push(id);
+    return id;
+  }
+
+  async showOfficeLight(side = 'left') {
+    if (!this.officeLightSprite) return;
+
+    const frameIndex = side === 'right' ? 1 : 0;
+    await this.officeLightSprite.showFrame(frameIndex);
+  }
+
+  async refreshOfficeLight() {
+    const isAnyLightOn = this.leftLightOn || this.rightLightOn;
+
+    if (!isAnyLightOn) {
+      this.activeLightSide = null;
+      this.clearLightFlicker();
+      this.hideOfficeLight();
+      return;
+    }
+
+    this.activeLightSide = this.leftLightOn ? 'left' : 'right';
+    await this.playLightFlickerSequence();
+  }
+
+  hideOfficeLight() {
+    if (!this.officeLightSprite) return;
+    this.officeLightSprite.clear();
+  }
+
+  clearLightFlicker() {
+    this.lightFlickerRunning = false;
+
+    for (const id of this.lightFlickerTimeouts) {
+      clearTimeout(id);
+    }
+
+    this.lightFlickerTimeouts = [];
+    this.stopLightSound();
+  }
+
+  queueLightFlicker(callback, delay) {
+    const id = setTimeout(() => {
+      this.lightFlickerTimeouts = this.lightFlickerTimeouts.filter(x => x !== id);
+      callback();
+    }, delay);
+
+    this.lightFlickerTimeouts.push(id);
+    return id;
+  }
+
+  async lightOnStep() {
+    await this.showOfficeLight(this.activeLightSide);
+    this.playLightOnSound();
+  }
+
+  lightOffStep() {
+    this.hideOfficeLight();
+    this.stopLightSound();
+  }
+
+  scheduleNextLightFlickerCycle() {
+    if (!this.lightFlickerRunning) return;
+
+    const offDelay1 = 60 + Math.floor(Math.random() * 120);
+    const onDelay1 = offDelay1 + 40 + Math.floor(Math.random() * 90);
+    const offDelay2 = onDelay1 + 70 + Math.floor(Math.random() * 160);
+    const onDelay2 = offDelay2 + 35 + Math.floor(Math.random() * 80);
+    const nextCycleDelay = onDelay2 + 140 + Math.floor(Math.random() * 260);
+
+    this.queueLightFlicker(() => {
+      if (!this.lightFlickerRunning) return;
+      this.lightOffStep();
+    }, offDelay1);
+
+    this.queueLightFlicker(async () => {
+      if (!this.lightFlickerRunning) return;
+      await this.lightOnStep();
+    }, onDelay1);
+
+    this.queueLightFlicker(() => {
+      if (!this.lightFlickerRunning) return;
+      this.lightOffStep();
+    }, offDelay2);
+
+    this.queueLightFlicker(async () => {
+      if (!this.lightFlickerRunning) return;
+      await this.lightOnStep();
+    }, onDelay2);
+
+    this.queueLightFlicker(() => {
+      if (!this.lightFlickerRunning) return;
+      this.scheduleNextLightFlickerCycle();
+    }, nextCycleDelay);
+  }
+
+  async playLightFlickerSequence() {
+    this.clearLightFlicker();
+    this.lightFlickerRunning = true;
+
+    await this.lightOnStep();
+    this.scheduleNextLightFlickerCycle();
+  }
+} 
 
 export default NightScene;

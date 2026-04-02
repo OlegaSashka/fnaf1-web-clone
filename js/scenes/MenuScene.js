@@ -1,5 +1,7 @@
 import BaseScene from './BaseScene.js';
 
+import Preloader from '../Preloader.js';
+
 import { getNightConfig } from '../config/NightConfigs.js';
 import GameProgress from '../managers/GameProgress.js';
 
@@ -11,10 +13,24 @@ import Sound from '../managers/SoundManager.js';
 import SceneTransitionManager from '../managers/SceneTransitionManager.js';
 
 import { SceneNames } from '../config/SceneNames.js';
-import { TransitionImages } from '../config/TransitionAssets.js';
 
-// import TestScene from './TestScene.js';
+import { TransitionImages } from '../config/TransitionAssets.js';
+import { TRANSITION_ASSETS } from '../config/TransitionAssets.js';
+
 import NightScene from './NightScene.js';
+
+const BOOT_ASSETS = [
+  //для меню
+  { type: 'image', src: 'assets/images/ui/Background/Menu-freddy.png' },
+  { type: 'image', src: 'assets/images/ui/NoiseTV/Noise.png' },
+  //музыка
+  { type: 'audio', src: 'assets/sounds/music/main-darkness-music.wav' },
+  { type: 'audio', src: 'assets/sounds/music/static2-menu.wav' },
+  { type: 'audio', src: 'assets/sounds/ui/blip3.wav' },
+
+  //для экрана шагрузки
+  ...TRANSITION_ASSETS,
+];
 
 class MenuScene extends BaseScene {
   constructor(game) {
@@ -29,6 +45,9 @@ class MenuScene extends BaseScene {
 
     this.freddyEffects = null;
     this.staticEffects = null;
+
+    this.staticPrepared = false;
+    this.liveStarted = false;
 
     this.onNewGameClick = this.onNewGameClick.bind(this);
     this.onContinueClick = this.onContinueClick.bind(this);
@@ -51,34 +70,45 @@ class MenuScene extends BaseScene {
     if (sweepLine) sweepLine.style.display = 'none';
   }
 
-  async enter() {
-    const freddyCanvas = document.getElementById('freddy-canvas');
-    const staticCanvas = document.getElementById('static-canvas');
-    const blinkCanvas = document.getElementById('blink-canvas');
-    const sweepLine = document.getElementById('scanline-sweep');
-
-    const menuContent = document.getElementById('menu-content');
+  bindMenuEvents() {
     const newGameBtn = document.querySelector('[data-action="new"]');
     const continueBtn = document.querySelector('[data-action="continue"]');
 
-    menuContent.style.display = 'block';
-    freddyCanvas.style.display = 'block';
-    staticCanvas.style.display = 'block';
-    blinkCanvas.style.display = 'block';
-    sweepLine.style.display = 'block';
+    newGameBtn.addEventListener('click', this.onNewGameClick);
+    continueBtn.addEventListener('click', this.onContinueClick);
+    newGameBtn.addEventListener('mouseenter', this.onHover);
+    continueBtn.addEventListener('mouseenter', this.onHover);
 
-    freddyCanvas.width = this.game.width;
-    freddyCanvas.height = this.game.height;
-    staticCanvas.width = this.game.width;
-    staticCanvas.height = this.game.height;
-    blinkCanvas.width = this.game.width;
-    blinkCanvas.height = this.game.height;
+    this.ensureContinueHint();
+    this.refreshContinueState();
 
-    this.sweepLine = new VerticalSweepLine(sweepLine, 40);
-    this.sweepLine.start();
+    continueBtn.addEventListener('mouseenter', this.onContinueEnter);
+    continueBtn.addEventListener('mouseleave', this.onContinueLeave);
+  }
 
-    this.freddyEffects = new CanvasEffectController(freddyCanvas);
-    this.staticEffects = new CanvasEffectController(staticCanvas);
+  async startLiveVisuals() {
+    if (this.liveStarted) return;
+
+    const freddyCanvas = document.getElementById('freddy-canvas');
+    const staticCanvas = document.getElementById('static-canvas');
+    const sweepLine = document.getElementById('scanline-sweep');
+
+    if (!this.sweepLine && sweepLine) {
+      this.sweepLine = new VerticalSweepLine(sweepLine, 40);
+    }
+
+    if (this.sweepLine && sweepLine) {
+      sweepLine.style.display = 'block';
+      this.sweepLine.start();
+    }
+
+    if (!this.freddyEffects) {
+      this.freddyEffects = new CanvasEffectController(freddyCanvas);
+    }
+
+    if (!this.staticEffects) {
+      this.staticEffects = new CanvasEffectController(staticCanvas);
+    }
 
     this.freddyEffects.startRandomOpacityDip({
       minPause: 200,
@@ -118,31 +148,9 @@ class MenuScene extends BaseScene {
       Sound.add('menu-hover', 'assets/sounds/ui/blip3.wav', { volume: 0.3 });
     }
 
-    this.freddySprite = new AnimatedSprite(
-      freddyCanvas,
-      'assets/images/ui/Background/Menu-freddy.png',
-      20
-    );
-
-    this.noiseStatic = new AnimatedSprite(
-      staticCanvas,
-      'assets/images/ui/NoiseTV/Noise.png',
-      40
-    );
-
-    this.blinkSprite = new AnimatedSprite(
-      blinkCanvas,
-      'assets/images/ui/Blink/Menu-blink.png',
-      2
-    );
-
-    await this.freddySprite.showFrame(0);
     this.freddySprite.randomMenuBehavior();
-
-    await this.noiseStatic.showFrame(0);
     this.noiseStatic.play();
 
-    await this.blinkSprite.showFrame(0);
     this.blinkSprite.startRandomBurstBehavior({
       idleFrame: 0,
       minPause: 2000,
@@ -158,16 +166,102 @@ class MenuScene extends BaseScene {
     Sound.play('music-menu');
     Sound.play('music-tv');
 
-    newGameBtn.addEventListener('click', this.onNewGameClick);
-    continueBtn.addEventListener('click', this.onContinueClick);
-    newGameBtn.addEventListener('mouseenter', this.onHover);
-    continueBtn.addEventListener('mouseenter', this.onHover);
+    this.liveStarted = true;
+  }
 
-    this.ensureContinueHint();
-    this.refreshContinueState();
+  async prepareStaticVisuals() {
+    const freddyCanvas = document.getElementById('freddy-canvas');
+    const staticCanvas = document.getElementById('static-canvas');
+    const blinkCanvas = document.getElementById('blink-canvas');
+    const menuContent = document.getElementById('menu-content');
+    const sweepLine = document.getElementById('scanline-sweep');
 
-    continueBtn.addEventListener('mouseenter', this.onContinueEnter);
-    continueBtn.addEventListener('mouseleave', this.onContinueLeave);
+    if (!freddyCanvas || !staticCanvas || !blinkCanvas || !menuContent) {
+      console.error('[MenuScene] Не найдены элементы меню для static prepare');
+      return;
+    }
+
+    menuContent.style.display = 'block';
+    freddyCanvas.style.display = 'block';
+    staticCanvas.style.display = 'block';
+    blinkCanvas.style.display = 'block';
+    if (sweepLine) sweepLine.style.display = 'none';
+
+    freddyCanvas.width = this.game.width;
+    freddyCanvas.height = this.game.height;
+    staticCanvas.width = this.game.width;
+    staticCanvas.height = this.game.height;
+    blinkCanvas.width = this.game.width;
+    blinkCanvas.height = this.game.height;
+
+    if (!this.freddySprite) {
+      this.freddySprite = new AnimatedSprite(
+        freddyCanvas,
+        'assets/images/ui/Background/Menu-freddy.png',
+        20
+      );
+    }
+
+    if (!this.noiseStatic) {
+      this.noiseStatic = new AnimatedSprite(
+        staticCanvas,
+        'assets/images/ui/NoiseTV/Noise.png',
+        40
+      );
+    }
+
+    if (!this.blinkSprite) {
+      this.blinkSprite = new AnimatedSprite(
+        blinkCanvas,
+        'assets/images/ui/Blink/Menu-blink.png',
+        2
+      );
+    }
+
+    await this.freddySprite.showFrame(0);
+    await this.noiseStatic.showFrame(0);
+    await this.blinkSprite.showFrame(0);
+
+    this.staticPrepared = true;
+  }
+
+  async enter() {
+    await SceneTransitionManager.go({
+      game: this.game,
+      skipSceneChange: true,
+
+      loading: {
+        background: '#000',
+        title: 'WARNING',
+        text: 'This game contains loud sounds, flashing lights and jump scares.',
+        uiMode: 'center',
+        showProgress: true,
+        fadeOut: {
+          enabled: true,
+          from: 1,
+          to: 0,
+          duration: 300
+        }
+      },
+
+      preload: (onProgress) => this.preload(onProgress),
+
+      afterPreload: async () => {
+        await this.prepareStaticVisuals();
+        this.ensureContinueHint();
+        this.refreshContinueState();
+      },
+
+      confirm: {
+        mode: 'button',
+        buttonText: 'Start'
+      },
+
+      onFadeOutStart: async () => {
+        await this.startLiveVisuals();
+        this.bindMenuEvents();
+      }
+    });
   }
 
   onContinueEnter() {
@@ -178,20 +272,27 @@ class MenuScene extends BaseScene {
     this.hideContinueHint();
   }
 
+  async preload(onProgress) {
+    await Preloader.loadAssets(BOOT_ASSETS, onProgress, {
+      continueOnError: true
+    });
+  }
+
   async exit() {
     const menuContent = document.getElementById('menu-content');
     const freddyCanvas = document.getElementById('freddy-canvas');
     const staticCanvas = document.getElementById('static-canvas');
     const blinkCanvas = document.getElementById('blink-canvas');
-    const newGameBtn = document.querySelector('[data-action="new"]');
-    const continueBtn = document.querySelector('[data-action="continue"]');
     const sweepLine = document.getElementById('scanline-sweep');
 
-    menuContent.style.display = 'none';
-    freddyCanvas.style.display = 'none';
-    staticCanvas.style.display = 'none';
-    blinkCanvas.style.display = 'none';
-    sweepLine.style.display = 'none';
+    const newGameBtn = document.querySelector('[data-action="new"]');
+    const continueBtn = document.querySelector('[data-action="continue"]');
+
+    if (menuContent) menuContent.style.display = 'none';
+    if (freddyCanvas) freddyCanvas.style.display = 'none';
+    if (staticCanvas) staticCanvas.style.display = 'none';
+    if (blinkCanvas) blinkCanvas.style.display = 'none';
+    if (sweepLine) sweepLine.style.display = 'none';
 
     if (this.freddyEffects) {
       this.freddyEffects.stop();
@@ -205,14 +306,17 @@ class MenuScene extends BaseScene {
 
     if (this.freddySprite) {
       this.freddySprite.stopMenuBehavior();
+      await this.freddySprite.showFrame(0);
     }
 
     if (this.noiseStatic) {
       this.noiseStatic.stop();
+      await this.noiseStatic.showFrame(0);
     }
 
     if (this.blinkSprite) {
       this.blinkSprite.stopBehavior();
+      await this.blinkSprite.showFrame(0);
     }
 
     if (this.sweepLine) {
@@ -223,14 +327,22 @@ class MenuScene extends BaseScene {
     Sound.stop('music-menu');
     Sound.stop('music-tv');
 
-    newGameBtn.removeEventListener('click', this.onNewGameClick);
-    continueBtn.removeEventListener('click', this.onContinueClick);
-    newGameBtn.removeEventListener('mouseenter', this.onHover);
-    continueBtn.removeEventListener('mouseenter', this.onHover);
-    continueBtn.removeEventListener('mouseenter', this.onContinueEnter);
-    continueBtn.removeEventListener('mouseleave', this.onContinueLeave);
+    if (newGameBtn) {
+      newGameBtn.removeEventListener('click', this.onNewGameClick);
+      newGameBtn.removeEventListener('mouseenter', this.onHover);
+    }
+
+    if (continueBtn) {
+      continueBtn.removeEventListener('click', this.onContinueClick);
+      continueBtn.removeEventListener('mouseenter', this.onHover);
+      continueBtn.removeEventListener('mouseenter', this.onContinueEnter);
+      continueBtn.removeEventListener('mouseleave', this.onContinueLeave);
+    }
 
     this.hideContinueHint();
+
+    this.liveStarted = false;
+    this.staticPrepared = false;
   }
 
   onHover() {
