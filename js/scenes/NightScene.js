@@ -80,6 +80,9 @@ class NightScene extends BaseScene {
 
     this.isNightComplete = false;
 
+    this.monitorToggleSprite = null;
+    this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
+
     this.onLeftDoorHitboxClick = this.onLeftDoorHitboxClick.bind(this);
     this.onLeftLightHitboxClick = this.onLeftLightHitboxClick.bind(this);
     this.onRightDoorHitboxClick = this.onRightDoorHitboxClick.bind(this);
@@ -126,6 +129,8 @@ class NightScene extends BaseScene {
     const rightLightHitbox = document.getElementById('right-light-hitbox');
 
     const freddyNoseHitbox = document.getElementById('freddy-nose-hitbox');
+
+    const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
 
     if (menuScreen) menuScreen.hidden = true;
     if (gameScreen) gameScreen.hidden = false;
@@ -234,6 +239,10 @@ class NightScene extends BaseScene {
       phoneGuyMuteBtn.addEventListener('click', this.onPhoneGuyMuteClick);
     }
 
+    if (monitorToggleCanvas) {
+      monitorToggleCanvas.addEventListener('mouseenter', this.onMonitorToggleMouseEnter);
+    }
+
     this.updatePhoneGuyMuteButton();
   }
   
@@ -256,6 +265,12 @@ class NightScene extends BaseScene {
     const phoneGuyMuteBtn = document.getElementById('phone-guy-mute-btn');
 
     const freddyNoseHitbox = document.getElementById('freddy-nose-hitbox');
+
+    const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
+
+    if (monitorToggleCanvas) {
+      monitorToggleCanvas.removeEventListener('mouseenter', this.onMonitorToggleMouseEnter);
+    }
 
     if (freddyNoseHitbox) {
       freddyNoseHitbox.removeEventListener('click', this.onFreddyNoseClick);
@@ -357,6 +372,8 @@ class NightScene extends BaseScene {
 
     const nightUsageCanvas = document.getElementById('night-usage-canvas');
 
+    const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
+
     const worldWidth = Math.round(officeWorld.offsetWidth);
     const worldHeight = Math.round(officeWorld.offsetHeight);
 
@@ -425,6 +442,27 @@ class NightScene extends BaseScene {
     nightUsageCanvas.style.display = 'block';
     nightUsageCanvas.width = 103;
     nightUsageCanvas.height = 32;
+
+    monitorToggleCanvas.style.display = 'block';
+    monitorToggleCanvas.width = 598;
+    monitorToggleCanvas.height = 45;
+
+    this.monitorToggleSprite = new AnimatedSprite(
+      monitorToggleCanvas,
+      NightAssetPaths.MONITOR_TOGGLE,
+      1,
+      {
+        frameWidth: 598,
+        frameHeight: 45,
+        direction: 'vertical',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: 598,
+        drawHeight: 45
+      }
+    );
+
+    await this.monitorToggleSprite.showFrame(0);
 
     if (!officeWorld || !officeCanvas || !officeFanCanvas) {
       console.error('[NightScene] Не найдены office-элементы');
@@ -1332,6 +1370,10 @@ class NightScene extends BaseScene {
 
     await this.lightOnStep();
     this.scheduleNextLightFlickerCycle();
+  }
+
+  async onMonitorToggleMouseEnter() {
+    console.log('open monitor');
   }
 } 
 
