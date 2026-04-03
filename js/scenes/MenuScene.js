@@ -49,6 +49,8 @@ class MenuScene extends BaseScene {
     this.staticPrepared = false;
     this.liveStarted = false;
 
+    this.entryMode = 'boot';
+
     this.onNewGameClick = this.onNewGameClick.bind(this);
     this.onContinueClick = this.onContinueClick.bind(this);
     this.onHover = this.onHover.bind(this);
@@ -226,21 +228,31 @@ class MenuScene extends BaseScene {
   }
 
   async enter() {
+    const isBootEntry = this.entryMode === 'boot';
+
+    const menuScreen = document.getElementById('menu-screen');
+    const gameScreen = document.getElementById('game-screen');
+
+    if (menuScreen) menuScreen.hidden = false;
+    if (gameScreen) gameScreen.hidden = true;
+
     await SceneTransitionManager.go({
       game: this.game,
       skipSceneChange: true,
 
       loading: {
         background: '#000',
-        title: 'WARNING',
-        text: 'This game contains loud sounds, flashing lights and jump scares.',
+        title: isBootEntry ? 'WARNING' : '',
+        text: isBootEntry
+          ? 'This game contains loud sounds, flashing lights and jump scares.'
+          : '',
         uiMode: 'center',
-        showProgress: true,
+        showProgress: isBootEntry,
         fadeOut: {
           enabled: true,
           from: 1,
           to: 0,
-          duration: 300
+          duration: isBootEntry ? 300 : 500
         }
       },
 
@@ -252,16 +264,23 @@ class MenuScene extends BaseScene {
         this.refreshContinueState();
       },
 
-      confirm: {
-        mode: 'button',
-        buttonText: 'Start'
-      },
+      confirm: isBootEntry
+        ? {
+            mode: 'button',
+            buttonText: 'Start'
+          }
+        : {
+            mode: 'auto',
+            minDuration: 800
+          },
 
       onFadeOutStart: async () => {
         await this.startLiveVisuals();
         this.bindMenuEvents();
       }
     });
+
+    this.entryMode = 'boot';
   }
 
   onContinueEnter() {
@@ -475,6 +494,10 @@ class MenuScene extends BaseScene {
     }
 
     await this.startNightByNumber(continueNight, { useMenuTransition: false });
+  }
+
+  setEntryMode(mode = 'boot') {
+    this.entryMode = mode;
   }
 }
 

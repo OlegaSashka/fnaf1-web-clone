@@ -358,7 +358,6 @@ canvas {
   pointer-events: none;
 }
 
-
 #office-world-canvas {
   z-index: 1;
 }
@@ -369,14 +368,6 @@ canvas {
 
 #office-fan-canvas {
   z-index: 3;
-}
-
-#office-left-door-canvas {
-  z-index: 4;
-}
-
-#office-right-door-canvas {
-  z-index: 5;
 }
 
 #office-look-zones {
@@ -538,6 +529,43 @@ canvas {
   pointer-events: none;
 }
 
+.office-door-wrap {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Левая дверь */
+#left-door-wrap {
+  left: 4.18%;
+  top: 0;
+  width: calc(229 / 1600 * 100%);
+  height: 100%;
+  /* opacity: 0.7; */
+}
+
+/* Правая дверь */
+#right-door-wrap {
+  right: 6.2%;
+  top: 0;
+  width: calc(229 / 1600 * 100%);
+  height: 100%;
+  z-index: 5;
+  /* opacity: 0.5; */
+}
+
+#office-left-door-canvas,
+#office-right-door-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
 #left-door-btn {
   left: 250px;
   bottom: 250px;
@@ -602,11 +630,10 @@ canvas {
 
 #office-left-panel-canvas,
 #office-right-panel-canvas {
-  position: block;
+  display: block;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  /* opacity: 0.2; */
 }
 
 #office-left-panel-canvas {
@@ -695,37 +722,6 @@ canvas {
   z-index: 2;
 }
 
-  #phone-guy-mute-btn {
-    position: absolute;
-    top: 14px;
-    left: 14px;
-    z-index: 20;
-    pointer-events: auto;
-
-    padding: 4px 8px;
-    background: rgba(95, 95, 95, 0.85);
-    color: #d6d6d6;
-    border: 2px solid #9a9a9a;
-    border-radius: 3px;
-
-    font-family: "Courier New", Courier, monospace;
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.15),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.35);
-
-    cursor: pointer;
-  }
-
-  #phone-guy-mute-btn:hover {
-    background: rgba(110, 110, 110, 0.92);
-  }
-
 #freddy-nose-hitbox {
   position: absolute;
   left: 42.4%;
@@ -737,5 +733,107 @@ canvas {
   border: none;
   background: transparent;
   pointer-events: auto;
-  /* cursor: pointer; */
+}
+
+#office-ui {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+#night-hud-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#night-power-text {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+#night-usage-text {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+#night-time-text {
+  font-size: 60px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+#night-label-text {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+#night-hud-svg text {
+  fill: white;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 700;
+  dominant-baseline: hanging;
+}
+
+#night-usage-fo {
+  overflow: visible;
+}
+
+#night-usage-canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+  display: block;
+}
+
+#night-usage-canvas {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  left: 30%;
+  top: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+}
+
+#phone-guy-mute-fo {
+  overflow: visible;
+}
+
+#phone-guy-mute-btn {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: auto;
+
+  padding: 0;
+  margin: 0;
+  background: rgba(95, 95, 95, 0.85);
+  color: #d6d6d6;
+  border: 2px solid #9a9a9a;
+  border-radius: 3px;
+
+  font-family: "Courier New", Courier, monospace;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+
+  cursor: pointer;
+}
+
+#phone-guy-mute-btn:hover {
+  background: rgba(110, 110, 110, 0.92);
 }

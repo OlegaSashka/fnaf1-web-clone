@@ -10,6 +10,10 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: 'assets/sounds/PhoneGuy/night1.wav',
 
+    phoneGuyUi: {
+      muteShowDelay: 19000
+    },
+
     extraAssets: [],
 
     ai: {
@@ -19,8 +23,15 @@ export const NightConfigs = Object.freeze({
       foxy: 0
     },
     
+
     power: {
-      start: 100
+      start: 1000
+    },
+
+    time: {
+      startHour: 12,
+      endHour: 6,
+      hourDurationMs: 30000
     }
   },
 
@@ -35,6 +46,10 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: 'assets/sounds/PhoneGuy/night2.wav',
 
+    phoneGuyUi: {
+      muteShowDelay: 19000
+    },
+
     extraAssets: [],
 
     ai: {
@@ -45,7 +60,13 @@ export const NightConfigs = Object.freeze({
     },
 
     power: {
-      start: 100
+      start: 1000
+    },
+
+    time: {
+      startHour: 12,
+      endHour: 6,
+      hourDurationMs: 30000
     }
   },
 
@@ -60,6 +81,10 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: 'assets/sounds/PhoneGuy/night3.wav',
 
+    phoneGuyUi: {
+      muteShowDelay: 20000
+    },
+
     extraAssets: [],
 
     ai: {
@@ -70,7 +95,13 @@ export const NightConfigs = Object.freeze({
     },
 
     power: {
-      start: 100
+      start: 1000
+    },
+
+    time: {
+      startHour: 12,
+      endHour: 6,
+      hourDurationMs: 30000
     }
   },
 
@@ -85,6 +116,10 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: 'assets/sounds/PhoneGuy/night4.wav',
 
+    phoneGuyUi: {
+      muteShowDelay: 17000
+    },
+
     extraAssets: [
       { type: 'audio', src: 'assets/sounds/animatronics/freddy/laugh-1.wav' },
       { type: 'audio', src: 'assets/sounds/animatronics/freddy/laugh-2.wav' }
@@ -98,7 +133,13 @@ export const NightConfigs = Object.freeze({
     },
 
     power: {
-      start: 100
+      start: 1000
+    },
+
+    time: {
+      startHour: 12,
+      endHour: 6,
+      hourDurationMs: 30000
     }
   },
 
@@ -113,6 +154,10 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: 'assets/sounds/PhoneGuy/night5.wav',
 
+    phoneGuyUi: {
+      muteShowDelay: 17000
+    },
+
     extraAssets: [],
 
     ai: {
@@ -123,7 +168,13 @@ export const NightConfigs = Object.freeze({
     },
 
     power: {
-      start: 100
+      start: 1000
+    },
+
+    time: {
+      startHour: 12,
+      endHour: 6,
+      hourDurationMs: 30000
     }
   }
 });

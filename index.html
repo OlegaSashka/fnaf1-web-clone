@@ -71,8 +71,13 @@
 
                   <button id="freddy-nose-hitbox" type="button" aria-label="Freddy nose"></button>
 
-                  <canvas id="office-left-door-canvas" width="2600" height="1080"></canvas>
-                  <canvas id="office-right-door-canvas" width="2600" height="1080"></canvas>
+                  <div id="left-door-wrap" class="office-door-wrap">
+                    <canvas id="office-left-door-canvas" width="229" height="720"></canvas>
+                  </div>
+
+                  <div id="right-door-wrap" class="office-door-wrap">
+                    <canvas id="office-right-door-canvas" width="229" height="720"></canvas>
+                  </div>
 
                   <div id="left-panel-wrap" class="office-panel-wrap">
                     <canvas id="office-left-panel-canvas" width="92" height="247"></canvas>
@@ -101,9 +106,24 @@
           <!-- 2. HUD поверх офиса -->
           <div id="office-ui-layer" class="layer">
             <div id="office-ui">
-              <div id="night-hud">
-                <button id="phone-guy-mute-btn" type="button">Mute Call</button>
-              </div>
+              <svg id="night-hud-svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+                <text id="night-time-text" x="1850" y="30" text-anchor="end">12 AM</text>
+                <text id="night-label-text" x="1850" y="80" text-anchor="end">Night 1</text>
+
+                <text id="night-power-text" x="40" y="960" text-anchor="start">
+                  <tspan id="night-power-label-text">Power left:</tspan>
+                  <tspan id="night-power-value-text" dx="-10">100%</tspan>
+                </text>
+                <text id="night-usage-text" x="40" y="1020" text-anchor="start">Usage:</text>
+                
+                <foreignObject id="night-usage-fo" x="150" y="992" width="103" height="32">
+                  <canvas id="night-usage-canvas" width="103" height="32"></canvas>
+                </foreignObject>
+
+                <foreignObject id="phone-guy-mute-fo" x="18" y="18" width="170" height="44">
+                  <button id="phone-guy-mute-btn" type="button" hidden>MUTE CALL</button>
+                </foreignObject>
+              </svg>
             </div>
           </div>
 

@@ -18,6 +18,8 @@ export const NightAssetPaths = Object.freeze({
   FREDDY_NOSE_SOUND: 'assets/sounds/FreddyNose/freddy-nose-honk.wav',
   FAN_HUM: 'assets/sounds/fan/FanHum.wav',
   BACKGROUND_AMBIENCE: 'assets/sounds/ambience/background-ambience.wav',
+
+  USAGE_METER: 'assets/images/camera/PowerUsege_103x32.png',
 });
 
 export const COMMON_NIGHT_ASSETS = [
@@ -25,6 +27,7 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'image', src: NightAssetPaths.OFFICE_ANIMATRONIC },
   { type: 'image', src: NightAssetPaths.OFFICE_FREDDY },
   { type: 'image', src: NightAssetPaths.OFFICE_LIGHT },
+  { type: 'image', src: NightAssetPaths.USAGE_METER },
 
   { type: 'image', src: NightAssetPaths.FAN },
   { type: 'image', src: NightAssetPaths.DOOR_SHEET },

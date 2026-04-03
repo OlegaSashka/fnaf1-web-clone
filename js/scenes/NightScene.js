@@ -1,8 +1,13 @@
 import BaseScene from './BaseScene.js';
 import Preloader from '../Preloader.js';
 
+import GameProgress from '../managers/GameProgress.js';
+
 import { COMMON_NIGHT_ASSETS } from '../config/NightAssets.js';
-  
+
+import MenuScene from './MenuScene.js';
+import { SceneNames } from '../config/SceneNames.js';
+
 import { NightAssetPaths } from '../config/NightAssets.js';
 
 import SceneTransitionManager from '../managers/SceneTransitionManager.js';
@@ -29,6 +34,7 @@ class NightScene extends BaseScene {
     this.isPhoneGuyMuted = false;
     this.isPhoneGuyStarted = false;
     this.phoneGuyMuteShowTimeout = null;
+    this.phoneGuyMuteHideTimeout = null;
 
     this.leftDoorSprite = null
     this.rightDoorSprite = null
@@ -58,6 +64,21 @@ class NightScene extends BaseScene {
 
     this.lightFlickerTimeouts = [];
     this.activeLightSide = null;
+
+    this.currentPower = this.config?.power?.start ?? 1000;
+    this.maxPower = this.config?.power?.max ?? this.currentPower;
+
+    this.currentHour = this.config?.time?.startHour ?? 12;
+    this.endHour = this.config?.time?.endHour ?? 6;
+    this.hourDurationMs = this.config?.time?.hourDurationMs ?? 90000;
+
+    this.nightTimeInterval = null;
+    this.powerDrainInterval = null;
+
+    this.usageSprite = null;
+    this.currentUsageLevel = 1;
+
+    this.isNightComplete = false;
 
     this.onLeftDoorHitboxClick = this.onLeftDoorHitboxClick.bind(this);
     this.onLeftLightHitboxClick = this.onLeftLightHitboxClick.bind(this);
@@ -174,6 +195,9 @@ class NightScene extends BaseScene {
         this.playBackgroundAmbience();
         this.playFanHum();
         this.fanSprite.play();
+
+        this.startNightClock();
+        this.startPowerDrain();
       }
     });
 
@@ -316,8 +340,12 @@ class NightScene extends BaseScene {
   async setupOfficeScene() {
     const officeCanvas = document.getElementById('office-world-canvas');
     const officeFanCanvas = document.getElementById('office-fan-canvas');
+
     const officeLeftDoorCanvas = document.getElementById('office-left-door-canvas');
     const officeRightDoorCanvas = document.getElementById('office-right-door-canvas');
+
+    const leftDoorWrap = document.getElementById('left-door-wrap');
+    const rightDoorWrap = document.getElementById('right-door-wrap');
 
     const officeLightCanvas = document.getElementById('office-light-canvas');
 
@@ -327,19 +355,22 @@ class NightScene extends BaseScene {
     const officeLeftPanelCanvas = document.getElementById('office-left-panel-canvas');
     const officeRightPanelCanvas = document.getElementById('office-right-panel-canvas');
 
+    const nightUsageCanvas = document.getElementById('night-usage-canvas');
+
     const worldWidth = Math.round(officeWorld.offsetWidth);
     const worldHeight = Math.round(officeWorld.offsetHeight);
 
     if (
       !officeCanvas ||
       !officeFanCanvas ||
-      !officeLeftDoorCanvas ||
-      !officeRightDoorCanvas ||
+      !leftDoorWrap || !rightDoorWrap ||
+      !officeLeftDoorCanvas || !officeRightDoorCanvas ||
       !officeLeftPanelCanvas ||
       !officeRightPanelCanvas ||
       !officeWorld || 
       !officeUiLayer ||
-      !officeLightCanvas
+      !officeLightCanvas ||
+      !nightUsageCanvas
     ) {
       console.error('[NightScene] Не найдены office-элементы');
       return;
@@ -349,7 +380,19 @@ class NightScene extends BaseScene {
       officeUiLayer.hidden = false;
     }
 
+    const leftDoorWidth = Math.round(leftDoorWrap.offsetWidth);
+    const rightDoorWidth = Math.round(rightDoorWrap.offsetWidth);
+    const doorHeight = Math.round(officeWorld.offsetHeight);
+
     this.root = officeCanvas;
+
+    officeLeftDoorCanvas.style.display = 'block';
+    officeLeftDoorCanvas.width = leftDoorWidth;
+    officeLeftDoorCanvas.height = doorHeight;
+
+    officeRightDoorCanvas.style.display = 'block';
+    officeRightDoorCanvas.width = rightDoorWidth;
+    officeRightDoorCanvas.height = doorHeight;
 
     officeCanvas.style.display = 'block';
     officeCanvas.width = worldWidth;
@@ -378,6 +421,10 @@ class NightScene extends BaseScene {
     officeRightPanelCanvas.style.display = 'block';
     officeRightPanelCanvas.width = 92;
     officeRightPanelCanvas.height = 247;
+
+    nightUsageCanvas.style.display = 'block';
+    nightUsageCanvas.width = 103;
+    nightUsageCanvas.height = 32;
 
     if (!officeWorld || !officeCanvas || !officeFanCanvas) {
       console.error('[NightScene] Не найдены office-элементы');
@@ -450,9 +497,9 @@ class NightScene extends BaseScene {
         frameWidth: 229,
         frameHeight: 720,
         direction: 'horizontal',
-        drawX: -950,
+        drawX: 0,
         drawY: 0,
-        drawWidth: 229*1.4,
+        drawWidth: officeLeftDoorCanvas.width,
         drawHeight: officeLeftDoorCanvas.height,
         flipX: true
       }
@@ -467,9 +514,9 @@ class NightScene extends BaseScene {
         frameWidth: 229,
         frameHeight: 720,
         direction: 'horizontal',
-        drawX: 890,
+        drawX: 0,
         drawY: 0,
-        drawWidth: 229*1.4,
+        drawWidth: officeRightDoorCanvas.width,
         drawHeight: officeRightDoorCanvas.height,
       }
     );
@@ -505,7 +552,77 @@ class NightScene extends BaseScene {
       }
     );
 
+    this.usageSprite = new AnimatedSprite(
+      nightUsageCanvas,
+      NightAssetPaths.USAGE_METER,
+      1,
+      {
+        frameWidth: 103,
+        frameHeight: 32,
+        direction: 'vertical',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: 103,
+        drawHeight: 32
+      }
+    );
+
+    await this.usageSprite.showFrame(0);
+
     await this.updateControlPanels();
+    await this.updateNightHud();
+
+    this.stopNightClock();
+    this.stopPowerDrain();
+  }
+
+  async completeNight() {
+    if (this.isNightComplete) return;
+    this.isNightComplete = true;
+
+    this.stopNightClock();
+    this.stopPowerDrain();
+
+    this.stopPhoneGuy();
+    this.stopBackgroundAmbience();
+    this.stopFanHum();
+
+    const currentNight = this.config?.nightNumber ?? GameProgress.getCurrentNight() ?? 1;
+    const nextNight = currentNight + 1;
+    GameProgress.setCurrentNight(nextNight);
+
+    await SceneTransitionManager.go({
+      game: this.game,
+      skipSceneChange: true,
+      loading: {
+        background: '#000',
+        title: '6:00 AM',
+        text: 'Night Complete',
+        uiMode: 'center',
+        showProgress: false,
+        fadeIn: {
+          enabled: true,
+          from: 0,
+          to: 1,
+          duration: 3000
+        },
+        fadeOut: {
+          enabled: true,
+          from: 1,
+          to: 0,
+          duration: 1200
+        }
+      },
+      confirm: {
+        mode: 'auto',
+        minDuration: 1500
+      }
+    });
+
+    const menuScene = new MenuScene(this.game);
+    menuScene.setEntryMode('return');
+
+    await this.game.state.change(SceneNames.MENU, menuScene);
   }
 
   ensureBackgroundAmbienceSound() {
@@ -514,9 +631,122 @@ class NightScene extends BaseScene {
     if (!Sound.sounds[this.backgroundAmbienceSoundId]) {
       Sound.add(this.backgroundAmbienceSoundId, NightAssetPaths.BACKGROUND_AMBIENCE, {
         loop: true,
-        volume: 0.35
+        volume: 1
       });
     }
+  }
+
+  startPowerDrain() {
+    this.stopPowerDrain();
+
+    this.powerDrainInterval = setInterval(async () => {
+      const usage = this.calculateUsageLevel();
+
+      this.currentPower = Math.max(0, this.currentPower - usage);
+      await this.updateNightHud();
+
+      if (this.currentPower <= 0) {
+        this.stopPowerDrain();
+      }
+    }, 1000);
+  }
+
+  stopPowerDrain() {
+    if (this.powerDrainInterval) {
+      clearInterval(this.powerDrainInterval);
+      this.powerDrainInterval = null;
+    }
+  }
+
+  startNightClock() {
+    this.stopNightClock();
+
+    this.nightTimeInterval = setInterval(async () => {
+      const nextHour = this.getNextNightHour(this.currentHour);
+
+      this.currentHour = nextHour;
+      await this.updateNightHud();
+
+      if (this.currentHour === this.endHour) {
+        await this.completeNight();
+      }
+    }, this.hourDurationMs);
+  }
+
+  getNextNightHour(hour) {
+    if (hour === 12) return 1;
+    if (hour >= 1 && hour < 6) return hour + 1;
+    return this.endHour;
+  }
+
+  stopNightClock() {
+    if (this.nightTimeInterval) {
+      clearInterval(this.nightTimeInterval);
+      this.nightTimeInterval = null;
+    }
+  }
+
+  async updateNightHud() {
+    this.updateNightLabel();
+    this.updateNightTimeText();
+    this.updatePowerText();
+    await this.updateUsage();
+  }
+
+  updateNightLabel() {
+    const nightLabelText = document.getElementById('night-label-text');
+    if (!nightLabelText) return;
+
+    const nightNumber = this.config?.nightNumber ?? 1;
+    nightLabelText.textContent = `Night ${nightNumber}`;
+  }
+
+  updateNightLabel() {
+    const nightLabelText = document.getElementById('night-label-text');
+    if (!nightLabelText) return;
+
+    const nightNumber = this.config?.nightNumber ?? 1;
+    nightLabelText.textContent = `Night ${nightNumber}`;
+  }
+
+  updateNightTimeText() {
+    const nightTimeText = document.getElementById('night-time-text');
+    if (!nightTimeText) return;
+
+    const displayHour = this.currentHour === 0 ? 12 : this.currentHour;
+    nightTimeText.textContent = `${displayHour} AM`;
+  }
+
+  updatePowerText() {
+    const powerValueText = document.getElementById('night-power-value-text');
+    if (!powerValueText) return;
+
+    const percent = Math.max(
+      0,
+      Math.ceil((this.currentPower / this.maxPower) * 100)
+    );
+
+    powerValueText.textContent = `${percent}%`;
+  }
+
+  calculateUsageLevel() {
+    let usage = 1;
+
+    if (this.leftDoorClosed) usage += 1;
+    if (this.rightDoorClosed) usage += 1;
+    if (this.leftLightOn) usage += 1;
+    if (this.rightLightOn) usage += 1;
+
+    return Math.min(usage, 5);
+  }
+
+  async updateUsage() {
+    this.currentUsageLevel = this.calculateUsageLevel();
+
+    if (!this.usageSprite) return;
+
+    const frameIndex = Math.max(0, this.currentUsageLevel - 1);
+    await this.usageSprite.showFrame(frameIndex);
   }
 
   playBackgroundAmbience() {
@@ -536,7 +766,7 @@ class NightScene extends BaseScene {
     if (!Sound.sounds[this.fanHumSoundId]) {
       Sound.add(this.fanHumSoundId, NightAssetPaths.FAN_HUM, {
         loop: true,
-        volume: 0.25
+        volume: 0.11
       });
     }
   }
@@ -560,32 +790,114 @@ class NightScene extends BaseScene {
     phoneGuyMuteBtn.textContent = this.isPhoneGuyMuted ? 'Call Muted' : 'Mute Call';
   }
 
-  schedulePhoneGuyMuteButton() {
-    const muteBtn = document.getElementById('phone-guy-mute-btn');
-    if (!muteBtn) return;
 
-    muteBtn.hidden = true;
+  hidePhoneGuyMuteButton() {
+    const muteBtn = document.getElementById('phone-guy-mute-btn');
+    const muteFo = document.getElementById('phone-guy-mute-fo');
+
+    if (muteBtn) {
+      muteBtn.hidden = true;
+      muteBtn.style.display = 'none';
+    }
+
+    if (muteFo) {
+      muteFo.style.display = 'none';
+    }
 
     if (this.phoneGuyMuteShowTimeout) {
       clearTimeout(this.phoneGuyMuteShowTimeout);
       this.phoneGuyMuteShowTimeout = null;
     }
 
-    this.phoneGuyMuteShowTimeout = setTimeout(() => {
-      if (this.isPhoneGuyMuted) return;
-      muteBtn.hidden = false;
-    }, 8000);
+    if (this.phoneGuyMuteHideTimeout) {
+      clearTimeout(this.phoneGuyMuteHideTimeout);
+      this.phoneGuyMuteHideTimeout = null;
+    }
+  }
+
+  schedulePhoneGuyMuteButton() {
+      const muteBtn = document.getElementById('phone-guy-mute-btn');
+      const muteFo = document.getElementById('phone-guy-mute-fo');
+
+      if (!muteBtn) return;
+
+      muteBtn.hidden = true;
+      muteBtn.style.display = 'none';
+
+      if (muteFo) {
+        muteFo.style.display = 'none';
+      }
+
+      if (this.phoneGuyMuteShowTimeout) {
+        clearTimeout(this.phoneGuyMuteShowTimeout);
+        this.phoneGuyMuteShowTimeout = null;
+      }
+
+      const delay = this.config?.phoneGuyUi?.muteShowDelay ?? 19000;
+
+      this.phoneGuyMuteShowTimeout = setTimeout(() => {
+        if (this.isPhoneGuyMuted || !this.isPhoneGuyStarted) return;
+
+        muteBtn.hidden = false;
+        muteBtn.style.display = 'block';
+
+        if (muteFo) {
+          muteFo.style.display = 'block';
+        }
+      }, delay);
+  }
+
+  schedulePhoneGuyMuteHide(soundId) {
+    const muteBtn = document.getElementById('phone-guy-mute-btn');
+    const muteFo = document.getElementById('phone-guy-mute-fo');
+
+    if (!muteBtn) return;
+
+    if (this.phoneGuyMuteHideTimeout) {
+      clearTimeout(this.phoneGuyMuteHideTimeout);
+      this.phoneGuyMuteHideTimeout = null;
+    }
+
+    const howl = Sound.sounds[soundId];
+    if (!howl || typeof howl.duration !== 'function') return;
+
+    const durationMs = Math.max(0, howl.duration() * 1000) * 0.9;
+
+    this.phoneGuyMuteHideTimeout = setTimeout(() => {
+      if (muteBtn) {
+        muteBtn.hidden = true;
+        muteBtn.style.display = 'none';
+      }
+
+      if (muteFo) {
+        muteFo.style.display = 'none';
+      }
+
+      this.isPhoneGuyStarted = false;
+    }, durationMs);
   }
 
   hidePhoneGuyMuteButton() {
     const muteBtn = document.getElementById('phone-guy-mute-btn');
-    if (!muteBtn) return;
+    const muteFo = document.getElementById('phone-guy-mute-fo');
 
-    muteBtn.hidden = true;
+    if (muteBtn) {
+      muteBtn.hidden = true;
+      muteBtn.style.display = 'none';
+    }
+
+    if (muteFo) {
+      muteFo.style.display = 'none';
+    }
 
     if (this.phoneGuyMuteShowTimeout) {
       clearTimeout(this.phoneGuyMuteShowTimeout);
       this.phoneGuyMuteShowTimeout = null;
+    }
+
+    if (this.phoneGuyMuteHideTimeout) {
+      clearTimeout(this.phoneGuyMuteHideTimeout);
+      this.phoneGuyMuteHideTimeout = null;
     }
   }
 
@@ -594,6 +906,15 @@ class NightScene extends BaseScene {
 
     this.isPhoneGuyMuted = true;
     this.stopPhoneGuy();
+    this.hidePhoneGuyMuteButton();
+  }
+  
+  stopPhoneGuy() {
+    if (this.phoneGuySoundId) {
+      Sound.stop(this.phoneGuySoundId);
+    }
+
+    this.isPhoneGuyStarted = false;
     this.hidePhoneGuyMuteButton();
   }
 
@@ -613,7 +934,7 @@ class NightScene extends BaseScene {
     if (!Sound.sounds[soundId]) {
       Sound.add(soundId, this.config.phoneGuy, {
         loop: false,
-        volume: 0.3
+        volume: 0.5
       });
     }
 
@@ -630,12 +951,16 @@ class NightScene extends BaseScene {
     this.isPhoneGuyStarted = true;
 
     this.schedulePhoneGuyMuteButton();
+    this.schedulePhoneGuyMuteHide(soundId);
   }
 
   stopPhoneGuy() {
-    if (!this.phoneGuySoundId) return;
-    Sound.stop(this.phoneGuySoundId);
+    if (this.phoneGuySoundId) {
+      Sound.stop(this.phoneGuySoundId);
+    }
+
     this.isPhoneGuyStarted = false;
+    this.hidePhoneGuyMuteButton();
   }
 
   ensureFreddyNoseSound() {
@@ -733,6 +1058,7 @@ class NightScene extends BaseScene {
     const nextClosed = !this.leftDoorClosed;
     this.leftDoorClosed = nextClosed;
     await this.updateControlPanels();
+    await this.updateNightHud();
 
     this.playDoorToggleSound();
 
@@ -767,6 +1093,7 @@ class NightScene extends BaseScene {
     const nextClosed = !this.rightDoorClosed;
     this.rightDoorClosed = nextClosed;
     await this.updateControlPanels();
+    await this.updateNightHud();
 
     this.playDoorToggleSound();
 
@@ -825,6 +1152,7 @@ class NightScene extends BaseScene {
       this.rightLightOn = false;
 
       await this.updateControlPanels();
+      await this.updateNightHud();
       await this.refreshOfficeLight();
     } finally {
       this.isLeftLightAnimating = false;
@@ -843,6 +1171,7 @@ class NightScene extends BaseScene {
       this.leftLightOn = false;
 
       await this.updateControlPanels();
+      await this.updateNightHud();
       await this.refreshOfficeLight();
     } finally {
       this.isRightLightAnimating = false;
