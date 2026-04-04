@@ -21,7 +21,9 @@ export const NightAssetPaths = Object.freeze({
 
   USAGE_METER: 'assets/images/camera/PowerUsege_103x32.png',
 
-  MONITOR_TOGGLE: 'assets/images/camera/monitor-toggle.png',
+  MONITOR_TOGGLE: 'assets/images/camera/monitor-toggle_598x45.png',
+
+  MONITOR_TRANSITION: 'assets/images/camera/cameraOpenClose.png',
 });
 
 export const COMMON_NIGHT_ASSETS = [
@@ -31,6 +33,7 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'image', src: NightAssetPaths.OFFICE_LIGHT },
   { type: 'image', src: NightAssetPaths.USAGE_METER },
   { type: 'image', src: NightAssetPaths.MONITOR_TOGGLE },
+  { type: 'image', src: NightAssetPaths.MONITOR_TRANSITION },
 
   { type: 'image', src: NightAssetPaths.FAN },
   { type: 'image', src: NightAssetPaths.DOOR_SHEET },

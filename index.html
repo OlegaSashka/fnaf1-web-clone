@@ -98,7 +98,6 @@
                     <div id="look-zone-center" class="look-zone"></div>
                     <div id="look-zone-right" class="look-zone"></div>
                   </div>
-
               </div>
             </div>
           </div>
@@ -141,7 +140,6 @@
             <div id="camera-viewport">
               <div id="camera-world">
                 <canvas id="camera-world-canvas" width="2600" height="1080"></canvas>
-                <canvas id="camera-world-fx-canvas" width="2600" height="1080"></canvas>
               </div>
 
               <canvas id="camera-static-canvas" width="1920" height="1080"></canvas>
@@ -152,7 +150,121 @@
           <!-- 5. UI планшета -->
           <div id="monitor-ui-layer" class="layer" hidden>
             <div id="monitor-ui">
-              <!-- карта и кнопки камер появятся позже -->
+              <svg id="monitor-ui-svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+                <!-- Рамка монитора -->
+                <rect
+                  id="monitor-frame"
+                  x="8"
+                  y="8"
+                  width="1904"
+                  height="1064"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.9)"
+                  stroke-width="4"
+                />
+
+                <!-- Красная точка записи -->
+                <circle
+                  id="monitor-record-dot"
+                  cx="110"
+                  cy="95"
+                  r="36"
+                  fill="#ff2a2a"
+                />
+
+                <!-- HUD справа сверху -->
+                <text id="monitor-time-text" x="1850" y="30" text-anchor="end">12 AM</text>
+                <text id="monitor-night-text" x="1850" y="80" text-anchor="end">Night 1</text>
+
+                <!-- HUD слева снизу -->
+                <text id="monitor-power-text" x="40" y="960" text-anchor="start">
+                  <tspan id="monitor-power-label-text">Power left:</tspan>
+                  <tspan id="monitor-power-value-text" dx="-10">100%</tspan>
+                </text>
+
+                <text id="monitor-usage-text" x="40" y="1020" text-anchor="start">Usage:</text>
+
+                <foreignObject id="monitor-usage-fo" x="150" y="992" width="103" height="32">
+                  <canvas id="monitor-usage-canvas" width="103" height="32"></canvas>
+                </foreignObject>
+
+                <!-- Название текущей камеры -->
+                <text id="monitor-camera-name-text" x="1220" y="610" text-anchor="start">Show Stage</text>
+
+                <!-- Карта -->
+                <image
+                  id="monitor-map-image"
+                  href="assets/images/camera/camera-map.png"
+                  x="1320"
+                  y="520"
+                  width="560"
+                  height="500"
+                  preserveAspectRatio="none"
+                />
+
+                <!-- CAM 1A -->
+                <foreignObject id="cam-btn-1a-fo" x="1460" y="585" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1a" class="monitor-cam-btn" type="button">CAM 1A</button>
+                </foreignObject>
+
+                <!-- CAM 1B -->
+                <foreignObject id="cam-btn-1b-fo" x="1410" y="675" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1b" class="monitor-cam-btn" type="button">CAM 1B</button>
+                </foreignObject>
+
+                <!-- CAM 1C -->
+                <foreignObject id="cam-btn-1c-fo" x="1365" y="790" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1c" class="monitor-cam-btn" type="button">CAM 1C</button>
+                </foreignObject>
+
+                <!-- CAM 2A -->
+                <foreignObject id="cam-btn-2a-fo" x="1485" y="930" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-2a" class="monitor-cam-btn" type="button">CAM 2A</button>
+                </foreignObject>
+
+                <!-- CAM 2B -->
+                <foreignObject id="cam-btn-2b-fo" x="1485" y="985" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-2b" class="monitor-cam-btn" type="button">CAM 2B</button>
+                </foreignObject>
+
+                <!-- CAM 3 -->
+                <foreignObject id="cam-btn-3-fo" x="1315" y="930" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-3" class="monitor-cam-btn" type="button">CAM 3</button>
+                </foreignObject>
+
+                <!-- CAM 4A -->
+                <foreignObject id="cam-btn-4a-fo" x="1660" y="930" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-4a" class="monitor-cam-btn" type="button">CAM 4A</button>
+                </foreignObject>
+
+                <!-- CAM 4B -->
+                <foreignObject id="cam-btn-4b-fo" x="1660" y="985" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-4b" class="monitor-cam-btn" type="button">CAM 4B</button>
+                </foreignObject>
+
+                <!-- CAM 5 -->
+                <foreignObject id="cam-btn-5-fo" x="1210" y="705" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-5" class="monitor-cam-btn" type="button">CAM 5</button>
+                </foreignObject>
+
+                <!-- CAM 6 -->
+                <foreignObject id="cam-btn-6-fo" x="1770" y="835" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-6" class="monitor-cam-btn" type="button">CAM 6</button>
+                </foreignObject>
+
+                <!-- CAM 7 -->
+                <foreignObject id="cam-btn-7-fo" x="1770" y="690" width="92" height="44">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-7" class="monitor-cam-btn" type="button">CAM 7</button>
+                </foreignObject>
+
+                <!-- YOU -->
+                <text id="monitor-you-text" x="1602" y="1015" text-anchor="middle">YOU</text>
+
+                <!-- Зона закрытия -->
+                <foreignObject id="monitor-close-fo" x="500" y="1020" width="598" height="45">
+                  <canvas id="monitor-close-canvas" width="598" height="45"></canvas>
+                </foreignObject>
+              </svg>
             </div>
           </div>
         </div>

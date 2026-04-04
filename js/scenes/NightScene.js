@@ -80,8 +80,16 @@ class NightScene extends BaseScene {
 
     this.isNightComplete = false;
 
+    this.monitorTransitionSprite = null;
+    this.isMonitorOpen = false;
+    this.isMonitorAnimating = false;
+
+    this.monitorCloseSprite = null;
+    this.onMonitorCloseMouseEnter = this.onMonitorCloseMouseEnter.bind(this);
+
     this.monitorToggleSprite = null;
     this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
+    this.onMonitorCloseMouseEnter = this.onMonitorCloseMouseEnter.bind(this);
 
     this.onLeftDoorHitboxClick = this.onLeftDoorHitboxClick.bind(this);
     this.onLeftLightHitboxClick = this.onLeftLightHitboxClick.bind(this);
@@ -131,6 +139,7 @@ class NightScene extends BaseScene {
     const freddyNoseHitbox = document.getElementById('freddy-nose-hitbox');
 
     const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
+    const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
 
     if (menuScreen) menuScreen.hidden = true;
     if (gameScreen) gameScreen.hidden = false;
@@ -242,6 +251,10 @@ class NightScene extends BaseScene {
     if (monitorToggleCanvas) {
       monitorToggleCanvas.addEventListener('mouseenter', this.onMonitorToggleMouseEnter);
     }
+    
+    if (monitorCloseCanvas) {
+      monitorCloseCanvas.addEventListener('mouseenter', this.onMonitorCloseMouseEnter);
+    }
 
     this.updatePhoneGuyMuteButton();
   }
@@ -267,6 +280,11 @@ class NightScene extends BaseScene {
     const freddyNoseHitbox = document.getElementById('freddy-nose-hitbox');
 
     const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
+    const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
+
+    if (monitorCloseCanvas) {
+      monitorCloseCanvas.removeEventListener('mouseenter', this.onMonitorCloseMouseEnter);
+    }
 
     if (monitorToggleCanvas) {
       monitorToggleCanvas.removeEventListener('mouseenter', this.onMonitorToggleMouseEnter);
@@ -373,6 +391,10 @@ class NightScene extends BaseScene {
     const nightUsageCanvas = document.getElementById('night-usage-canvas');
 
     const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
+    const monitorTransitionCanvas = document.getElementById('monitor-transition-canvas');
+
+    const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
+    const monitorUsageCanvas = document.getElementById('monitor-usage-canvas');
 
     const worldWidth = Math.round(officeWorld.offsetWidth);
     const worldHeight = Math.round(officeWorld.offsetHeight);
@@ -387,7 +409,8 @@ class NightScene extends BaseScene {
       !officeWorld || 
       !officeUiLayer ||
       !officeLightCanvas ||
-      !nightUsageCanvas
+      !nightUsageCanvas || !monitorTransitionCanvas || 
+      !monitorUsageCanvas || !monitorCloseCanvas
     ) {
       console.error('[NightScene] Не найдены office-элементы');
       return;
@@ -403,14 +426,6 @@ class NightScene extends BaseScene {
 
     this.root = officeCanvas;
 
-    officeLeftDoorCanvas.style.display = 'block';
-    officeLeftDoorCanvas.width = leftDoorWidth;
-    officeLeftDoorCanvas.height = doorHeight;
-
-    officeRightDoorCanvas.style.display = 'block';
-    officeRightDoorCanvas.width = rightDoorWidth;
-    officeRightDoorCanvas.height = doorHeight;
-
     officeCanvas.style.display = 'block';
     officeCanvas.width = worldWidth;
     officeCanvas.height = worldHeight;
@@ -424,12 +439,12 @@ class NightScene extends BaseScene {
     officeFanCanvas.height = worldHeight;
 
     officeLeftDoorCanvas.style.display = 'block';
-    officeLeftDoorCanvas.width = worldWidth;
-    officeLeftDoorCanvas.height = worldHeight;
+    officeLeftDoorCanvas.width = leftDoorWidth;
+    officeLeftDoorCanvas.height = doorHeight;
 
     officeRightDoorCanvas.style.display = 'block';
-    officeRightDoorCanvas.width = worldWidth;
-    officeRightDoorCanvas.height = worldHeight;
+    officeRightDoorCanvas.width = rightDoorWidth;
+    officeRightDoorCanvas.height = doorHeight;
 
     officeLeftPanelCanvas.style.display = 'block';
     officeLeftPanelCanvas.width = 92;
@@ -443,9 +458,50 @@ class NightScene extends BaseScene {
     nightUsageCanvas.width = 103;
     nightUsageCanvas.height = 32;
 
+    monitorUsageCanvas.style.display = 'block';
+    monitorUsageCanvas.width = 103;
+    monitorUsageCanvas.height = 32;
+
     monitorToggleCanvas.style.display = 'block';
     monitorToggleCanvas.width = 598;
     monitorToggleCanvas.height = 45;
+
+    monitorTransitionCanvas.width = 1920;
+    monitorTransitionCanvas.height = 1080;
+    monitorTransitionCanvas.style.display = 'block';
+
+    this.monitorTransitionSprite = new AnimatedSprite(
+      monitorTransitionCanvas,
+      NightAssetPaths.MONITOR_TRANSITION,
+      25,
+      {
+        frameWidth: 1280,
+        frameHeight: 720,
+        direction: 'vertical',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: 1920,
+        drawHeight: 1080
+      }
+    );
+    
+
+    this.monitorCloseSprite = new AnimatedSprite(
+      monitorCloseCanvas,
+      NightAssetPaths.MONITOR_TOGGLE,
+      1,
+      {
+        frameWidth: 598,
+        frameHeight: 45,
+        direction: 'vertical',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: 598,
+        drawHeight: 45
+      }
+    );
+
+    await this.monitorCloseSprite.showFrame(0);
 
     this.monitorToggleSprite = new AnimatedSprite(
       monitorToggleCanvas,
@@ -739,14 +795,6 @@ class NightScene extends BaseScene {
     nightLabelText.textContent = `Night ${nightNumber}`;
   }
 
-  updateNightLabel() {
-    const nightLabelText = document.getElementById('night-label-text');
-    if (!nightLabelText) return;
-
-    const nightNumber = this.config?.nightNumber ?? 1;
-    nightLabelText.textContent = `Night ${nightNumber}`;
-  }
-
   updateNightTimeText() {
     const nightTimeText = document.getElementById('night-time-text');
     if (!nightTimeText) return;
@@ -826,31 +874,6 @@ class NightScene extends BaseScene {
 
     phoneGuyMuteBtn.classList.toggle('is-muted', this.isPhoneGuyMuted);
     phoneGuyMuteBtn.textContent = this.isPhoneGuyMuted ? 'Call Muted' : 'Mute Call';
-  }
-
-
-  hidePhoneGuyMuteButton() {
-    const muteBtn = document.getElementById('phone-guy-mute-btn');
-    const muteFo = document.getElementById('phone-guy-mute-fo');
-
-    if (muteBtn) {
-      muteBtn.hidden = true;
-      muteBtn.style.display = 'none';
-    }
-
-    if (muteFo) {
-      muteFo.style.display = 'none';
-    }
-
-    if (this.phoneGuyMuteShowTimeout) {
-      clearTimeout(this.phoneGuyMuteShowTimeout);
-      this.phoneGuyMuteShowTimeout = null;
-    }
-
-    if (this.phoneGuyMuteHideTimeout) {
-      clearTimeout(this.phoneGuyMuteHideTimeout);
-      this.phoneGuyMuteHideTimeout = null;
-    }
   }
 
   schedulePhoneGuyMuteButton() {
@@ -947,15 +970,6 @@ class NightScene extends BaseScene {
     this.hidePhoneGuyMuteButton();
   }
   
-  stopPhoneGuy() {
-    if (this.phoneGuySoundId) {
-      Sound.stop(this.phoneGuySoundId);
-    }
-
-    this.isPhoneGuyStarted = false;
-    this.hidePhoneGuyMuteButton();
-  }
-
   getPhoneGuySoundId() {
     const nightNumber = this.config?.nightNumber ?? 'default';
     console.log(`nightNumber ${nightNumber}`);
@@ -1255,13 +1269,6 @@ class NightScene extends BaseScene {
     Sound.stop(this.lightSoundId);
   }
 
-  clearLightFlicker() {
-  for (const id of this.lightFlickerTimeouts) {
-    clearTimeout(id);
-  }
-  this.lightFlickerTimeouts = [];
-  }
-
   queueLightFlicker(callback, delay) {
     const id = setTimeout(() => {
       this.lightFlickerTimeouts = this.lightFlickerTimeouts.filter(x => x !== id);
@@ -1307,16 +1314,6 @@ class NightScene extends BaseScene {
 
     this.lightFlickerTimeouts = [];
     this.stopLightSound();
-  }
-
-  queueLightFlicker(callback, delay) {
-    const id = setTimeout(() => {
-      this.lightFlickerTimeouts = this.lightFlickerTimeouts.filter(x => x !== id);
-      callback();
-    }, delay);
-
-    this.lightFlickerTimeouts.push(id);
-    return id;
   }
 
   async lightOnStep() {
@@ -1374,6 +1371,96 @@ class NightScene extends BaseScene {
 
   async onMonitorToggleMouseEnter() {
     console.log('open monitor');
+    await this.openMonitor();
+  }
+
+  async openMonitor() {
+    if (this.isMonitorAnimating || this.isMonitorOpen || !this.monitorTransitionSprite) return;
+
+    const officeUiLayer = document.getElementById('office-ui-layer');
+    const monitorTransitionLayer = document.getElementById('monitor-transition-layer');
+    const monitorScreenLayer = document.getElementById('monitor-screen-layer');
+    const monitorUiLayer = document.getElementById('monitor-ui-layer');
+
+    this.isMonitorAnimating = true;
+
+    if (officeUiLayer) officeUiLayer.hidden = true;
+    if (monitorTransitionLayer) monitorTransitionLayer.hidden = false;
+
+    await this.monitorTransitionSprite.playOnce({
+      fromFrame: 0,
+      toFrame: this.monitorTransitionSprite.totalFrames - 1,
+      holdLastFrame: true
+    });
+
+    if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
+    if (monitorScreenLayer) monitorScreenLayer.hidden = false;
+    if (monitorUiLayer) monitorUiLayer.hidden = false;
+
+    this.isMonitorOpen = true;
+    this.isMonitorAnimating = false;
+  }
+
+  async closeMonitor() {
+    if (this.isMonitorAnimating || !this.isMonitorOpen || !this.monitorTransitionSprite) return;
+
+    const officeUiLayer = document.getElementById('office-ui-layer');
+    const monitorTransitionLayer = document.getElementById('monitor-transition-layer');
+    const monitorScreenLayer = document.getElementById('monitor-screen-layer');
+    const monitorUiLayer = document.getElementById('monitor-ui-layer');
+
+    this.isMonitorAnimating = true;
+
+    if (monitorScreenLayer) monitorScreenLayer.hidden = true;
+    if (monitorUiLayer) monitorUiLayer.hidden = true;
+    if (monitorTransitionLayer) monitorTransitionLayer.hidden = false;
+
+    await this.monitorTransitionSprite.playOnceReverse({
+      fromFrame: this.monitorTransitionSprite.totalFrames - 1,
+      toFrame: 0,
+      holdLastFrame: false,
+      clearOnFinish: true
+    });
+
+    if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
+    if (officeUiLayer) officeUiLayer.hidden = false;
+
+    this.isMonitorOpen = false;
+    this.isMonitorAnimating = false;
+  }
+
+  async onMonitorCloseMouseEnter() {
+    await this.closeMonitor();
+  }
+
+  setTextIfExists(id, value) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = value;
+    }
+  }
+
+  updateHudTexts() {
+    const nightNumber = this.config?.nightNumber ?? 1;
+    const displayHour = this.currentHour === 0 ? 12 : this.currentHour;
+    const percent = Math.max(
+      0,
+      Math.ceil((this.currentPower / this.maxPower) * 100)
+    );
+
+    this.setTextIfExists('night-label-text', `Night ${nightNumber}`);
+    this.setTextIfExists('monitor-night-text', `Night ${nightNumber}`);
+
+    this.setTextIfExists('night-time-text', `${displayHour} AM`);
+    this.setTextIfExists('monitor-time-text', `${displayHour} AM`);
+
+    this.setTextIfExists('night-power-value-text', `${percent}%`);
+    this.setTextIfExists('monitor-power-value-text', `${percent}%`);
+  }
+
+  async updateNightHud() {
+    this.updateHudTexts();
+    await this.updateUsage();
   }
 } 
 
