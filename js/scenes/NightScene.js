@@ -841,6 +841,7 @@ class NightScene extends BaseScene {
     if (this.rightDoorClosed) usage += 1;
     if (this.leftLightOn) usage += 1;
     if (this.rightLightOn) usage += 1;
+    if (this.isMonitorOpen) usage += 1;
 
     return Math.min(usage, 5);
   }
@@ -1426,6 +1427,7 @@ class NightScene extends BaseScene {
     if (monitorUiLayer) monitorUiLayer.hidden = false;
 
     this.isMonitorOpen = true;
+    await this.updateNightHud();
     this.isMonitorAnimating = false;
   }
 
@@ -1447,6 +1449,9 @@ class NightScene extends BaseScene {
     this.playMonitorToggleSound();
     this.setFanHumVolume(0.2);
 
+    this.isMonitorOpen = false;
+    await this.updateNightHud();
+
     await this.monitorTransitionSprite.playOnceReverse({
       fromFrame: this.monitorTransitionSprite.totalFrames - 1,
       toFrame: 0,
@@ -1456,7 +1461,6 @@ class NightScene extends BaseScene {
 
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
 
-    this.isMonitorOpen = false;
     this.isMonitorAnimating = false;
   }
 
