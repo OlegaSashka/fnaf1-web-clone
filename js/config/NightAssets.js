@@ -18,6 +18,7 @@ export const NightAssetPaths = Object.freeze({
   FREDDY_NOSE_SOUND: 'assets/sounds/FreddyNose/freddy-nose-honk.wav',
   FAN_HUM: 'assets/sounds/fan/FanHum.wav',
   BACKGROUND_AMBIENCE: 'assets/sounds/ambience/background-ambience.wav',
+  MONITOR_TOGGLE_SOUND: 'assets/sounds/camera/monitor-toggle.wav',
 
   USAGE_METER: 'assets/images/camera/PowerUsege_103x32.png',
 
@@ -43,8 +44,5 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'audio', src: NightAssetPaths.DOOR_TOGGLE_SOUND },
   { type: 'audio', src: NightAssetPaths.LIGHT_ON_SOUND },
   { type: 'audio', src: NightAssetPaths.FREDDY_NOSE_SOUND },
-
-  // когда добавишь звуки, просто раскомментируешь
-  // { type: 'audio', src: NightAssetPaths.DOOR_CLOSE_SOUND },
-  // { type: 'audio', src: NightAssetPaths.DOOR_OPEN_SOUND },
+  { type: 'audio', src: NightAssetPaths.MONITOR_TOGGLE_SOUND },
 ];

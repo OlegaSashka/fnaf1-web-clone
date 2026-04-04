@@ -54,6 +54,7 @@ class NightScene extends BaseScene {
     this.lightSoundId = 'light-on';
     this.backgroundAmbienceSoundId = 'night-ambience';
     this.fanHumSoundId = 'fan-hum';
+    this.monitorToggleSoundId = 'monitor-toggle';
 
     this.lightFlickerRunning = false;
 
@@ -875,7 +876,7 @@ class NightScene extends BaseScene {
     if (!Sound.sounds[this.fanHumSoundId]) {
       Sound.add(this.fanHumSoundId, NightAssetPaths.FAN_HUM, {
         loop: true,
-        volume: 0.11
+        volume: 0.2
       });
     }
   }
@@ -1407,8 +1408,9 @@ class NightScene extends BaseScene {
 
     this.isMonitorAnimating = true;
 
-    if (officeUiLayer) officeUiLayer.hidden = true;
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = false;
+    
+    this.playMonitorToggleSound();
 
     await this.monitorTransitionSprite.playOnce({
       fromFrame: 0,
@@ -1416,6 +1418,9 @@ class NightScene extends BaseScene {
       holdLastFrame: true
     });
 
+    this.setFanHumVolume(0.1);
+
+    if (officeUiLayer) officeUiLayer.hidden = true;
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
     if (monitorScreenLayer) monitorScreenLayer.hidden = false;
     if (monitorUiLayer) monitorUiLayer.hidden = false;
@@ -1437,6 +1442,10 @@ class NightScene extends BaseScene {
     if (monitorScreenLayer) monitorScreenLayer.hidden = true;
     if (monitorUiLayer) monitorUiLayer.hidden = true;
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = false;
+    if (officeUiLayer) officeUiLayer.hidden = false;
+
+    this.playMonitorToggleSound();
+    this.setFanHumVolume(0.2);
 
     await this.monitorTransitionSprite.playOnceReverse({
       fromFrame: this.monitorTransitionSprite.totalFrames - 1,
@@ -1446,7 +1455,6 @@ class NightScene extends BaseScene {
     });
 
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
-    if (officeUiLayer) officeUiLayer.hidden = false;
 
     this.isMonitorOpen = false;
     this.isMonitorAnimating = false;
@@ -1484,6 +1492,30 @@ class NightScene extends BaseScene {
   async updateNightHud() {
     this.updateHudTexts();
     await this.updateUsage();
+  }
+
+  ensureMonitorSounds() {
+    if (NightAssetPaths.MONITOR_TOGGLE_SOUND && !Sound.sounds[this.monitorToggleSoundId]) {
+      Sound.add(this.monitorToggleSoundId, NightAssetPaths.MONITOR_TOGGLE_SOUND, {
+        loop: false,
+        volume: 0.45
+      });
+    }
+  }
+
+  playMonitorToggleSound() {
+    this.ensureMonitorSounds();
+    if (Sound.sounds[this.monitorToggleSoundId]) {
+      Sound.stop(this.monitorToggleSoundId);
+      Sound.playOnce(this.monitorToggleSoundId);
+    }
+  }
+
+  setFanHumVolume(volume) {
+    const howl = Sound.sounds[this.fanHumSoundId];
+    if (!howl) return;
+
+    howl.volume(volume);
   }
 } 
 
