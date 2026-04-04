@@ -84,10 +84,11 @@ class NightScene extends BaseScene {
     this.isMonitorOpen = false;
     this.isMonitorAnimating = false;
 
-    this.monitorCloseSprite = null;
-    this.onMonitorCloseMouseEnter = this.onMonitorCloseMouseEnter.bind(this);
-
     this.monitorToggleSprite = null;
+    this.monitorCloseSprite = null;
+
+    this.monitorUsageSprite = null;
+
     this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
     this.onMonitorCloseMouseEnter = this.onMonitorCloseMouseEnter.bind(this);
 
@@ -410,7 +411,7 @@ class NightScene extends BaseScene {
       !officeUiLayer ||
       !officeLightCanvas ||
       !nightUsageCanvas || !monitorTransitionCanvas || 
-      !monitorUsageCanvas || !monitorCloseCanvas
+      !monitorUsageCanvas || !monitorCloseCanvas || !monitorToggleCanvas
     ) {
       console.error('[NightScene] Не найдены office-элементы');
       return;
@@ -663,6 +664,23 @@ class NightScene extends BaseScene {
 
     await this.usageSprite.showFrame(0);
 
+    this.monitorUsageSprite = new AnimatedSprite(
+      monitorUsageCanvas,
+      NightAssetPaths.USAGE_METER,
+      1,
+      {
+        frameWidth: 103,
+        frameHeight: 32,
+        direction: 'vertical',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: 103,
+        drawHeight: 32
+      }
+    );
+
+    await this.monitorUsageSprite.showFrame(0);
+
     await this.updateControlPanels();
     await this.updateNightHud();
 
@@ -829,10 +847,15 @@ class NightScene extends BaseScene {
   async updateUsage() {
     this.currentUsageLevel = this.calculateUsageLevel();
 
-    if (!this.usageSprite) return;
-
     const frameIndex = Math.max(0, this.currentUsageLevel - 1);
-    await this.usageSprite.showFrame(frameIndex);
+
+    if (this.usageSprite) {
+      await this.usageSprite.showFrame(frameIndex);
+    }
+
+    if (this.monitorUsageSprite) {
+      await this.monitorUsageSprite.showFrame(frameIndex);
+    }
   }
 
   playBackgroundAmbience() {
