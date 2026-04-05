@@ -5,7 +5,7 @@ export const TransitionImages = {
 };
 
 export const TRANSITION_ASSETS = [
-  { type: 'image', src: TransitionImages.NEW_GAME },
-  { type: 'image', src: TransitionImages.NIGHT_COMPLETE },
-  { type: 'image', src: TransitionImages.GAME_OVER }
+  { type: 'image', id: 'transition-new-game', src: TransitionImages.NEW_GAME },
+  { type: 'image', id: 'transition-night-complete', src: TransitionImages.NIGHT_COMPLETE },
+  { type: 'image', id: 'transition-game-over', src: TransitionImages.GAME_OVER }
 ];

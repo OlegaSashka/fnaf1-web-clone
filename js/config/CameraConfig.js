@@ -126,6 +126,15 @@ export const cameraConfigs = {
             bonny_look_at_camera: 3,
           }
         },
+  '6': {
+          name: 'Kitchen',
+          image: null,
+          viewportMode: 'screen',
+          useCameraOffset: false,
+          states: {
+            default: 0,
+          }
+        },
   '7':  { 
           name: 'Restrooms', 
           image: NightAssetPaths.CAM_7,

@@ -1,8 +1,8 @@
 class AnimatedSprite {
-  constructor(canvas, src, fps = 8, options = {}) {
+  constructor(canvas, source, fps = 8, options = {}) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.img = new Image();
+    this.img = null;
 
     this.frameWidth = options.frameWidth ?? null;
     this.frameHeight = options.frameHeight ?? 720;
@@ -37,20 +37,53 @@ class AnimatedSprite {
     this.holdLastFrame = true;
     this.clearOnFinish = false;
 
-    this.img.onload = () => {
-      this.#calcFrames();
-    };
+    this.#initImage(source);
+  }
 
-    this.img.onerror = () => {
-      this.failed = true;
-      console.error('[AnimatedSprite] Ошибка загрузки:', src);
-    };
+  #initImage(source) {
+    if (source instanceof HTMLImageElement) {
+      this.img = source;
 
-    this.img.src = src;
+      if (this.img.complete && this.img.naturalWidth > 0 && this.img.naturalHeight > 0) {
+        this.#calcFrames();
+        return;
+      }
 
-    if (this.img.complete && this.img.naturalHeight !== 0) {
-      this.#calcFrames();
+      this.img.onload = () => {
+        this.#calcFrames();
+      };
+
+      this.img.onerror = () => {
+        this.failed = true;
+        console.error('[AnimatedSprite] Ошибка загрузки переданного Image');
+      };
+
+      return;
     }
+
+    if (typeof source === 'string') {
+      this.img = new Image();
+
+      this.img.onload = () => {
+        this.#calcFrames();
+      };
+
+      this.img.onerror = () => {
+        this.failed = true;
+        console.error('[AnimatedSprite] Ошибка загрузки:', source);
+      };
+
+      this.img.src = source;
+
+      if (this.img.complete && this.img.naturalWidth > 0 && this.img.naturalHeight !== 0) {
+        this.#calcFrames();
+      }
+
+      return;
+    }
+
+    this.failed = true;
+    console.error('[AnimatedSprite] Некорректный source:', source);
   }
 
   #calcFrames() {

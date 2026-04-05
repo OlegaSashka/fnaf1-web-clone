@@ -17,7 +17,7 @@ import AnimatedSprite from '../AnimatedSprite.js';
 
 import Sound from '../managers/SoundManager.js';
 
-import CameraSystem from '../camera/CameraSystem.js';
+import CameraSystem from '../managers/СameraSystem.js';
 
 class NightScene extends BaseScene {
   constructor(game, config) {
@@ -94,6 +94,11 @@ class NightScene extends BaseScene {
 
     this.cameraOffsetX = 0;
 
+    this.cameraSystem = null;
+    this.cameraOffsetX = 0;
+    this.currentCameraId = '1A';
+
+    this.onCameraButtonClick = this.onCameraButtonClick.bind(this);
     this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
     this.onMonitorCloseMouseEnter = this.onMonitorCloseMouseEnter.bind(this);
 
@@ -107,6 +112,20 @@ class NightScene extends BaseScene {
 
     this.onPhoneGuyMuteClick = this.onPhoneGuyMuteClick.bind(this);
     this.onFreddyNoseClick = this.onFreddyNoseClick.bind(this);
+
+    this.cameraButtonIds = [
+      'cam-btn-1a',
+      'cam-btn-1b',
+      'cam-btn-1c',
+      'cam-btn-2a',
+      'cam-btn-2b',
+      'cam-btn-3',
+      'cam-btn-4a',
+      'cam-btn-4b',
+      'cam-btn-5',
+      'cam-btn-6',
+      'cam-btn-7'
+    ];
   }
 
   async preload(onProgress) {
@@ -221,6 +240,13 @@ class NightScene extends BaseScene {
       }
     });
 
+    for (const id of this.cameraButtonIds) {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.addEventListener('click', this.onCameraButtonClick);
+      }
+    }
+
     const officeViewport = document.getElementById('office-viewport');
 
     if (officeViewport) {
@@ -287,6 +313,13 @@ class NightScene extends BaseScene {
 
     const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
     const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
+
+    for (const id of this.cameraButtonIds) {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.removeEventListener('click', this.onCameraButtonClick);
+      }
+    }
 
     if (monitorCloseCanvas) {
       monitorCloseCanvas.removeEventListener('mouseenter', this.onMonitorCloseMouseEnter);
@@ -402,6 +435,10 @@ class NightScene extends BaseScene {
     const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
     const monitorUsageCanvas = document.getElementById('monitor-usage-canvas');
 
+    const cameraWorld = document.getElementById('camera-world');
+    const cameraWorldCanvas = document.getElementById('camera-world-canvas');
+    const monitorCameraNameText = document.getElementById('monitor-camera-name-text');
+
     const worldWidth = Math.round(officeWorld.offsetWidth);
     const worldHeight = Math.round(officeWorld.offsetHeight);
 
@@ -476,6 +513,16 @@ class NightScene extends BaseScene {
     monitorTransitionCanvas.height = 1080;
     monitorTransitionCanvas.style.display = 'block';
 
+    this.cameraSystem = new CameraSystem({
+      cameraWorld,
+      cameraWorldCanvas,
+      cameraNameText: monitorCameraNameText,
+      initialCameraId: this.currentCameraId
+    });
+
+    await this.cameraSystem.init();
+    this.updateActiveCameraButton();
+    
     this.monitorTransitionSprite = new AnimatedSprite(
       monitorTransitionCanvas,
       NightAssetPaths.MONITOR_TRANSITION,
@@ -1524,6 +1571,32 @@ class NightScene extends BaseScene {
     if (!howl) return;
 
     howl.volume(volume);
+  }
+
+  async onCameraButtonClick(event) {
+    if (!this.cameraSystem) return;
+
+    const button = event.currentTarget;
+    if (!button) return;
+
+    const cameraId = button.id
+      .replace('cam-btn-', '')
+      .toUpperCase();
+
+    await this.cameraSystem.setCurrentCamera(cameraId);
+    this.currentCameraId = cameraId;
+
+    this.updateActiveCameraButton();
+  }
+
+  updateActiveCameraButton() {
+    for (const id of this.cameraButtonIds) {
+      const btn = document.getElementById(id);
+      if (!btn) continue;
+
+      const buttonCameraId = id.replace('cam-btn-', '').toUpperCase();
+      btn.classList.toggle('is-active', buttonCameraId === this.currentCameraId);
+    }
   }
 } 
 

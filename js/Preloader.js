@@ -1,23 +1,67 @@
+import Sound from './managers/SoundManager.js';
+import Images from './managers/ImageManager.js';
+
 class Preloader {
-  static loadImage(src) {
+  static loadImage(asset) {
     return new Promise((resolve, reject) => {
       const img = new Image();
 
-      img.onload = () => resolve({ src, img, type: 'image' });
-      img.onerror = () => reject(new Error(`Не удалось загрузить изображение: ${src}`));
+      img.onload = () => {
+        if (asset.id) {
+          Images.add(asset.id, img);
+        }
 
-      img.src = src;
+        resolve({
+          id: asset.id ?? null,
+          src: asset.src,
+          img,
+          type: 'image'
+        });
+      };
+
+      img.onerror = () => reject(new Error(`Не удалось загрузить изображение: ${asset.src}`));
+
+      img.src = asset.src;
     });
   }
 
-  static loadAudio(src) {
+  static loadAudio(asset) {
     return new Promise((resolve, reject) => {
-      const audio = new Howl({
-        src: [src],
-        preload: true,
-        onload: () => resolve({ src, type: 'audio' }),
-        onloaderror: (_, err) => reject(new Error(`Не удалось загрузить звук: ${src} (${err})`))
-      });
+      try {
+        if (asset.id) {
+          Sound.add(asset.id, asset.src, asset.options ?? {});
+        }
+
+        const sound = asset.id ? Sound.sounds[asset.id] : null;
+
+        if (!sound) {
+          reject(new Error(`Не удалось зарегистрировать звук: ${asset.src}`));
+          return;
+        }
+
+        if (sound.state && sound.state() === 'loaded') {
+          resolve({
+            id: asset.id ?? null,
+            src: asset.src,
+            type: 'audio'
+          });
+          return;
+        }
+
+        sound.once('load', () => {
+          resolve({
+            id: asset.id ?? null,
+            src: asset.src,
+            type: 'audio'
+          });
+        });
+
+        sound.once('loaderror', (_, err) => {
+          reject(new Error(`Не удалось загрузить звук: ${asset.src} (${err})`));
+        });
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 
@@ -43,9 +87,9 @@ class Preloader {
         let result;
 
         if (asset.type === 'image') {
-          result = await Preloader.loadImage(asset.src);
+          result = await Preloader.loadImage(asset);
         } else if (asset.type === 'audio') {
-          result = await Preloader.loadAudio(asset.src);
+          result = await Preloader.loadAudio(asset);
         } else {
           throw new Error(`Неизвестный тип ассета: ${asset.type}`);
         }
