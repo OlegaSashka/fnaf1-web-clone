@@ -3,10 +3,12 @@ import Preloader from '../Preloader.js';
 
 import GameProgress from '../managers/GameProgress.js';
 
-import { COMMON_NIGHT_ASSETS } from '../config/NightAssets.js';
+import { COMMON_NIGHT_ASSETS, NightAssetIds } from '../config/NightAssets.js';
 
 import MenuScene from './MenuScene.js';
 import { SceneNames } from '../config/SceneNames.js';
+
+import Images from '../managers/ImageLibrary.js';
 
 import { NightAssetPaths } from '../config/NightAssets.js';
 
@@ -15,11 +17,14 @@ import LoadingScreen from '../managers/LoadingScreen.js';
 
 import AnimatedSprite from '../AnimatedSprite.js';
 
+import Sounds from '../managers/SoundLibrary.js';
 import Sound from '../managers/SoundManager.js';
 
-import CameraSystem from '../managers/СameraSystem.js';
+import { TransitionAssets, TransitionAssetIds } from '../config/TransitionAssets.js';
 
-import { cameraButtonIds } from '../config/CameraConfig.js';
+import CameraSystem from '../managers/CameraSystem.js';
+
+import { cameraButtonIds } from '../config/CameraConfigs.js';
 
 class NightScene extends BaseScene {
   constructor(game, config) {
@@ -54,11 +59,6 @@ class NightScene extends BaseScene {
 
     this.leftLightOn = false;
     this.rightLightOn = false;
-
-    this.lightSoundId = 'light-on';
-    this.backgroundAmbienceSoundId = 'night-ambience';
-    this.fanHumSoundId = 'fan-hum';
-    this.monitorToggleSoundId = 'monitor-toggle';
 
     this.lightFlickerRunning = false;
 
@@ -122,8 +122,8 @@ class NightScene extends BaseScene {
       ...(this.config?.extraAssets ?? [])
     ];
 
-    if (this.config?.phoneGuy) {
-      assets.push({ type: 'audio', src: this.config.phoneGuy });
+    if (this.config?.phoneGuy.src) {
+      assets.push({ type: 'audio', id: this.config.phoneGuy.id, src: this.config.phoneGuy.src});
     }
 
     const results = await Preloader.loadAssets(assets, onProgress, {
@@ -188,8 +188,8 @@ class NightScene extends BaseScene {
           holdLastFrame: false,
           clearOnFinish: true,
           sound: {
-            id: 'camera-intro-blip',
-            src: 'assets/sounds/ui/blip3.wav',
+            id: TransitionAssetIds.BLIP,
+            src: TransitionAssets.BLIP,
             volume: 1,
             playOnce: true
           }
@@ -513,7 +513,7 @@ class NightScene extends BaseScene {
     
     this.monitorTransitionSprite = new AnimatedSprite(
       monitorTransitionCanvas,
-      NightAssetPaths.MONITOR_TRANSITION,
+      Images.get(NightAssetIds.MONITOR_TRANSITION),
       25,
       {
         frameWidth: 1280,
@@ -529,7 +529,7 @@ class NightScene extends BaseScene {
 
     this.monitorCloseSprite = new AnimatedSprite(
       monitorCloseCanvas,
-      NightAssetPaths.MONITOR_TOGGLE,
+      Images.get(NightAssetIds.MONITOR_TOGGLE),
       1,
       {
         frameWidth: 598,
@@ -546,7 +546,7 @@ class NightScene extends BaseScene {
 
     this.monitorToggleSprite = new AnimatedSprite(
       monitorToggleCanvas,
-      NightAssetPaths.MONITOR_TOGGLE,
+      Images.get(NightAssetIds.MONITOR_TOGGLE),
       1,
       {
         frameWidth: 598,
@@ -573,7 +573,7 @@ class NightScene extends BaseScene {
 
     this.officeLightSprite = new AnimatedSprite(
       officeLightCanvas,
-      NightAssetPaths.OFFICE_LIGHT,
+      Images.get(NightAssetIds.OFFICE_LIGHT),
       1,
       {
         frameWidth: 1600,
@@ -590,7 +590,7 @@ class NightScene extends BaseScene {
 
     this.officeBaseSprite = new AnimatedSprite(
       officeCanvas,
-      NightAssetPaths.OFFICE_BASE,
+      Images.get(NightAssetIds.OFFICE_BASE),
       1,
       {
         frameWidth: 1600,
@@ -608,7 +608,7 @@ class NightScene extends BaseScene {
 
     this.fanSprite = new AnimatedSprite(
       officeFanCanvas,
-      NightAssetPaths.FAN,
+      Images.get(NightAssetIds.FAN),
       30,
       {
         frameWidth: 1600,
@@ -626,7 +626,7 @@ class NightScene extends BaseScene {
 
     this.leftDoorSprite = new AnimatedSprite(
       officeLeftDoorCanvas,
-      NightAssetPaths.DOOR_SHEET,
+      Images.get(NightAssetIds.DOOR_SHEET),
       35,
       {
         frameWidth: 229,
@@ -643,7 +643,7 @@ class NightScene extends BaseScene {
 
     this.rightDoorSprite = new AnimatedSprite(
       officeRightDoorCanvas,
-      NightAssetPaths.DOOR_SHEET,
+      Images.get(NightAssetIds.DOOR_SHEET),
       35,
       {
         frameWidth: 229,
@@ -659,7 +659,7 @@ class NightScene extends BaseScene {
 
     this.leftControlPanelSprite = new AnimatedSprite(
       officeLeftPanelCanvas,
-      NightAssetPaths.LEFT_DOOR_BUTTON,
+      Images.get(NightAssetIds.LEFT_DOOR_BUTTON),
       1,
       {
         frameWidth: 92,
@@ -674,7 +674,7 @@ class NightScene extends BaseScene {
 
     this.rightControlPanelSprite = new AnimatedSprite(
       officeRightPanelCanvas,
-      NightAssetPaths.RIGHT_DOOR_BUTTON,
+      Images.get(NightAssetIds.RIGHT_DOOR_BUTTON),
       1,
       {
         frameWidth: 92,
@@ -689,7 +689,7 @@ class NightScene extends BaseScene {
 
     this.usageSprite = new AnimatedSprite(
       nightUsageCanvas,
-      NightAssetPaths.USAGE_METER,
+      Images.get(NightAssetIds.USAGE_METER),
       1,
       {
         frameWidth: 103,
@@ -706,7 +706,7 @@ class NightScene extends BaseScene {
 
     this.monitorUsageSprite = new AnimatedSprite(
       monitorUsageCanvas,
-      NightAssetPaths.USAGE_METER,
+      Images.get(NightAssetIds.USAGE_METER),
       1,
       {
         frameWidth: 103,
@@ -778,10 +778,10 @@ class NightScene extends BaseScene {
   }
 
   ensureBackgroundAmbienceSound() {
-    if (!NightAssetPaths.BACKGROUND_AMBIENCE) return;
+    if (!NightAssetPaths.BACKGROUND_AMBIENCE_SOUND) return;
 
-    if (!Sound.sounds[this.backgroundAmbienceSoundId]) {
-      Sound.add(this.backgroundAmbienceSoundId, NightAssetPaths.BACKGROUND_AMBIENCE, {
+    if (!Sounds.has(NightAssetIds.BACKGROUND_AMBIENCE_SOUND)) {
+      Sounds.add(NightAssetIds.BACKGROUND_AMBIENCE_SOUND, NightAssetPaths.BACKGROUND_AMBIENCE_SOUND, {
         loop: true,
         volume: 1
       });
@@ -900,21 +900,21 @@ class NightScene extends BaseScene {
   }
 
   playBackgroundAmbience() {
-    if (!NightAssetPaths.BACKGROUND_AMBIENCE) return;
+    if (!NightAssetPaths.BACKGROUND_AMBIENCE_SOUND) return;
     this.ensureBackgroundAmbienceSound();
-    Sound.play(this.backgroundAmbienceSoundId);
+    Sound.play(NightAssetIds.BACKGROUND_AMBIENCE_SOUND);
   }
 
   stopBackgroundAmbience() {
-    if (!Sound.sounds[this.backgroundAmbienceSoundId]) return;
-    Sound.stop(this.backgroundAmbienceSoundId);
+    if (!Sounds.has(NightAssetIds.BACKGROUND_AMBIENCE_SOUND)) return;
+    Sound.stop(NightAssetIds.BACKGROUND_AMBIENCE_SOUND);
   }
 
   ensureFanHumSound() {
     if (!NightAssetPaths.FAN_HUM) return;
 
-    if (!Sound.sounds[this.fanHumSoundId]) {
-      Sound.add(this.fanHumSoundId, NightAssetPaths.FAN_HUM, {
+    if (!Sounds.has(NightAssetIds.FAN_HUM_SOUND)) {
+      Sounds.add(NightAssetIds.FAN_HUM_SOUND, NightAssetPaths.FAN_HUM, {
         loop: true,
         volume: 0.2
       });
@@ -924,12 +924,12 @@ class NightScene extends BaseScene {
   playFanHum() {
     if (!NightAssetPaths.FAN_HUM) return;
     this.ensureFanHumSound();
-    Sound.play(this.fanHumSoundId);
+    Sound.play(NightAssetIds.FAN_HUM_SOUND);
   }
 
   stopFanHum() {
-    if (!Sound.sounds[this.fanHumSoundId]) return;
-    Sound.stop(this.fanHumSoundId);
+    if (!Sounds.has(NightAssetIds.FAN_HUM_SOUND)) return;
+    Sound.stop(NightAssetIds.FAN_HUM_SOUND);
   }
 
   updatePhoneGuyMuteButton() {
@@ -983,7 +983,7 @@ class NightScene extends BaseScene {
       this.phoneGuyMuteHideTimeout = null;
     }
 
-    const howl = Sound.sounds[soundId];
+    const howl = Sounds.get(soundId);
     if (!howl || typeof howl.duration !== 'function') return;
 
     const durationMs = Math.max(0, howl.duration() * 1000) * 0.9;
@@ -1041,14 +1041,14 @@ class NightScene extends BaseScene {
   }
 
   ensurePhoneGuySound() {
-    if (!this.config?.phoneGuy) return null;
+    if (!this.config?.phoneGuy.src) return null;
 
-    const soundId = this.getPhoneGuySoundId();
+    const soundId = this.config?.phoneGuy.id;
 
     this.phoneGuySoundId = soundId;
 
-    if (!Sound.sounds[soundId]) {
-      Sound.add(soundId, this.config.phoneGuy, {
+    if (!Sounds.has(soundId)) {
+      Sounds.add(soundId, this.config.phoneGuy.src, {
         loop: false,
         volume: 0.5
       });
@@ -1082,8 +1082,8 @@ class NightScene extends BaseScene {
   ensureFreddyNoseSound() {
     if (!NightAssetPaths.FREDDY_NOSE_SOUND) return;
 
-    if (!Sound.sounds['freddy-nose']) {
-      Sound.add('freddy-nose', NightAssetPaths.FREDDY_NOSE_SOUND, {
+    if (!Sounds.has(NightAssetIds.FREDDY_NOSE_SOUND)) {
+      Sounds.add(NightAssetIds.FREDDY_NOSE_SOUND, NightAssetPaths.FREDDY_NOSE_SOUND, {
         loop: false,
         volume: 0.5
       });
@@ -1092,7 +1092,7 @@ class NightScene extends BaseScene {
 
   onFreddyNoseClick() {
     this.ensureFreddyNoseSound();
-    Sound.play('freddy-nose');
+    Sound.play(NightAssetIds.FREDDY_NOSE_SOUND);
   }
 
   setOfficeOffset(offsetX = 0) {
@@ -1295,8 +1295,8 @@ class NightScene extends BaseScene {
   }
 
   ensureDoorToggleSound() {
-    if (!Sound.sounds['door-toggle']) {
-      Sound.add('door-toggle', NightAssetPaths.DOOR_TOGGLE_SOUND, {
+    if (!Sounds.has(NightAssetIds.DOOR_TOGGLE_SOUND)) {
+      Sounds.add(NightAssetIds.DOOR_TOGGLE_SOUND, NightAssetPaths.DOOR_TOGGLE_SOUND, {
         loop: false,
         volume: 0.4
       });
@@ -1307,14 +1307,14 @@ class NightScene extends BaseScene {
     if (!NightAssetPaths.DOOR_TOGGLE_SOUND) return;
 
     this.ensureDoorToggleSound();
-    Sound.play('door-toggle');
+    Sound.play(NightAssetIds.DOOR_TOGGLE_SOUND);
   }
 
   ensureLightSounds() {
     if (!NightAssetPaths.LIGHT_ON_SOUND) return;
 
-    if (!Sound.sounds[this.lightSoundId]) {
-      Sound.add(this.lightSoundId, NightAssetPaths.LIGHT_ON_SOUND, {
+    if (!Sounds.has(NightAssetIds.LIGHT_ON_SOUND)) {
+      Sounds.add(NightAssetIds.LIGHT_ON_SOUND, NightAssetPaths.LIGHT_ON_SOUND, {
         loop: false,
         volume: 0.35
       });
@@ -1324,13 +1324,13 @@ class NightScene extends BaseScene {
   playLightOnSound() {
     if (!NightAssetPaths.LIGHT_ON_SOUND) return;
     this.ensureLightSounds();
-    Sound.stop(this.lightSoundId);
-    Sound.play(this.lightSoundId);
+    Sound.stop(NightAssetIds.LIGHT_ON_SOUND);
+    Sound.play(NightAssetIds.LIGHT_ON_SOUND);
   }
 
   stopLightSound() {
-    if (!Sound.sounds[this.lightSoundId]) return;
-    Sound.stop(this.lightSoundId);
+    if (!Sounds.has(NightAssetIds.LIGHT_ON_SOUND)) return;
+    Sound.stop(NightAssetIds.LIGHT_ON_SOUND);
   }
 
   queueLightFlicker(callback, delay) {
@@ -1538,8 +1538,8 @@ class NightScene extends BaseScene {
   }
 
   ensureMonitorSounds() {
-    if (NightAssetPaths.MONITOR_TOGGLE_SOUND && !Sound.sounds[this.monitorToggleSoundId]) {
-      Sound.add(this.monitorToggleSoundId, NightAssetPaths.MONITOR_TOGGLE_SOUND, {
+    if (NightAssetPaths.MONITOR_TOGGLE_SOUND && !Sounds.has(NightAssetIds.MONITOR_TOGGLE_SOUND)) {
+      Sounds.add(NightAssetIds.MONITOR_TOGGLE_SOUND, NightAssetPaths.MONITOR_TOGGLE_SOUND, {
         loop: false,
         volume: 0.45
       });
@@ -1548,17 +1548,16 @@ class NightScene extends BaseScene {
 
   playMonitorToggleSound() {
     this.ensureMonitorSounds();
-    if (Sound.sounds[this.monitorToggleSoundId]) {
-      Sound.stop(this.monitorToggleSoundId);
-      Sound.playOnce(this.monitorToggleSoundId);
+    if (Sounds.has(NightAssetIds.MONITOR_TOGGLE_SOUND)) {
+      Sound.stop(NightAssetIds.MONITOR_TOGGLE_SOUND);
+      Sound.playOnce(NightAssetIds.MONITOR_TOGGLE_SOUND);
     }
   }
 
   setFanHumVolume(volume) {
-    const howl = Sound.sounds[this.fanHumSoundId];
-    if (!howl) return;
+    if (!Sounds.has(NightAssetIds.FAN_HUM_SOUND)) return;
 
-    howl.volume(volume);
+    Sound.setVolume(NightAssetIds.FAN_HUM_SOUND, volume);
   }
 
   async onCameraButtonClick(event) {

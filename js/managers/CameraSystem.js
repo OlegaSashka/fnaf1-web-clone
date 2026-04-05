@@ -1,5 +1,5 @@
 import AnimatedSprite from '../AnimatedSprite.js';
-import { cameraConfigs } from '../config/CameraConfig.js';
+import { CameraConfigs } from '../config/CameraConfigs.js';
 
 class CameraSystem {
   constructor(options = {}) {
@@ -15,11 +15,11 @@ class CameraSystem {
     this.cameraSprite = null;
     this.specialAnimationSprite = null;
 
-    this.cameraConfigs = cameraConfigs;
+    this.CameraConfigs = CameraConfigs;
   }
 
   getCurrentConfig() {
-    return this.cameraConfigs[this.currentCameraId] ?? null;
+    return this.CameraConfigs[this.currentCameraId] ?? null;
   }
 
   getDefaultStateKey(config) {
@@ -132,7 +132,7 @@ class CameraSystem {
   }
 
   async setCurrentCamera(cameraId, stateKey = null) {
-    if (!this.cameraConfigs[cameraId]) return;
+    if (!this.CameraConfigs[cameraId]) return;
 
     this.currentCameraId = cameraId;
 

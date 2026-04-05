@@ -15,8 +15,7 @@ import SceneTransitionManager from '../managers/SceneTransitionManager.js';
 
 import { SceneNames } from '../config/SceneNames.js';
 
-import { TransitionAssets } from '../config/TransitionAssets.js';
-import { TransitionAssetIds } from '../config/TransitionAssets.js';
+import { TransitionAssets, TransitionAssetIds} from '../config/TransitionAssets.js';
 import { TRANSITION_ASSETS } from '../config/TransitionAssets.js';
 
 import { MenuAssetIds } from '../config/MenuAsstets.js';
@@ -153,7 +152,7 @@ class MenuScene extends BaseScene {
     }
 
     Sound.stop(MenuAssetIds.MUSIC_MENU);
-    Sound.stop(MenuAssetIds.MUSIC_TV);
+    Sound.stop(TransitionAssetIds.MUSIC_TV_SOUND);
 
     if (newGameBtn) {
       newGameBtn.removeEventListener('click', this.onNewGameClick);
@@ -263,7 +262,7 @@ class MenuScene extends BaseScene {
     });
 
     Sound.play(MenuAssetIds.MUSIC_MENU);
-    Sound.play(MenuAssetIds.MUSIC_TV);
+    Sound.play(TransitionAssetIds.MUSIC_TV_SOUND);
 
     this.liveStarted = true;
   }
@@ -355,7 +354,7 @@ class MenuScene extends BaseScene {
   }
 
   onHover() {
-    Sound.play(MenuAssetIds.MENU_HOVER);
+    Sound.play(TransitionAssetIds.BLIP);
   }
 
   ensureContinueHint() {

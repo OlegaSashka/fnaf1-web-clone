@@ -17,6 +17,8 @@ export const NightAssetIds = Object.freeze({
   LIGHT_ON_SOUND: 'light-on',
   FREDDY_NOSE_SOUND: 'freddy-nose',
   MONITOR_TOGGLE_SOUND: 'monitor-toggle-sound',
+  FAN_HUM_SOUND: 'fan-hum-sound',
+  BACKGROUND_AMBIENCE_SOUND: 'background-ambience-sound',
 
   CAM_1A: 'cam-1a',
   CAM_1B: 'cam-1b',
@@ -50,8 +52,8 @@ export const NightAssetPaths = Object.freeze({
   LIGHT_ON_SOUND: 'assets/sounds/light/light-on.wav',
   FREDDY_NOSE_SOUND: 'assets/sounds/FreddyNose/freddy-nose-honk.wav',
   FAN_HUM: 'assets/sounds/fan/FanHum.wav',
-  BACKGROUND_AMBIENCE: 'assets/sounds/ambience/background-ambience.wav',
   MONITOR_TOGGLE_SOUND: 'assets/sounds/camera/monitor-toggle.wav',
+  BACKGROUND_AMBIENCE_SOUND: 'assets/sounds/ambience/background-ambience.wav',
 
   USAGE_METER: 'assets/images/camera/PowerUsege_103x32.png',
 
@@ -91,6 +93,8 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'audio', id: NightAssetIds.LIGHT_ON_SOUND, src: NightAssetPaths.LIGHT_ON_SOUND, options: { volume: 0.35 } },
   { type: 'audio', id: NightAssetIds.FREDDY_NOSE_SOUND, src: NightAssetPaths.FREDDY_NOSE_SOUND, options: { volume: 0.5 } },
   { type: 'audio', id: NightAssetIds.MONITOR_TOGGLE_SOUND, src: NightAssetPaths.MONITOR_TOGGLE_SOUND, options: { volume: 0.45 } },
+  { type: 'audio', id: NightAssetIds.FAN_HUM_SOUND, src: NightAssetPaths.FAN_HUM, options: {loop:true, volume: 0.2 } },
+  { type: 'audio', id: NightAssetIds.BACKGROUND_AMBIENCE_SOUND, src: NightAssetPaths.BACKGROUND_AMBIENCE_SOUND, options: {loop:true, volume: 0.5 } },
 
   { type: 'image', id: NightAssetIds.CAM_1A, src: NightAssetPaths.CAM_1A },
   { type: 'image', id: NightAssetIds.CAM_1B, src: NightAssetPaths.CAM_1B },

@@ -1,5 +1,6 @@
 import AnimatedSprite from '../AnimatedSprite.js';
 import Sound from './SoundManager.js';
+import Sounds from './SoundLibrary.js';
 
 class LoadingScreen {
   static screenClickHandler = null;
@@ -346,8 +347,8 @@ class LoadingScreen {
 
     this.effectSprite = new AnimatedSprite(effectCanvas, spriteSheet, fps);
 
-    if (sound?.id && sound?.src && !Sound.sounds[sound.id]) {
-      Sound.add(sound.id, sound.src, {
+    if (sound?.id && sound?.src && !Sounds.has(sound.id)) {
+      Sounds.add(sound.id, sound.src, {
         volume: sound.volume ?? 1,
         loop: sound.loop ?? false
       });

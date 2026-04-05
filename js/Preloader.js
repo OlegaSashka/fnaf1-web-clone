@@ -33,6 +33,18 @@ class Preloader {
           return;
         }
 
+        if (Sounds.has(asset.id)) {
+          const existing = Sounds.get(asset.id);
+
+          resolve({
+            id: asset.id,
+            src: asset.src,
+            type: 'audio',
+            sound: existing
+          });
+          return;
+        }
+
         const sound = Sounds.add(asset.id, asset.src, asset.options ?? {});
 
         if (!sound) {
@@ -44,7 +56,8 @@ class Preloader {
           resolve({
             id: asset.id,
             src: asset.src,
-            type: 'audio'
+            type: 'audio',
+            sound
           });
           return;
         }
@@ -53,7 +66,8 @@ class Preloader {
           resolve({
             id: asset.id,
             src: asset.src,
-            type: 'audio'
+            type: 'audio',
+            sound
           });
         });
 

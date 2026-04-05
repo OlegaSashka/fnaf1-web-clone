@@ -8,7 +8,10 @@ export const NightConfigs = Object.freeze({
       duration: 4000
     },
 
-    phoneGuy: 'assets/sounds/PhoneGuy/night1.wav',
+    phoneGuy: {
+      id: 'phone-guy-night-1',
+      src: 'assets/sounds/PhoneGuy/night1.wav'
+    },
 
     phoneGuyUi: {
       muteShowDelay: 19000
@@ -44,7 +47,10 @@ export const NightConfigs = Object.freeze({
       duration: 4000
     },
 
-    phoneGuy: 'assets/sounds/PhoneGuy/night2.wav',
+    phoneGuy: {
+      id: 'phone-guy-night-2',
+      src: 'assets/sounds/PhoneGuy/night2.wav'
+    },
 
     phoneGuyUi: {
       muteShowDelay: 19000
@@ -79,7 +85,10 @@ export const NightConfigs = Object.freeze({
       duration: 4000
     },
 
-    phoneGuy: 'assets/sounds/PhoneGuy/night3.wav',
+    phoneGuy: {
+      id: 'phone-guy-night-3',
+      src: 'assets/sounds/PhoneGuy/night3.wav'
+    },
 
     phoneGuyUi: {
       muteShowDelay: 20000
@@ -114,7 +123,10 @@ export const NightConfigs = Object.freeze({
       duration: 4000
     },
 
-    phoneGuy: 'assets/sounds/PhoneGuy/night4.wav',
+    phoneGuy: {
+      id: 'phone-guy-night-4',
+      src: 'assets/sounds/PhoneGuy/night4.wav'
+    },
 
     phoneGuyUi: {
       muteShowDelay: 17000
@@ -152,7 +164,10 @@ export const NightConfigs = Object.freeze({
       duration: 4000
     },
 
-    phoneGuy: 'assets/sounds/PhoneGuy/night5.wav',
+    phoneGuy: {
+      id: 'phone-guy-night-5',
+      src: 'assets/sounds/PhoneGuy/night5.wav'
+    },
 
     phoneGuyUi: {
       muteShowDelay: 17000

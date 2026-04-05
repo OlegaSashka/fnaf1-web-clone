@@ -1,6 +1,6 @@
 import { NightAssetPaths } from './NightAssets.js';
 
-export const cameraConfigs = {
+export const CameraConfigs = {
   '1A': {
           name: 'Show Stage',
           buttonId: 'cam-btn-1a',
@@ -160,6 +160,6 @@ export const cameraConfigs = {
         }
 };
 
-export const cameraButtonIds = Object.values(cameraConfigs)
+export const cameraButtonIds = Object.values(CameraConfigs)
   .map(cfg => cfg.buttonId)
   .filter(Boolean);
