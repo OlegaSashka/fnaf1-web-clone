@@ -17,6 +17,8 @@ import AnimatedSprite from '../AnimatedSprite.js';
 
 import Sound from '../managers/SoundManager.js';
 
+import CameraSystem from '../camera/CameraSystem.js';
+
 class NightScene extends BaseScene {
   constructor(game, config) {
     super(game);
@@ -89,6 +91,8 @@ class NightScene extends BaseScene {
     this.monitorCloseSprite = null;
 
     this.monitorUsageSprite = null;
+
+    this.cameraOffsetX = 0;
 
     this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
     this.onMonitorCloseMouseEnter = this.onMonitorCloseMouseEnter.bind(this);

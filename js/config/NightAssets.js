@@ -25,6 +25,18 @@ export const NightAssetPaths = Object.freeze({
   MONITOR_TOGGLE: 'assets/images/camera/monitor-toggle_598x45.png',
 
   MONITOR_TRANSITION: 'assets/images/camera/cameraOpenClose.png',
+
+  CAM_1A: 'assets/images/camera/cam-1a.png',
+  CAM_1B: 'assets/images/camera/cam-1b.png',
+  CAM_1C: 'assets/images/camera/cam-1c.png',
+  CAM_2A: 'assets/images/camera/cam-2a.png',
+  CAM_2A_FOXY_RUN_ANIM: 'assets/images/camera/cam-2A-foxy.png',
+  CAM_2B: 'assets/images/camera/cam-2b.png',
+  CAM_3: 'assets/images/camera/cam-3.png',
+  CAM_4A: 'assets/images/camera/cam-4a.png',
+  CAM_4B: 'assets/images/camera/cam-4b.png',
+  CAM_5: 'assets/images/camera/cam-5.png',
+  CAM_7: 'assets/images/camera/cam-7.png',
 });
 
 export const COMMON_NIGHT_ASSETS = [
@@ -45,4 +57,16 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'audio', src: NightAssetPaths.LIGHT_ON_SOUND },
   { type: 'audio', src: NightAssetPaths.FREDDY_NOSE_SOUND },
   { type: 'audio', src: NightAssetPaths.MONITOR_TOGGLE_SOUND },
+
+  { type: 'image', src: NightAssetPaths.CAM_1A },
+  { type: 'image', src: NightAssetPaths.CAM_1B },
+  { type: 'image', src: NightAssetPaths.CAM_1C },
+  { type: 'image', src: NightAssetPaths.CAM_2A },
+  { type: 'image', src: NightAssetPaths.CAM_2A_FOXY_RUN_ANIM},
+  { type: 'image', src: NightAssetPaths.CAM_2B },
+  { type: 'image', src: NightAssetPaths.CAM_3 },
+  { type: 'image', src: NightAssetPaths.CAM_4A },
+  { type: 'image', src: NightAssetPaths.CAM_4B },
+  { type: 'image', src: NightAssetPaths.CAM_5 },
+  { type: 'image', src: NightAssetPaths.CAM_7 },
 ];
