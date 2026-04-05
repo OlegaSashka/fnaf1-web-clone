@@ -1,142 +1,144 @@
-// js/SoundManager.js
+import Sounds from './SoundLibrary.js';
 
 class SoundManager {
   constructor() {
-    this.sounds = {};      // хранилище всех звуков
-    this.muted = false;    // глобальный mute
-    this.masterVolume = 1; // глобальная громкость (0–1)
+    this.muted = false;
+    this.masterVolume = 1;
   }
 
-  /**
-   * Добавляет звук в менеджер
-   * @param {string} id — короткое имя для вызова (например 'door-close')
-   * @param {string|string[]} src — путь к файлу или массив путей (для fallback)
-   * @param {object} [options] — настройки Howl (volume, loop, etc.)
-   */
-  add(id, src, options = {}) {
-    if (this.sounds[id]) {
-      console.warn(`Звук с id "${id}" уже существует, перезаписываем`);
-    }
+  #applyPlaybackOptions(sound, meta, options = {}) {
+    const volume = options.volume ?? meta?.baseVolume ?? 0.5;
+    const loop = options.loop ?? meta?.baseLoop ?? false;
 
-    this.sounds[id] = new Howl({
-      src: Array.isArray(src) ? src : [src],
-      volume: options.volume ?? 1,
-      loop: options.loop ?? false,
-      preload: options.preload ?? true,
-      ...options
-    });
+    const safeVolume = Math.max(0, Math.min(1, volume));
 
-    console.log(`Добавлен звук: ${id} (${src})`);
+    sound.loop(loop);
+    sound.volume(safeVolume * this.masterVolume);
   }
 
-  /**
-   * Воспроизводит звук
-   * @param {string} id
-   * @returns {Howl|null} экземпляр или null, если звука нет
-   */
-  play(id) {
+  play(id, options = {}) {
     if (this.muted) return null;
-    const sound = this.sounds[id];
+
+    const sound = Sounds.get(id);
+    const meta = Sounds.getMeta(id);
+
     if (!sound) {
       console.warn(`Звук "${id}" не найден`);
       return null;
     }
-    sound.volume(this.masterVolume * (sound._volume || 1));
+
+    this.#applyPlaybackOptions(sound, meta, options);
     sound.play();
     return sound;
   }
 
-    /**
-     * Запускает звук ровно один раз:
-     * - если уже играет — ничего не делает
-     * - если закончился — запускает заново
-     * - если loop: true — всё равно играет один цикл (или до stop)
-     * @param {string} id
-     * @returns {Howl|null}
-     */
-    playOnce(id) {
+  playOnce(id, options = {}) {
     if (this.muted) return null;
 
-    const sound = this.sounds[id];
+    const sound = Sounds.get(id);
+    const meta = Sounds.getMeta(id);
+
     if (!sound) {
-        console.warn(`Звук "${id}" не найден`);
-        return null;
+      console.warn(`Звук "${id}" не найден`);
+      return null;
     }
 
-    // Ключ: проверяем playing() — если уже звучит, не трогаем
     if (sound.playing()) {
-        console.log(`Звук "${id}" уже играет — пропускаем`);
-        return sound;
+      return sound;
     }
 
-    // Устанавливаем громкость и запускаем
-    sound.volume(this.masterVolume * (sound._volume || 1));
+    this.#applyPlaybackOptions(sound, meta, {
+      ...options,
+      loop: false
+    });
+
     sound.play();
-
-    console.log(`Запущен звук "${id}" (один раз)`);
     return sound;
-    }
+  }
 
-  /**
-   * Останавливает конкретный звук
-   */
   stop(id) {
-    const sound = this.sounds[id];
+    const sound = Sounds.get(id);
     if (sound) sound.stop();
   }
 
-  /**
-   * Ставит на паузу
-   */
   pause(id) {
-    const sound = this.sounds[id];
+    const sound = Sounds.get(id);
     if (sound) sound.pause();
   }
 
-  /**
-   * Глобальный mute / unmute
-   */
   toggleMute() {
     this.muted = !this.muted;
-    Object.values(this.sounds).forEach(s => s.mute(this.muted));
-    console.log(`Звуки ${this.muted ? 'выключены' : 'включены'}`);
+    Object.values(Sounds.sounds).forEach(sound => sound.mute(this.muted));
   }
 
-  /**
-   * Устанавливает глобальную громкость (0–1)
-   */
   setMasterVolume(volume) {
     this.masterVolume = Math.max(0, Math.min(1, volume));
-    Object.values(this.sounds).forEach(s => {
-      s.volume(this.masterVolume * (s._volume || 1));
-    });
   }
 
-  /**
-   * Плавное затухание звука (fade out)
-   * @param {string} id
-   * @param {number} duration — в миллисекундах
-   */
-  fadeOut(id, duration = 1000) {
-    const sound = this.sounds[id];
+  setVolume(id, volume) {
+    const sound = Sounds.get(id);
     if (!sound) return;
+
+    const safeVolume = Math.max(0, Math.min(1, volume));
+    sound.volume(safeVolume * this.masterVolume);
+  }
+
+  resetVolume(id) {
+    const sound = Sounds.get(id);
+    const meta = Sounds.getMeta(id);
+    if (!sound || !meta) return;
+
+    sound.volume(meta.baseVolume * this.masterVolume);
+  }
+
+  setLoop(id, loop) {
+    const sound = Sounds.get(id);
+    if (!sound) return;
+
+    sound.loop(!!loop);
+  }
+
+  resetLoop(id) {
+    const sound = Sounds.get(id);
+    const meta = Sounds.getMeta(id);
+    if (!sound || !meta) return;
+
+    sound.loop(meta.baseLoop);
+  }
+
+  resetToBase(id) {
+    const sound = Sounds.get(id);
+    const meta = Sounds.getMeta(id);
+    if (!sound || !meta) return;
+
+    sound.loop(meta.baseLoop);
+    sound.volume(meta.baseVolume * this.masterVolume);
+  }
+
+  fadeOut(id, duration = 1000) {
+    const sound = Sounds.get(id);
+    if (!sound) return;
+
     sound.fade(sound.volume(), 0, duration);
     setTimeout(() => sound.stop(), duration);
   }
 
-  /**
-   * Плавное нарастание (fade in)
-   */
-  fadeIn(id, duration = 1000, targetVolume = 1) {
-    const sound = this.sounds[id];
+  fadeIn(id, duration = 1000, targetVolume = null) {
+    const sound = Sounds.get(id);
+    const meta = Sounds.getMeta(id);
     if (!sound) return;
+
+    const finalVolume = Math.max(
+      0,
+      Math.min(1, targetVolume ?? meta?.baseVolume ?? 0.5)
+    );
+
     sound.volume(0);
     sound.play();
-    sound.fade(0, targetVolume * this.masterVolume, duration);
+    sound.fade(0, finalVolume * this.masterVolume, duration);
   }
 }
 
-// Создаём глобальный менеджер (или экспортируем, если используешь modules)
 const Sound = new SoundManager();
 
 export default Sound;

@@ -1,6 +1,7 @@
 import BaseScene from './BaseScene.js';
 
 import Preloader from '../Preloader.js';
+import Images from '../managers/ImageLibrary.js';
 
 import { getNightConfig } from '../config/NightConfigs.js';
 import GameProgress from '../managers/GameProgress.js';
@@ -14,23 +15,14 @@ import SceneTransitionManager from '../managers/SceneTransitionManager.js';
 
 import { SceneNames } from '../config/SceneNames.js';
 
-import { TransitionImages } from '../config/TransitionAssets.js';
+import { TransitionAssets } from '../config/TransitionAssets.js';
+import { TransitionAssetIds } from '../config/TransitionAssets.js';
 import { TRANSITION_ASSETS } from '../config/TransitionAssets.js';
 
+import { MenuAssetIds } from '../config/MenuAsstets.js';
+import { MENU_ASSETS } from '../config/MenuAsstets.js';
+
 import NightScene from './NightScene.js';
-
-const BOOT_ASSETS = [
-  //для меню
-  { type: 'image', src: 'assets/images/ui/Background/Menu-freddy.png' },
-  { type: 'image', src: 'assets/images/ui/NoiseTV/Noise.png' },
-  //музыка
-  { type: 'audio', src: 'assets/sounds/music/main-darkness-music.wav' },
-  { type: 'audio', src: 'assets/sounds/music/static2-menu.wav' },
-  { type: 'audio', src: 'assets/sounds/ui/blip3.wav' },
-
-  //для экрана шагрузки
-  ...TRANSITION_ASSETS,
-];
 
 class MenuScene extends BaseScene {
   constructor(game) {
@@ -56,6 +48,129 @@ class MenuScene extends BaseScene {
     this.onHover = this.onHover.bind(this);
     this.onContinueEnter = this.onContinueEnter.bind(this);
     this.onContinueLeave = this.onContinueLeave.bind(this);
+  }
+
+  async enter() {
+    const isBootEntry = this.entryMode === 'boot';
+
+    const menuScreen = document.getElementById('menu-screen');
+    const gameScreen = document.getElementById('game-screen');
+
+    if (menuScreen) menuScreen.hidden = false;
+    if (gameScreen) gameScreen.hidden = true;
+
+    await SceneTransitionManager.go({
+      game: this.game,
+      skipSceneChange: true,
+
+      loading: {
+        background: '#000',
+        title: isBootEntry ? 'WARNING' : '',
+        text: isBootEntry
+          ? 'This game contains loud sounds, flashing lights and jump scares.'
+          : '',
+        uiMode: 'center',
+        showProgress: isBootEntry,
+        fadeOut: {
+          enabled: true,
+          from: 1,
+          to: 0,
+          duration: isBootEntry ? 300 : 500
+        }
+      },
+
+      preload: (onProgress) => this.preload(onProgress),
+
+      afterPreload: async () => {
+        await this.prepareStaticVisuals();
+        this.ensureContinueHint();
+        this.refreshContinueState();
+      },
+
+      confirm: isBootEntry
+        ? {
+            mode: 'button',
+            buttonText: 'Start'
+          }
+        : {
+            mode: 'auto',
+            minDuration: 800
+          },
+
+      onFadeOutStart: async () => {
+        await this.startLiveVisuals();
+        this.bindMenuEvents();
+      }
+    });
+
+    this.entryMode = 'boot';
+  }
+
+  async exit() {
+    const menuContent = document.getElementById('menu-content');
+    const freddyCanvas = document.getElementById('freddy-canvas');
+    const staticCanvas = document.getElementById('static-canvas');
+    const blinkCanvas = document.getElementById('blink-canvas');
+    const sweepLine = document.getElementById('scanline-sweep');
+
+    const newGameBtn = document.querySelector('[data-action="new"]');
+    const continueBtn = document.querySelector('[data-action="continue"]');
+
+    if (menuContent) menuContent.style.display = 'none';
+    if (freddyCanvas) freddyCanvas.style.display = 'none';
+    if (staticCanvas) staticCanvas.style.display = 'none';
+    if (blinkCanvas) blinkCanvas.style.display = 'none';
+    if (sweepLine) sweepLine.style.display = 'none';
+
+    if (this.freddyEffects) {
+      this.freddyEffects.stop();
+      this.freddyEffects = null;
+    }
+
+    if (this.staticEffects) {
+      this.staticEffects.stop();
+      this.staticEffects = null;
+    }
+
+    if (this.freddySprite) {
+      this.freddySprite.stopMenuBehavior();
+      await this.freddySprite.showFrame(0);
+    }
+
+    if (this.noiseStatic) {
+      this.noiseStatic.stop();
+      await this.noiseStatic.showFrame(0);
+    }
+
+    if (this.blinkSprite) {
+      this.blinkSprite.stopBehavior();
+      await this.blinkSprite.showFrame(0);
+    }
+
+    if (this.sweepLine) {
+      this.sweepLine.stop();
+      this.sweepLine = null;
+    }
+
+    Sound.stop(MenuAssetIds.MUSIC_MENU);
+    Sound.stop(MenuAssetIds.MUSIC_TV);
+
+    if (newGameBtn) {
+      newGameBtn.removeEventListener('click', this.onNewGameClick);
+      newGameBtn.removeEventListener('mouseenter', this.onHover);
+    }
+
+    if (continueBtn) {
+      continueBtn.removeEventListener('click', this.onContinueClick);
+      continueBtn.removeEventListener('mouseenter', this.onHover);
+      continueBtn.removeEventListener('mouseenter', this.onContinueEnter);
+      continueBtn.removeEventListener('mouseleave', this.onContinueLeave);
+    }
+
+    this.hideContinueHint();
+
+    this.liveStarted = false;
+    this.staticPrepared = false;
   }
 
   hideMenuVisualsForTransition() {
@@ -132,24 +247,6 @@ class MenuScene extends BaseScene {
       baseBrightness: 1
     });
 
-    if (!Sound.sounds['music-menu']) {
-      Sound.add('music-menu', 'assets/sounds/music/main-darkness-music.wav', {
-        loop: true,
-        volume: 0.6
-      });
-    }
-
-    if (!Sound.sounds['music-tv']) {
-      Sound.add('music-tv', 'assets/sounds/music/static2-menu.wav', {
-        loop: true,
-        volume: 0.3
-      });
-    }
-
-    if (!Sound.sounds['menu-hover']) {
-      Sound.add('menu-hover', 'assets/sounds/ui/blip3.wav', { volume: 0.3 });
-    }
-
     this.freddySprite.randomMenuBehavior();
     this.noiseStatic.play();
 
@@ -165,8 +262,8 @@ class MenuScene extends BaseScene {
       uniqueFrames: true
     });
 
-    Sound.play('music-menu');
-    Sound.play('music-tv');
+    Sound.play(MenuAssetIds.MUSIC_MENU);
+    Sound.play(MenuAssetIds.MUSIC_TV);
 
     this.liveStarted = true;
   }
@@ -195,11 +292,20 @@ class MenuScene extends BaseScene {
     staticCanvas.height = this.game.height;
     blinkCanvas.width = this.game.width;
     blinkCanvas.height = this.game.height;
+    
+    const freddyImage = Images.get(MenuAssetIds.MENU_FREDDY);
+    const noiseImage = Images.get(MenuAssetIds.MENU_NOISE);
+    const blinkImage = Images.get(MenuAssetIds.MENU_BLINK);
+
+    if (!freddyImage || !noiseImage || !blinkImage) {
+      console.error('[MenuScene] Не найдены предзагруженные изображения меню');
+      return;
+    }
 
     if (!this.freddySprite) {
       this.freddySprite = new AnimatedSprite(
         freddyCanvas,
-        'assets/images/ui/Background/Menu-freddy.png',
+        freddyImage,
         20
       );
     }
@@ -207,7 +313,7 @@ class MenuScene extends BaseScene {
     if (!this.noiseStatic) {
       this.noiseStatic = new AnimatedSprite(
         staticCanvas,
-        'assets/images/ui/NoiseTV/Noise.png',
+        noiseImage,
         40
       );
     }
@@ -215,7 +321,7 @@ class MenuScene extends BaseScene {
     if (!this.blinkSprite) {
       this.blinkSprite = new AnimatedSprite(
         blinkCanvas,
-        'assets/images/ui/Blink/Menu-blink.png',
+        blinkImage,
         2
       );
     }
@@ -227,62 +333,6 @@ class MenuScene extends BaseScene {
     this.staticPrepared = true;
   }
 
-  async enter() {
-    const isBootEntry = this.entryMode === 'boot';
-
-    const menuScreen = document.getElementById('menu-screen');
-    const gameScreen = document.getElementById('game-screen');
-
-    if (menuScreen) menuScreen.hidden = false;
-    if (gameScreen) gameScreen.hidden = true;
-
-    await SceneTransitionManager.go({
-      game: this.game,
-      skipSceneChange: true,
-
-      loading: {
-        background: '#000',
-        title: isBootEntry ? 'WARNING' : '',
-        text: isBootEntry
-          ? 'This game contains loud sounds, flashing lights and jump scares.'
-          : '',
-        uiMode: 'center',
-        showProgress: isBootEntry,
-        fadeOut: {
-          enabled: true,
-          from: 1,
-          to: 0,
-          duration: isBootEntry ? 300 : 500
-        }
-      },
-
-      preload: (onProgress) => this.preload(onProgress),
-
-      afterPreload: async () => {
-        await this.prepareStaticVisuals();
-        this.ensureContinueHint();
-        this.refreshContinueState();
-      },
-
-      confirm: isBootEntry
-        ? {
-            mode: 'button',
-            buttonText: 'Start'
-          }
-        : {
-            mode: 'auto',
-            minDuration: 800
-          },
-
-      onFadeOutStart: async () => {
-        await this.startLiveVisuals();
-        this.bindMenuEvents();
-      }
-    });
-
-    this.entryMode = 'boot';
-  }
-
   onContinueEnter() {
     this.showContinueHint();
   }
@@ -292,80 +342,20 @@ class MenuScene extends BaseScene {
   }
 
   async preload(onProgress) {
-    await Preloader.loadAssets(BOOT_ASSETS, onProgress, {
-      continueOnError: true
-    });
-  }
-
-  async exit() {
-    const menuContent = document.getElementById('menu-content');
-    const freddyCanvas = document.getElementById('freddy-canvas');
-    const staticCanvas = document.getElementById('static-canvas');
-    const blinkCanvas = document.getElementById('blink-canvas');
-    const sweepLine = document.getElementById('scanline-sweep');
-
-    const newGameBtn = document.querySelector('[data-action="new"]');
-    const continueBtn = document.querySelector('[data-action="continue"]');
-
-    if (menuContent) menuContent.style.display = 'none';
-    if (freddyCanvas) freddyCanvas.style.display = 'none';
-    if (staticCanvas) staticCanvas.style.display = 'none';
-    if (blinkCanvas) blinkCanvas.style.display = 'none';
-    if (sweepLine) sweepLine.style.display = 'none';
-
-    if (this.freddyEffects) {
-      this.freddyEffects.stop();
-      this.freddyEffects = null;
-    }
-
-    if (this.staticEffects) {
-      this.staticEffects.stop();
-      this.staticEffects = null;
-    }
-
-    if (this.freddySprite) {
-      this.freddySprite.stopMenuBehavior();
-      await this.freddySprite.showFrame(0);
-    }
-
-    if (this.noiseStatic) {
-      this.noiseStatic.stop();
-      await this.noiseStatic.showFrame(0);
-    }
-
-    if (this.blinkSprite) {
-      this.blinkSprite.stopBehavior();
-      await this.blinkSprite.showFrame(0);
-    }
-
-    if (this.sweepLine) {
-      this.sweepLine.stop();
-      this.sweepLine = null;
-    }
-
-    Sound.stop('music-menu');
-    Sound.stop('music-tv');
-
-    if (newGameBtn) {
-      newGameBtn.removeEventListener('click', this.onNewGameClick);
-      newGameBtn.removeEventListener('mouseenter', this.onHover);
-    }
-
-    if (continueBtn) {
-      continueBtn.removeEventListener('click', this.onContinueClick);
-      continueBtn.removeEventListener('mouseenter', this.onHover);
-      continueBtn.removeEventListener('mouseenter', this.onContinueEnter);
-      continueBtn.removeEventListener('mouseleave', this.onContinueLeave);
-    }
-
-    this.hideContinueHint();
-
-    this.liveStarted = false;
-    this.staticPrepared = false;
+    await Preloader.loadAssets(
+      [
+        ...MENU_ASSETS,
+        ...TRANSITION_ASSETS
+      ],
+      onProgress,
+      {
+        continueOnError: true
+      }
+    );
   }
 
   onHover() {
-    Sound.play('menu-hover');
+    Sound.play(MenuAssetIds.MENU_HOVER);
   }
 
   ensureContinueHint() {
@@ -449,7 +439,7 @@ class MenuScene extends BaseScene {
       preload: null,
 
       loading: {
-        image: TransitionImages.NEW_GAME,
+        image: TransitionAssets.NEW_GAME,
         background: '#000',
         title: '',
         text: '',

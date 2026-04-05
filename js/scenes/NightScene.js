@@ -19,6 +19,8 @@ import Sound from '../managers/SoundManager.js';
 
 import CameraSystem from '../managers/СameraSystem.js';
 
+import { cameraButtonIds } from '../config/CameraConfig.js';
+
 class NightScene extends BaseScene {
   constructor(game, config) {
     super(game);
@@ -92,8 +94,6 @@ class NightScene extends BaseScene {
 
     this.monitorUsageSprite = null;
 
-    this.cameraOffsetX = 0;
-
     this.cameraSystem = null;
     this.cameraOffsetX = 0;
     this.currentCameraId = '1A';
@@ -113,19 +113,7 @@ class NightScene extends BaseScene {
     this.onPhoneGuyMuteClick = this.onPhoneGuyMuteClick.bind(this);
     this.onFreddyNoseClick = this.onFreddyNoseClick.bind(this);
 
-    this.cameraButtonIds = [
-      'cam-btn-1a',
-      'cam-btn-1b',
-      'cam-btn-1c',
-      'cam-btn-2a',
-      'cam-btn-2b',
-      'cam-btn-3',
-      'cam-btn-4a',
-      'cam-btn-4b',
-      'cam-btn-5',
-      'cam-btn-6',
-      'cam-btn-7'
-    ];
+    this.cameraButtonIds = [...cameraButtonIds];
   }
 
   async preload(onProgress) {

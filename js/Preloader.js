@@ -1,5 +1,5 @@
-import Sound from './managers/SoundManager.js';
-import Images from './managers/ImageManager.js';
+import Sounds from './managers/SoundLibrary.js';
+import Images from './managers/ImageLibrary.js';
 
 class Preloader {
   static loadImage(asset) {
@@ -28,11 +28,12 @@ class Preloader {
   static loadAudio(asset) {
     return new Promise((resolve, reject) => {
       try {
-        if (asset.id) {
-          Sound.add(asset.id, asset.src, asset.options ?? {});
+        if (!asset.id) {
+          reject(new Error(`Для audio ассета нужен id: ${asset.src}`));
+          return;
         }
 
-        const sound = asset.id ? Sound.sounds[asset.id] : null;
+        const sound = Sounds.add(asset.id, asset.src, asset.options ?? {});
 
         if (!sound) {
           reject(new Error(`Не удалось зарегистрировать звук: ${asset.src}`));
@@ -41,7 +42,7 @@ class Preloader {
 
         if (sound.state && sound.state() === 'loaded') {
           resolve({
-            id: asset.id ?? null,
+            id: asset.id,
             src: asset.src,
             type: 'audio'
           });
@@ -50,7 +51,7 @@ class Preloader {
 
         sound.once('load', () => {
           resolve({
-            id: asset.id ?? null,
+            id: asset.id,
             src: asset.src,
             type: 'audio'
           });

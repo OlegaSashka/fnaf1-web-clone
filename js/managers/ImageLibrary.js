@@ -1,11 +1,11 @@
-class ImageManager {
+class ImageLibrary {
   constructor() {
     this.images = {};
   }
 
   add(id, img) {
     if (!id || !img) {
-      console.warn('[ImageManager] add: нужен id и img');
+      console.warn('[ImageLibrary] add: нужен id и img');
       return null;
     }
 
@@ -30,6 +30,6 @@ class ImageManager {
   }
 }
 
-const Images = new ImageManager();
+const Images = new ImageLibrary();
 
 export default Images;

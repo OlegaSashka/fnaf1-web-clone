@@ -3,6 +3,7 @@ import { NightAssetPaths } from './NightAssets.js';
 export const cameraConfigs = {
   '1A': {
           name: 'Show Stage',
+          buttonId: 'cam-btn-1a',
           image: NightAssetPaths.CAM_1A,
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -18,6 +19,7 @@ export const cameraConfigs = {
         },
   '1B': { 
           name: 'Dining Area', 
+          buttonId: 'cam-btn-1b',
           image: NightAssetPaths.CAM_1B,
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -33,6 +35,7 @@ export const cameraConfigs = {
         },
   '1C': { 
           name: 'Pirate Cove', 
+          buttonId: 'cam-btn-1c',
           image: NightAssetPaths.CAM_1C, 
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -46,6 +49,7 @@ export const cameraConfigs = {
         },
   '2A': { 
           name: 'West Hall', 
+          buttonId: 'cam-btn-2a',
           image: NightAssetPaths.CAM_2A,
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -61,6 +65,7 @@ export const cameraConfigs = {
         },
   '2B': { 
           name: 'W. Hall Corner', 
+          buttonId: 'cam-btn-2b',
           image: NightAssetPaths.CAM_2B,
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -75,6 +80,7 @@ export const cameraConfigs = {
         },
   '3':  { 
           name: 'Supply Closet', 
+          buttonId: 'cam-btn-3',
           image: NightAssetPaths.CAM_3,
           viewportMode: 'screen', // 'world' | 'screen'
           useCameraOffset: false,
@@ -85,6 +91,7 @@ export const cameraConfigs = {
         },
   '4A': { 
           name: 'East Hall',
+          buttonId: 'cam-btn-4a',
           image: NightAssetPaths.CAM_4A,
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -99,6 +106,7 @@ export const cameraConfigs = {
         },
   '4B': { 
           name: 'E. Hall Corner', 
+          buttonId: 'cam-btn-4b',
           image: NightAssetPaths.CAM_4B,
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -116,6 +124,7 @@ export const cameraConfigs = {
         },
   '5':  { 
           name: 'Backstage', 
+          buttonId: 'cam-btn-5',
           image: NightAssetPaths.CAM_5,
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -128,6 +137,7 @@ export const cameraConfigs = {
         },
   '6': {
           name: 'Kitchen',
+          buttonId: 'cam-btn-6',
           image: null,
           viewportMode: 'screen',
           useCameraOffset: false,
@@ -137,6 +147,7 @@ export const cameraConfigs = {
         },
   '7':  { 
           name: 'Restrooms', 
+          buttonId: 'cam-btn-7',
           image: NightAssetPaths.CAM_7,
           viewportMode: 'world', // 'world' | 'screen'
           useCameraOffset: true,
@@ -148,3 +159,7 @@ export const cameraConfigs = {
           }
         }
 };
+
+export const cameraButtonIds = Object.values(cameraConfigs)
+  .map(cfg => cfg.buttonId)
+  .filter(Boolean);
