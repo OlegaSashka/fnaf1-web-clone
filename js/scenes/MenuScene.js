@@ -293,7 +293,7 @@ class MenuScene extends BaseScene {
     blinkCanvas.height = this.game.height;
     
     const freddyImage = Images.get(MenuAssetIds.MENU_FREDDY);
-    const noiseImage = Images.get(MenuAssetIds.MENU_NOISE);
+    const noiseImage = Images.get(TransitionAssetIds.TV_NOISE);
     const blinkImage = Images.get(MenuAssetIds.MENU_BLINK);
 
     if (!freddyImage || !noiseImage || !blinkImage) {

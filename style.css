@@ -651,13 +651,20 @@ canvas {
   image-rendering: pixelated;
 }
 
-#phone-guy-mute-fo {
-  overflow: visible;
+#global-ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  display: none;
 }
 
 #phone-guy-mute-btn {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  width: 170px;
+  height: 44px;
   display: block;
   pointer-events: auto;
 
@@ -684,6 +691,11 @@ canvas {
 
 #phone-guy-mute-btn:hover {
   background: rgba(110, 110, 110, 0.92);
+}
+
+
+#phone-guy-mute-btn[hidden] {
+  display: none !important;
 }
 
 #monitor-toggle-fo {
@@ -766,7 +778,7 @@ canvas {
    ========================= */
 
 #monitor-ui-layer{
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 #monitor-ui-svg {
@@ -818,25 +830,47 @@ canvas {
 .monitor-cam-btn {
   width: 100%;
   height: 100%;
-  display: block;
-  pointer-events: auto;
-  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;   /* по вертикали в центр */
+  align-items: flex-start;   /* влево */
+
+  padding: 0 0 0 6px;        /* только левый отступ */
   margin: 0;
-  background: rgba(95, 95, 95, 0.85);
-  color: #d6d6d6;
-  border: 2px solid #9a9a9a;
-  border-radius: 3px;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: 0.04em;
+
+  background: #4b4b4e;
+  border: 3.5px solid #ffffff; /* толще рамка */
+  border-radius: 0;
+
+  box-shadow:
+    inset 0 0 0 1px #4b4b4e,
+    0 0 0 1px #4b4b4e;
+
+  color: #f3f3f3;
+  font-family: "Courier New", monospace;
+  font-size: 18px;
+  font-weight: 1000;
+  line-height: 0.8;
+  letter-spacing: -1px;
   text-transform: uppercase;
+  text-align: left;
+
   cursor: pointer;
+
+  pointer-events: auto;
 }
 
 .monitor-cam-btn:hover {
-  background: rgba(110, 110, 110, 0.92);
+  background: rgba(145, 145, 145, 0.96);
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.monitor-cam-btn.is-active {
+  background: rgba(235, 235, 235, 0.98);
+  color: #4b4b4e;
+  border-color: #ffffff;
 }
 
 #monitor-camera-name-text {
@@ -874,8 +908,28 @@ canvas {
   pointer-events: auto;
 }
 
-.monitor-cam-btn.is-active {
-  background: rgba(180, 180, 180, 0.95);
-  color: #111;
-  border-color: #fff;
+#camera-world {
+  z-index: 1;
+}
+
+#camera-static-canvas {
+  z-index: 2;
+  mix-blend-mode: screen;
+  opacity: 0.4;
+}
+
+#camera-blink-canvas {
+  z-index: 3;
+}
+
+#camera-world-canvas,
+#camera-static-canvas,
+#camera-blink-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  image-rendering: pixelated;
 }

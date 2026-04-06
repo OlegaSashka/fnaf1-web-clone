@@ -20,6 +20,8 @@ export const NightAssetIds = Object.freeze({
   FAN_HUM_SOUND: 'fan-hum-sound',
   BACKGROUND_AMBIENCE_SOUND: 'background-ambience-sound',
 
+  MONITOR_BLINK: 'menu-blink-camera',
+
   CAM_1A: 'cam-1a',
   CAM_1B: 'cam-1b',
   CAM_1C: 'cam-1c',
@@ -61,6 +63,8 @@ export const NightAssetPaths = Object.freeze({
 
   MONITOR_TRANSITION: 'assets/images/camera/cameraOpenClose.png',
 
+  MONITOR_BLINK:'assets/images/ui/Blink/Menu-blink-camera.png',
+
   CAM_1A: 'assets/images/camera/cam-1a.png',
   CAM_1B: 'assets/images/camera/cam-1b.png',
   CAM_1C: 'assets/images/camera/cam-1c.png',
@@ -88,6 +92,8 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'image', id: NightAssetIds.DOOR_SHEET, src: NightAssetPaths.DOOR_SHEET },
   { type: 'image', id: NightAssetIds.LEFT_DOOR_BUTTON, src: NightAssetPaths.LEFT_DOOR_BUTTON },
   { type: 'image', id: NightAssetIds.RIGHT_DOOR_BUTTON, src: NightAssetPaths.RIGHT_DOOR_BUTTON },
+
+  { type: 'image', id: NightAssetIds.MONITOR_BLINK, src: NightAssetPaths.MONITOR_BLINK},
 
   { type: 'audio', id: NightAssetIds.DOOR_TOGGLE_SOUND, src: NightAssetPaths.DOOR_TOGGLE_SOUND, options: { volume: 0.4 } },
   { type: 'audio', id: NightAssetIds.LIGHT_ON_SOUND, src: NightAssetPaths.LIGHT_ON_SOUND, options: { volume: 0.35 } },

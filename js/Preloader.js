@@ -4,6 +4,16 @@ import Images from './managers/ImageLibrary.js';
 class Preloader {
   static loadImage(asset) {
     return new Promise((resolve, reject) => {
+      if (asset.id && Images.has(asset.id)) {
+        resolve({
+          id: asset.id,
+          src: asset.src,
+          img: Images.get(asset.id),
+          type: 'image'
+        });
+        return;
+      }
+
       const img = new Image();
 
       img.onload = () => {

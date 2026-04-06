@@ -1,5 +1,9 @@
 import AnimatedSprite from '../AnimatedSprite.js';
 import { CameraConfigs } from '../config/CameraConfigs.js';
+import { TransitionAssetIds } from '../config/TransitionAssets.js';
+import { NightAssetIds } from '../config/NightAssets.js';
+import Images from '../managers/ImageLibrary.js';
+import { cameraButtonIds } from '../config/CameraConfigs.js';
 
 class CameraSystem {
   constructor(options = {}) {
@@ -12,10 +16,92 @@ class CameraSystem {
 
     this.cameraOffsetX = 0;
 
+    this.autoOffsetSpeed = options.autoOffsetSpeed ?? 0.35;
+    this.autoOffsetDirection = options.autoOffsetDirection ?? 1;
+    this.autoOffsetRafId = null;
+
+    this.autoOffsetPauseMinMs = options.autoOffsetPauseMinMs ?? 400;
+    this.autoOffsetPauseMaxMs = options.autoOffsetPauseMaxMs ?? 1100;
+    this.autoOffsetPauseUntil = 0;
+
+    this.cameraStaticCanvas = options.cameraStaticCanvas ?? document.getElementById('camera-static-canvas');
+    this.cameraBlinkCanvas = options.cameraBlinkCanvas ?? document.getElementById('camera-blink-canvas');;
+
+    this.cameraStaticSprite = null;
+    this.cameraBlinkSprite = null;
+
+    this.onBlinkSound = options.onBlinkSound ?? null;
+
     this.cameraSprite = null;
     this.specialAnimationSprite = null;
 
     this.CameraConfigs = CameraConfigs;
+
+    this.cameraButtonIds = [...cameraButtonIds];
+  }
+
+  async setupEffectSprites() {
+      if (this.cameraBlinkCanvas && !this.cameraBlinkSprite) {
+      this.cameraBlinkSprite = new AnimatedSprite(
+        this.cameraBlinkCanvas,
+        Images.get(NightAssetIds.MONITOR_BLINK),
+        30,
+        {
+          frameWidth: 1280,
+          frameHeight: 720,
+          direction: 'vertical',
+          drawX: 0,
+          drawY: 0,
+          drawWidth: this.cameraBlinkCanvas.width,
+          drawHeight: this.cameraBlinkCanvas.height
+        }
+      );
+
+      this.cameraBlinkSprite.clear();
+    }
+
+    if (this.cameraStaticCanvas && !this.cameraStaticSprite) {
+      this.cameraStaticSprite = new AnimatedSprite(
+        this.cameraStaticCanvas,
+        Images.get(TransitionAssetIds.TV_NOISE),
+        30,
+        {
+          frameWidth: 1280,
+          frameHeight: 720,
+          direction: 'vertical',
+          drawX: 0,
+          drawY: 0,
+          drawWidth: this.cameraStaticCanvas.width,
+          drawHeight: this.cameraStaticCanvas.height
+        }
+      );
+
+      this.cameraStaticSprite.clear();
+    }
+  }
+
+  async playBlinkEffect() {
+    if (!this.cameraBlinkSprite) return;
+    if (typeof this.onBlinkSound === 'function') {
+      this.onBlinkSound();
+    }
+
+    await this.cameraBlinkSprite.playOnce({
+      fromFrame: 0,
+      toFrame: this.cameraBlinkSprite.totalFrames - 1,
+      holdLastFrame: false,
+      clearOnFinish: true
+    });
+  }
+
+  async startStatic() {
+    if (!this.cameraStaticSprite) return;
+    await this.cameraStaticSprite.play();
+  }
+
+  stopStatic() {
+    if (!this.cameraStaticSprite) return;
+    this.cameraStaticSprite.stop({ clear: true });
   }
 
   getCurrentConfig() {
@@ -84,9 +170,69 @@ class CameraSystem {
     this.cameraWorld.style.transform = `translateX(calc(-50% + ${this.getAppliedOffset()}px))`;
   }
 
+  getMaxOffset() {
+    const viewport = this.cameraWorld?.parentElement;
+    const world = this.cameraWorld;
+
+    if (!viewport || !world) return 0;
+
+    return Math.max(0, (world.offsetWidth - viewport.offsetWidth) / 2);
+  }
+
   setOffset(offsetX) {
-    this.cameraOffsetX = offsetX;
+    const maxOffset = this.getMaxOffset();
+    const clampedOffset = Math.max(-maxOffset, Math.min(maxOffset, offsetX));
+
+    this.cameraOffsetX = clampedOffset;
     this.applyOffset();
+  }
+
+ startAutoOffset() {
+    if (this.autoOffsetRafId) return;
+
+    const step = (time) => {
+      const maxOffset = this.getMaxOffset();
+
+      if (time < this.autoOffsetPauseUntil) {
+        this.autoOffsetRafId = requestAnimationFrame(step);
+        return;
+      }
+
+      if (maxOffset > 0) {
+        const next = this.cameraOffsetX + this.autoOffsetSpeed * this.autoOffsetDirection;
+
+        const pauseMs =
+          this.autoOffsetPauseMinMs +
+          Math.random() * (this.autoOffsetPauseMaxMs - this.autoOffsetPauseMinMs);
+
+        if (next >= maxOffset) {
+          this.cameraOffsetX = maxOffset;
+          this.autoOffsetDirection = -1;
+          this.autoOffsetPauseUntil = time + pauseMs;
+        } else if (next <= -maxOffset) {
+          this.cameraOffsetX = -maxOffset;
+          this.autoOffsetDirection = 1;
+          this.autoOffsetPauseUntil = time + pauseMs;
+        } else {
+          this.cameraOffsetX = next;
+        }
+
+        this.applyOffset();
+      }
+
+      this.autoOffsetRafId = requestAnimationFrame(step);
+    };
+
+    this.autoOffsetRafId = requestAnimationFrame(step);
+  }
+
+  stopAutoOffset() {
+    if (this.autoOffsetRafId) {
+      cancelAnimationFrame(this.autoOffsetRafId);
+      this.autoOffsetRafId = null;
+    }
+
+    this.autoOffsetPauseUntil = 0;
   }
 
   async destroySprites() {
@@ -132,8 +278,9 @@ class CameraSystem {
   }
 
   async setCurrentCamera(cameraId, stateKey = null) {
-    if (!this.CameraConfigs[cameraId]) return;
-
+    console.log("222");
+    if (!this.CameraConfigs[cameraId] || this.currentCameraId === cameraId) return;
+    console.log("111");
     this.currentCameraId = cameraId;
 
     const config = this.getCurrentConfig();
@@ -141,7 +288,20 @@ class CameraSystem {
 
     this.applyViewportMode();
     this.updateCameraTitle();
+    this.updateActiveCameraButton();
+
     await this.createCameraSprite();
+    await this.playBlinkEffect();
+  }
+
+  updateActiveCameraButton() {
+    for (const id of this.cameraButtonIds) {
+      const btn = document.getElementById(id);
+      if (!btn) continue;
+
+      const buttonCameraId = id.replace('cam-btn-', '').toUpperCase();
+      btn.classList.toggle('is-active', buttonCameraId === this.currentCameraId);
+    }
   }
 
   async setCurrentState(stateKey) {
@@ -199,7 +359,11 @@ class CameraSystem {
   async init() {
     this.applyViewportMode();
     this.updateCameraTitle();
+    await this.setupEffectSprites();
     await this.createCameraSprite();
+    this.applyOffset();
+    this.startAutoOffset();
+    this.updateActiveCameraButton();
   }
 }
 

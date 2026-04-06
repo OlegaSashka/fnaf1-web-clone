@@ -28,6 +28,9 @@
 
           <div id="loading-continue-hint"></div>
         </div>
+        <div id="global-ui-layer">
+          <button id="phone-guy-mute-btn" type="button" hidden>MUTE CALL</button>
+        </div>
       </div>
 
       <!-- Слой экранов -->
@@ -122,10 +125,6 @@
                 <foreignObject id="night-usage-fo" x="190" y="1020" width="103" height="32">
                   <canvas id="night-usage-canvas" width="103" height="32"></canvas>
                 </foreignObject>
-
-                <foreignObject id="phone-guy-mute-fo" x="18" y="18" width="170" height="44">
-                  <button id="phone-guy-mute-btn" type="button" hidden>MUTE CALL</button>
-                </foreignObject>
               </svg>
             </div>
           </div>
@@ -203,58 +202,91 @@
                 />
 
                 <!-- CAM 1A -->
-                <foreignObject id="cam-btn-1a-fo" x="1460" y="585" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1a" class="monitor-cam-btn" type="button">CAM 1A</button>
+                <foreignObject id="cam-btn-1a-fo" x="1460" y="585" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1a" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>1A</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 1B -->
-                <foreignObject id="cam-btn-1b-fo" x="1410" y="675" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1b" class="monitor-cam-btn" type="button">CAM 1B</button>
+                <foreignObject id="cam-btn-1b-fo" x="1410" y="675" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1b" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>1B</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 1C -->
-                <foreignObject id="cam-btn-1c-fo" x="1365" y="790" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1c" class="monitor-cam-btn" type="button">CAM 1C</button>
+                <foreignObject id="cam-btn-1c-fo" x="1365" y="790" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1c" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>1C</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 2A -->
-                <foreignObject id="cam-btn-2a-fo" x="1485" y="930" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-2a" class="monitor-cam-btn" type="button">CAM 2A</button>
+                <foreignObject id="cam-btn-2a-fo" x="1485" y="930" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-2a" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>2A</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 2B -->
-                <foreignObject id="cam-btn-2b-fo" x="1485" y="985" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-2b" class="monitor-cam-btn" type="button">CAM 2B</button>
+                <foreignObject id="cam-btn-2b-fo" x="1485" y="985" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-2b" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>2B</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 3 -->
-                <foreignObject id="cam-btn-3-fo" x="1315" y="930" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-3" class="monitor-cam-btn" type="button">CAM 3</button>
+                <foreignObject id="cam-btn-3-fo" x="1315" y="930" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-3" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>3</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 4A -->
-                <foreignObject id="cam-btn-4a-fo" x="1660" y="930" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-4a" class="monitor-cam-btn" type="button">CAM 4A</button>
+                <foreignObject id="cam-btn-4a-fo" x="1660" y="930" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-4a" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>4A</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 4B -->
-                <foreignObject id="cam-btn-4b-fo" x="1660" y="985" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-4b" class="monitor-cam-btn" type="button">CAM 4B</button>
+                <foreignObject id="cam-btn-4b-fo" x="1660" y="985" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-4b" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>4B</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 5 -->
-                <foreignObject id="cam-btn-5-fo" x="1210" y="705" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-5" class="monitor-cam-btn" type="button">CAM 5</button>
+                <foreignObject id="cam-btn-5-fo" x="1210" y="705" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-5" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>5</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 6 -->
-                <foreignObject id="cam-btn-6-fo" x="1770" y="835" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-6" class="monitor-cam-btn" type="button">CAM 6</button>
+                <foreignObject id="cam-btn-6-fo" x="1770" y="835" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-6" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>6</span>
+                  </button>
                 </foreignObject>
 
                 <!-- CAM 7 -->
-                <foreignObject id="cam-btn-7-fo" x="1770" y="690" width="92" height="44">
-                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-7" class="monitor-cam-btn" type="button">CAM 7</button>
+                <foreignObject id="cam-btn-7-fo" x="1770" y="690" width="70" height="40">
+                  <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-7" class="monitor-cam-btn" type="button">
+                    <span>CAM</span>
+                    <span>7</span>
+                  </button>
                 </foreignObject>
 
                 <!-- YOU -->
@@ -267,6 +299,7 @@
               </svg>
             </div>
           </div>
+
         </div>
       </div>
     </div>

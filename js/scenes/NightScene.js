@@ -36,7 +36,8 @@ class NightScene extends BaseScene {
     this.fanSprite = null;
 
     this.lookDirection = 0;
-    this.lookSpeed = 8;
+    this.lookBaseSpeed = 5;
+    this.lookSpeedMultiplier = 1;
     this.lookRafId = null;
 
     this.phoneGuySoundId = null;
@@ -95,7 +96,6 @@ class NightScene extends BaseScene {
     this.monitorUsageSprite = null;
 
     this.cameraSystem = null;
-    this.cameraOffsetX = 0;
     this.currentCameraId = '1A';
 
     this.onCameraButtonClick = this.onCameraButtonClick.bind(this);
@@ -154,6 +154,9 @@ class NightScene extends BaseScene {
     const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
     const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
 
+    const monitorStaticCanvas = document.getElementById('camera-static-canvas');
+    const monitorBlinkCanvas = document.getElementById('camera-blink-canvas');
+
     if (menuScreen) menuScreen.hidden = true;
     if (gameScreen) gameScreen.hidden = false;
 
@@ -177,13 +180,13 @@ class NightScene extends BaseScene {
           enabled: true,
           from: 1,
           to: 0,
-          duration: 1500
+          duration: 500
         }
       },
 
       afterShow: async () => {
         await LoadingScreen.playEffect({
-          spriteSheet: 'assets/images/ui/Blink/Menu-blink-camera.png',
+          spriteSheet: NightAssetPaths.MONITOR_BLINK,
           fps: 30,
           holdLastFrame: false,
           clearOnFinish: true,
@@ -228,18 +231,18 @@ class NightScene extends BaseScene {
       }
     });
 
-    for (const id of this.cameraButtonIds) {
-      const btn = document.getElementById(id);
-      if (btn) {
-        btn.addEventListener('click', this.onCameraButtonClick);
-      }
-    }
-
     const officeViewport = document.getElementById('office-viewport');
 
     if (officeViewport) {
       officeViewport.addEventListener('mousemove', this.onOfficeViewportMouseMove);
       officeViewport.addEventListener('mouseleave', this.onOfficeViewportMouseLeave);
+    }
+
+    for (const id of this.cameraButtonIds) {
+      const btn = document.getElementById(id);
+      if (btn) {
+        btn.addEventListener('click', this.onCameraButtonClick);
+      }
     }
 
     if (leftDoorHitbox) {
@@ -371,6 +374,7 @@ class NightScene extends BaseScene {
     }
 
     this.lookDirection = 0;
+    this.lookSpeedMultiplier = 0;
     this.stopLookMovement();
 
     if (officeUiLayer) {
@@ -427,6 +431,9 @@ class NightScene extends BaseScene {
     const cameraWorldCanvas = document.getElementById('camera-world-canvas');
     const monitorCameraNameText = document.getElementById('monitor-camera-name-text');
 
+    const cameraStaticCanvas = document.getElementById('camera-static-canvas');
+    const cameraBlinkCanvas = document.getElementById('camera-blink-canvas');
+
     const worldWidth = Math.round(officeWorld.offsetWidth);
     const worldHeight = Math.round(officeWorld.offsetHeight);
 
@@ -441,7 +448,7 @@ class NightScene extends BaseScene {
       !officeUiLayer ||
       !officeLightCanvas ||
       !nightUsageCanvas || !monitorTransitionCanvas || 
-      !monitorUsageCanvas || !monitorCloseCanvas || !monitorToggleCanvas
+      !monitorUsageCanvas || !monitorCloseCanvas || !monitorToggleCanvas || !cameraStaticCanvas || !cameraBlinkCanvas
     ) {
       console.error('[NightScene] Не найдены office-элементы');
       return;
@@ -504,12 +511,16 @@ class NightScene extends BaseScene {
     this.cameraSystem = new CameraSystem({
       cameraWorld,
       cameraWorldCanvas,
+      autoOffsetSpeed: 0.8,
+      autoOffsetPauseMs: 650,
+      cameraStaticCanvas: cameraStaticCanvas,
+      cameraBlinkCanvas: cameraBlinkCanvas,
       cameraNameText: monitorCameraNameText,
-      initialCameraId: this.currentCameraId
+      initialCameraId: this.currentCameraId,
+      onBlinkSound: () => this.playCameraBlinkSound()
     });
 
     await this.cameraSystem.init();
-    this.updateActiveCameraButton();
     
     this.monitorTransitionSprite = new AnimatedSprite(
       monitorTransitionCanvas,
@@ -942,7 +953,7 @@ class NightScene extends BaseScene {
 
   schedulePhoneGuyMuteButton() {
       const muteBtn = document.getElementById('phone-guy-mute-btn');
-      const muteFo = document.getElementById('phone-guy-mute-fo');
+      const muteFo = document.getElementById('global-ui-layer');
 
       if (!muteBtn) return;
 
@@ -974,7 +985,7 @@ class NightScene extends BaseScene {
 
   schedulePhoneGuyMuteHide(soundId) {
     const muteBtn = document.getElementById('phone-guy-mute-btn');
-    const muteFo = document.getElementById('phone-guy-mute-fo');
+    const muteFo = document.getElementById('global-ui-layer');
 
     if (!muteBtn) return;
 
@@ -1004,7 +1015,7 @@ class NightScene extends BaseScene {
 
   hidePhoneGuyMuteButton() {
     const muteBtn = document.getElementById('phone-guy-mute-btn');
-    const muteFo = document.getElementById('phone-guy-mute-fo');
+    const muteFo = document.getElementById('global-ui-layer');
 
     if (muteBtn) {
       muteBtn.hidden = true;
@@ -1107,6 +1118,8 @@ class NightScene extends BaseScene {
   }
 
   onOfficeViewportMouseMove(event) {
+    if (this.isMonitorOpen || this.isMonitorAnimating) return;
+    
     const officeViewport = document.getElementById('office-viewport');
     if (!officeViewport) return;
 
@@ -1114,23 +1127,40 @@ class NightScene extends BaseScene {
     const localX = event.clientX - rect.left;
     const normalizedX = localX / rect.width;
 
-    if (normalizedX <= 0.33) {
+    const segment = 1 / 7;
+
+    if (normalizedX < segment) {
       this.lookDirection = 1;
-      this.startLookMovement();
-      return;
-    }
-
-    if (normalizedX >= 0.67) {
+      this.lookSpeedMultiplier = 1.5;
+    } else if (normalizedX < segment * 2) {
+      this.lookDirection = 1;
+      this.lookSpeedMultiplier = 1;
+    } else if (normalizedX < segment * 3) {
+      this.lookDirection = 1;
+      this.lookSpeedMultiplier = 0.5;
+    } else if (normalizedX < segment * 4) {
+      this.lookDirection = 0;
+      this.lookSpeedMultiplier = 0;
+    } else if (normalizedX < segment * 5) {
       this.lookDirection = -1;
-      this.startLookMovement();
-      return;
+      this.lookSpeedMultiplier = 0.5;
+    } else if (normalizedX < segment * 6) {
+      this.lookDirection = -1;
+      this.lookSpeedMultiplier = 1;
+    } else {
+      this.lookDirection = -1;
+      this.lookSpeedMultiplier = 1.5;
     }
 
-    this.lookDirection = 0;
+    if (this.lookDirection !== 0) {
+      this.startLookMovement();
+    }
   }
 
   onOfficeViewportMouseLeave() {
     this.lookDirection = 0;
+    this.lookSpeedMultiplier = 0;
+    this.stopLookMovement();
   }
 
   getOfficeMaxOffset() {
@@ -1150,7 +1180,7 @@ class NightScene extends BaseScene {
 
     const step = () => {
       if (this.lookDirection !== 0) {
-        this.setOfficeOffset(this.officeOffsetX + this.lookDirection * this.lookSpeed);
+        this.setOfficeOffset(this.officeOffsetX + this.lookDirection * this.lookBaseSpeed * this.lookSpeedMultiplier);
       }
 
       this.lookRafId = requestAnimationFrame(step);
@@ -1441,6 +1471,10 @@ class NightScene extends BaseScene {
   async openMonitor() {
     if (this.isMonitorAnimating || this.isMonitorOpen || !this.monitorTransitionSprite) return;
 
+    this.lookDirection = 0;
+    this.lookSpeedMultiplier = 0;
+    this.stopLookMovement();
+
     const officeUiLayer = document.getElementById('office-ui-layer');
     const monitorTransitionLayer = document.getElementById('monitor-transition-layer');
     const monitorScreenLayer = document.getElementById('monitor-screen-layer');
@@ -1465,9 +1499,12 @@ class NightScene extends BaseScene {
     if (monitorScreenLayer) monitorScreenLayer.hidden = false;
     if (monitorUiLayer) monitorUiLayer.hidden = false;
 
-    this.isMonitorOpen = true;
+    await this.cameraSystem.startStatic();
+
+    this.isMonitorOpen = true;  
     await this.updateNightHud();
     this.isMonitorAnimating = false;
+    await this.cameraSystem.playBlinkEffect();
   }
 
   async closeMonitor() {
@@ -1484,6 +1521,8 @@ class NightScene extends BaseScene {
     if (monitorUiLayer) monitorUiLayer.hidden = true;
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = false;
     if (officeUiLayer) officeUiLayer.hidden = false;
+
+    await this.cameraSystem.stopStatic();
 
     this.playMonitorToggleSound();
     this.setFanHumVolume(0.2);
@@ -1561,7 +1600,7 @@ class NightScene extends BaseScene {
   }
 
   async onCameraButtonClick(event) {
-    if (!this.cameraSystem) return;
+    if (!this.cameraSystem || this.isMonitorAnimating || !this.isMonitorOpen) return;
 
     const button = event.currentTarget;
     if (!button) return;
@@ -1570,20 +1609,23 @@ class NightScene extends BaseScene {
       .replace('cam-btn-', '')
       .toUpperCase();
 
+    this.currentCameraId = this.cameraSystem.currentCameraId;
     await this.cameraSystem.setCurrentCamera(cameraId);
-    this.currentCameraId = cameraId;
-
-    this.updateActiveCameraButton();
   }
 
-  updateActiveCameraButton() {
-    for (const id of this.cameraButtonIds) {
-      const btn = document.getElementById(id);
-      if (!btn) continue;
-
-      const buttonCameraId = id.replace('cam-btn-', '').toUpperCase();
-      btn.classList.toggle('is-active', buttonCameraId === this.currentCameraId);
+  ensureCameraBlinkSound() {
+    if (!Sounds.has(TransitionAssetIds.BLIP)) {
+      Sounds.add(TransitionAssetIds.BLIP, TransitionAssets.BLIP, {
+        loop: false,
+        volume: 0.3
+      });
     }
+  }
+
+  playCameraBlinkSound() {
+    this.ensureCameraBlinkSound();
+    Sound.stop(TransitionAssetIds.BLIP);
+    Sound.play(TransitionAssetIds.BLIP, { volume: 0.3 });
   }
 } 
 
