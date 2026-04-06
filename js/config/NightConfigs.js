@@ -34,7 +34,7 @@ export const NightConfigs = Object.freeze({
     time: {
       startHour: 12,
       endHour: 6,
-      hourDurationMs: 30000
+      hourDurationMs: 90000
     }
   },
 
@@ -72,7 +72,7 @@ export const NightConfigs = Object.freeze({
     time: {
       startHour: 12,
       endHour: 6,
-      hourDurationMs: 30000
+      hourDurationMs: 90000
     }
   },
 
@@ -110,7 +110,7 @@ export const NightConfigs = Object.freeze({
     time: {
       startHour: 12,
       endHour: 6,
-      hourDurationMs: 30000
+      hourDurationMs: 90000
     }
   },
 
@@ -151,7 +151,7 @@ export const NightConfigs = Object.freeze({
     time: {
       startHour: 12,
       endHour: 6,
-      hourDurationMs: 30000
+      hourDurationMs: 90000
     }
   },
 
@@ -189,7 +189,7 @@ export const NightConfigs = Object.freeze({
     time: {
       startHour: 12,
       endHour: 6,
-      hourDurationMs: 30000
+      hourDurationMs: 90000
     }
   }
 });

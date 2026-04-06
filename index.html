@@ -28,9 +28,11 @@
 
           <div id="loading-continue-hint"></div>
         </div>
-        <div id="global-ui-layer">
-          <button id="phone-guy-mute-btn" type="button" hidden>MUTE CALL</button>
-        </div>
+        <svg id="global-ui-layer-svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+          <foreignObject id="phone-guy-mute-fo" x="38" y="22" width="170" height="40">
+            <button xmlns="http://www.w3.org/1999/xhtml" id="phone-guy-mute-btn" type="button" hidden>MUTE CALL</button>
+          </foreignObject>
+        </svg>
       </div>
 
       <!-- Слой экранов -->
@@ -109,8 +111,8 @@
           <div id="office-ui-layer" class="layer">
             <div id="office-ui">
               <svg id="night-hud-svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
-                <text id="night-time-text" x="1850" y="30" text-anchor="end">12 AM</text>
-                <text id="night-label-text" x="1850" y="80" text-anchor="end">Night 1</text>
+                <text id="night-time-text" x="1880" y="30" text-anchor="end">12 AM</text>
+                <text id="night-label-text" x="1880" y="80" text-anchor="end">Night 1</text>
 
                 <text id="night-power-text" x="40" y="960" text-anchor="start">
                   <tspan id="night-power-label-text">Power left:</tspan>
@@ -118,12 +120,12 @@
                 </text>
                 <text id="night-usage-text" x="40" y="1020" text-anchor="start">Usage:</text>
                 
-                <foreignObject id="monitor-toggle-fo" x="500" y="1020" width="598" height="45">
-                  <canvas id="monitor-toggle-canvas" width="598" height="45"></canvas>
+                <foreignObject id="monitor-toggle-fo" x="500" y="1000" width="777" height="60">
+                  <canvas id="monitor-toggle-canvas" width="777" height="60"></canvas>
                 </foreignObject>
 
-                <foreignObject id="night-usage-fo" x="190" y="1020" width="103" height="32">
-                  <canvas id="night-usage-canvas" width="103" height="32"></canvas>
+                <foreignObject id="night-usage-fo" x="190" y="1016.5" width="133.9" height="41.6">
+                  <canvas id="night-usage-canvas" width="133.9" height="41.6"></canvas>
                 </foreignObject>
               </svg>
             </div>
@@ -172,23 +174,23 @@
                 />
 
                 <!-- HUD справа сверху -->
-                <text id="monitor-time-text" x="1850" y="30" text-anchor="end">12 AM</text>
-                <text id="monitor-night-text" x="1850" y="80" text-anchor="end">Night 1</text>
+                <text id="monitor-time-text" x="1880" y="30" text-anchor="end">12 AM</text>
+                <text id="monitor-night-text" x="1880" y="80" text-anchor="end">Night 1</text>
 
                 <!-- HUD слева снизу -->
-                <text id="monitor-power-text" x="40" y="960" text-anchor="start">
+                <text id="monitor-power-text" x="40" y="950" text-anchor="start">
                   <tspan id="monitor-power-label-text">Power left:</tspan>
                   <tspan id="monitor-power-value-text" dx="-10">100%</tspan>
                 </text>
 
                 <text id="monitor-usage-text" x="40" y="1020" text-anchor="start">Usage:</text>
 
-                <foreignObject id="monitor-usage-fo" x="190" y="1020" width="103" height="32">
-                  <canvas id="monitor-usage-canvas" width="103" height="32"></canvas>
+                <foreignObject id="monitor-usage-fo" x="190" y="1016.5" width="133.9" height="41.6">
+                  <canvas id="monitor-usage-canvas" width="133.9" height="41.6"></canvas>
                 </foreignObject>
 
                 <!-- Название текущей камеры -->
-                <text id="monitor-camera-name-text" x="1220" y="610" text-anchor="start">Show Stage</text>
+                <text id="monitor-camera-name-text" x="1320" y="490" text-anchor="start">Show Stage</text>
 
                 <!-- Карта -->
                 <image
@@ -202,7 +204,7 @@
                 />
 
                 <!-- CAM 1A -->
-                <foreignObject id="cam-btn-1a-fo" x="1460" y="585" width="70" height="40">
+                <foreignObject id="cam-btn-1a-fo" x="1480" y="555" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1a" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>1A</span>
@@ -210,7 +212,7 @@
                 </foreignObject>
 
                 <!-- CAM 1B -->
-                <foreignObject id="cam-btn-1b-fo" x="1410" y="675" width="70" height="40">
+                <foreignObject id="cam-btn-1b-fo" x="1445" y="615" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1b" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>1B</span>
@@ -218,7 +220,7 @@
                 </foreignObject>
 
                 <!-- CAM 1C -->
-                <foreignObject id="cam-btn-1c-fo" x="1365" y="790" width="70" height="40">
+                <foreignObject id="cam-btn-1c-fo" x="1400" y="715" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-1c" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>1C</span>
@@ -226,7 +228,7 @@
                 </foreignObject>
 
                 <!-- CAM 2A -->
-                <foreignObject id="cam-btn-2a-fo" x="1485" y="930" width="70" height="40">
+                <foreignObject id="cam-btn-2a-fo" x="1470" y="865" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-2a" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>2A</span>
@@ -234,7 +236,7 @@
                 </foreignObject>
 
                 <!-- CAM 2B -->
-                <foreignObject id="cam-btn-2b-fo" x="1485" y="985" width="70" height="40">
+                <foreignObject id="cam-btn-2b-fo" x="1470" y="910" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-2b" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>2B</span>
@@ -242,7 +244,7 @@
                 </foreignObject>
 
                 <!-- CAM 3 -->
-                <foreignObject id="cam-btn-3-fo" x="1315" y="930" width="70" height="40">
+                <foreignObject id="cam-btn-3-fo" x="1365" y="840" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-3" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>3</span>
@@ -250,7 +252,7 @@
                 </foreignObject>
 
                 <!-- CAM 4A -->
-                <foreignObject id="cam-btn-4a-fo" x="1660" y="930" width="70" height="40">
+                <foreignObject id="cam-btn-4a-fo" x="1615" y="865" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-4a" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>4A</span>
@@ -258,7 +260,7 @@
                 </foreignObject>
 
                 <!-- CAM 4B -->
-                <foreignObject id="cam-btn-4b-fo" x="1660" y="985" width="70" height="40">
+                <foreignObject id="cam-btn-4b-fo" x="1615" y="910" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-4b" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>4B</span>
@@ -266,7 +268,7 @@
                 </foreignObject>
 
                 <!-- CAM 5 -->
-                <foreignObject id="cam-btn-5-fo" x="1210" y="705" width="70" height="40">
+                <foreignObject id="cam-btn-5-fo" x="1310" y="660" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-5" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>5</span>
@@ -274,7 +276,7 @@
                 </foreignObject>
 
                 <!-- CAM 6 -->
-                <foreignObject id="cam-btn-6-fo" x="1770" y="835" width="70" height="40">
+                <foreignObject id="cam-btn-6-fo" x="1770" y="815" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-6" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>6</span>
@@ -282,7 +284,7 @@
                 </foreignObject>
 
                 <!-- CAM 7 -->
-                <foreignObject id="cam-btn-7-fo" x="1770" y="690" width="70" height="40">
+                <foreignObject id="cam-btn-7-fo" x="1770" y="660" width="72" height="42">
                   <button xmlns="http://www.w3.org/1999/xhtml" id="cam-btn-7" class="monitor-cam-btn" type="button">
                     <span>CAM</span>
                     <span>7</span>
@@ -290,11 +292,11 @@
                 </foreignObject>
 
                 <!-- YOU -->
-                <text id="monitor-you-text" x="1602" y="1015" text-anchor="middle">YOU</text>
+                <text id="monitor-you-text" x="1572" y="915" text-anchor="middle">YOU</text>
 
                 <!-- Зона закрытия -->
-                <foreignObject id="monitor-close-fo" x="500" y="1020" width="598" height="45">
-                  <canvas id="monitor-close-canvas" width="598" height="45"></canvas>
+                <foreignObject id="monitor-close-fo" x="500" y="1000" width="777" height="60"">
+                  <canvas id="monitor-close-canvas" width="777" height="60"></canvas>
                 </foreignObject>
               </svg>
             </div>

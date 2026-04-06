@@ -493,16 +493,20 @@ class NightScene extends BaseScene {
     officeRightPanelCanvas.height = 247;
 
     nightUsageCanvas.style.display = 'block';
-    nightUsageCanvas.width = 103;
-    nightUsageCanvas.height = 32;
+    // nightUsageCanvas.width = 103;
+    // nightUsageCanvas.height = 32;
 
     monitorUsageCanvas.style.display = 'block';
-    monitorUsageCanvas.width = 103;
-    monitorUsageCanvas.height = 32;
+    // monitorUsageCanvas.width = 103;
+    // monitorUsageCanvas.height = 32;
 
     monitorToggleCanvas.style.display = 'block';
-    monitorToggleCanvas.width = 598;
-    monitorToggleCanvas.height = 45;
+    // monitorToggleCanvas.width = 598*1.3;
+    // monitorToggleCanvas.height = 45*1.3;
+
+    monitorCloseCanvas.style.display = 'block';
+    // monitorCloseCanvas.width = 598*1.3;
+    // monitorCloseCanvas.height = 45*1.3;
 
     monitorTransitionCanvas.width = 1920;
     monitorTransitionCanvas.height = 1080;
@@ -548,8 +552,8 @@ class NightScene extends BaseScene {
         direction: 'vertical',
         drawX: 0,
         drawY: 0,
-        drawWidth: 598,
-        drawHeight: 45
+        drawWidth: 598*1.3,
+        drawHeight: 45*1.3
       }
     );
 
@@ -565,8 +569,8 @@ class NightScene extends BaseScene {
         direction: 'vertical',
         drawX: 0,
         drawY: 0,
-        drawWidth: 598,
-        drawHeight: 45
+        drawWidth: 598*1.3,
+        drawHeight: 45*1.3
       }
     );
 
@@ -708,8 +712,8 @@ class NightScene extends BaseScene {
         direction: 'vertical',
         drawX: 0,
         drawY: 0,
-        drawWidth: 103,
-        drawHeight: 32
+        drawWidth: 103*1.3,
+        drawHeight: 32*1.3
       }
     );
 
@@ -725,8 +729,8 @@ class NightScene extends BaseScene {
         direction: 'vertical',
         drawX: 0,
         drawY: 0,
-        drawWidth: 103,
-        drawHeight: 32
+        drawWidth: 103*1.3,
+        drawHeight: 32*1.3
       }
     );
 
@@ -953,7 +957,7 @@ class NightScene extends BaseScene {
 
   schedulePhoneGuyMuteButton() {
       const muteBtn = document.getElementById('phone-guy-mute-btn');
-      const muteFo = document.getElementById('global-ui-layer');
+      const muteFo = document.getElementById('global-ui-layer-svg');
 
       if (!muteBtn) return;
 
@@ -985,7 +989,7 @@ class NightScene extends BaseScene {
 
   schedulePhoneGuyMuteHide(soundId) {
     const muteBtn = document.getElementById('phone-guy-mute-btn');
-    const muteFo = document.getElementById('global-ui-layer');
+    const muteFo = document.getElementById('phone-guy-mute-fo');
 
     if (!muteBtn) return;
 
@@ -1015,7 +1019,7 @@ class NightScene extends BaseScene {
 
   hidePhoneGuyMuteButton() {
     const muteBtn = document.getElementById('phone-guy-mute-btn');
-    const muteFo = document.getElementById('global-ui-layer');
+    const muteFo = document.getElementById('global-ui-layer-svg');
 
     if (muteBtn) {
       muteBtn.hidden = true;
