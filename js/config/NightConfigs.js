@@ -32,7 +32,7 @@ export const NightConfigs = Object.freeze({
     },
 
     time: {
-      startHour: 12,
+      startHour: 2,
       endHour: 6,
       hourDurationMs: 90000
     }

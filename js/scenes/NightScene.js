@@ -26,6 +26,12 @@ import CameraSystem from '../managers/CameraSystem.js';
 
 import { cameraButtonIds } from '../config/CameraConfigs.js';
 
+import AnimatronicStateManager from '../config/AnimatronicStateManager.js';
+import AnimatronicMovementManager from '../managers/AnimatronicMovementManager.js';
+import { AnimatronicConfigs } from '../config/AnimatronicConfigs.js';
+
+import CameraStateResolver from '../managers/CameraStateResolver.js';
+
 class NightScene extends BaseScene {
   constructor(game, config) {
     super(game);
@@ -97,6 +103,10 @@ class NightScene extends BaseScene {
 
     this.cameraSystem = null;
     this.currentCameraId = '1A';
+
+    this.animatronicStateManager = null;
+    this.animatronicMovementManager = null;
+    this.cameraStateResolver = null;
 
     this.onCameraButtonClick = this.onCameraButtonClick.bind(this);
     this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
@@ -228,6 +238,8 @@ class NightScene extends BaseScene {
 
         this.startNightClock();
         this.startPowerDrain();
+
+        this.animatronicMovementManager?.startAnimatronic('bonnie');
       }
     });
 
@@ -304,6 +316,12 @@ class NightScene extends BaseScene {
 
     const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
     const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
+
+    this.animatronicMovementManager?.stopAll();
+    this.animatronicMovementManager = null;
+    this.animatronicStateManager = null;
+    this.cameraStateResolver?.clearAllBlackouts();
+    this.cameraStateResolver = null;
 
     for (const id of this.cameraButtonIds) {
       const btn = document.getElementById(id);
@@ -493,21 +511,12 @@ class NightScene extends BaseScene {
     officeRightPanelCanvas.height = 247;
 
     nightUsageCanvas.style.display = 'block';
-    // nightUsageCanvas.width = 103;
-    // nightUsageCanvas.height = 32;
 
     monitorUsageCanvas.style.display = 'block';
-    // monitorUsageCanvas.width = 103;
-    // monitorUsageCanvas.height = 32;
 
     monitorToggleCanvas.style.display = 'block';
-    // monitorToggleCanvas.width = 598*1.3;
-    // monitorToggleCanvas.height = 45*1.3;
 
     monitorCloseCanvas.style.display = 'block';
-    // monitorCloseCanvas.width = 598*1.3;
-    // monitorCloseCanvas.height = 45*1.3;
-
     monitorTransitionCanvas.width = 1920;
     monitorTransitionCanvas.height = 1080;
     monitorTransitionCanvas.style.display = 'block';
@@ -525,7 +534,44 @@ class NightScene extends BaseScene {
     });
 
     await this.cameraSystem.init();
-    
+
+    this.animatronicStateManager = new AnimatronicStateManager();
+
+    this.animatronicMovementManager = new AnimatronicMovementManager({
+      animatronicConfigs: AnimatronicConfigs,
+      stateManager: this.animatronicStateManager,
+      cameraSystem: this.cameraSystem,
+      hooks: {
+        isLeftDoorClosed: () => this.leftDoorClosed,
+        isLeftLightOn: () => this.leftLightOn,
+        isMonitorOpen: () => this.isMonitorOpen,
+        onBonnieEnteredOfficeAttack: async () => {
+          await this.refreshOfficeLight();
+        },
+        onBonnieAttackFailed: async () => {
+          await this.refreshOfficeLight();
+        },
+        onBonnieAttackSucceeded: async () => {
+          await this.refreshOfficeLight();
+        }
+      },
+      onAnimatronicMoved: async ({ animatronicId, fromNode, toNode }) => {
+        console.log(`[MOVE] ${animatronicId}: ${fromNode} -> ${toNode}`);
+
+        this.cameraStateResolver?.setTransitionBlackout(fromNode, toNode);
+        await this.cameraStateResolver?.updateCurrentCameraView();
+      }
+    });
+
+    this.animatronicMovementManager.initAnimatronic('bonnie');
+
+    this.animatronicMovementManager.setForcedRoll('bonnie', 1);
+
+    this.cameraStateResolver = new CameraStateResolver({
+      cameraSystem: this.cameraSystem,
+      animatronicStateManager: this.animatronicStateManager
+    });
+
     this.monitorTransitionSprite = new AnimatedSprite(
       monitorTransitionCanvas,
       Images.get(NightAssetIds.MONITOR_TRANSITION),
@@ -828,10 +874,13 @@ class NightScene extends BaseScene {
   startNightClock() {
     this.stopNightClock();
 
+    this.animatronicMovementManager?.onHourChanged(this.currentHour);
+
     this.nightTimeInterval = setInterval(async () => {
       const nextHour = this.getNextNightHour(this.currentHour);
 
       this.currentHour = nextHour;
+      this.animatronicMovementManager?.onHourChanged(this.currentHour);
       await this.updateNightHud();
 
       if (this.currentHour === this.endHour) {
@@ -858,6 +907,8 @@ class NightScene extends BaseScene {
     this.updateNightTimeText();
     this.updatePowerText();
     await this.updateUsage();
+
+    this.updateHudTexts();
   }
 
   updateNightLabel() {
@@ -1384,6 +1435,15 @@ class NightScene extends BaseScene {
     await this.officeLightSprite.showFrame(frameIndex);
   }
 
+  async showOfficeBonnieAtDoor() {
+    if (!this.officeLightSprite) return;
+
+    // ВСТАВЬ НУЖНЫЙ КАДР BONNIE У ЛЕВОЙ ДВЕРИ
+    const frameIndex = 2;
+    await this.officeLightSprite.showFrame(frameIndex);
+    this.playLightOnSound();
+  }
+
   async refreshOfficeLight() {
     const isAnyLightOn = this.leftLightOn || this.rightLightOn;
 
@@ -1395,6 +1455,15 @@ class NightScene extends BaseScene {
     }
 
     this.activeLightSide = this.leftLightOn ? 'left' : 'right';
+
+    const bonnieState = this.animatronicStateManager?.get('bonnie');
+    const isBonnieAtDoor = bonnieState?.currentNode === 'office-attack';
+
+    if (this.leftLightOn && isBonnieAtDoor) {
+      await this.showOfficeBonnieAtDoor();
+      return;
+    }
+
     await this.playLightFlickerSequence();
   }
 
@@ -1575,11 +1644,6 @@ class NightScene extends BaseScene {
     this.setTextIfExists('monitor-power-value-text', `${percent}%`);
   }
 
-  async updateNightHud() {
-    this.updateHudTexts();
-    await this.updateUsage();
-  }
-
   ensureMonitorSounds() {
     if (NightAssetPaths.MONITOR_TOGGLE_SOUND && !Sounds.has(NightAssetIds.MONITOR_TOGGLE_SOUND)) {
       Sounds.add(NightAssetIds.MONITOR_TOGGLE_SOUND, NightAssetPaths.MONITOR_TOGGLE_SOUND, {
@@ -1613,8 +1677,12 @@ class NightScene extends BaseScene {
       .replace('cam-btn-', '')
       .toUpperCase();
 
+    const initialState = this.cameraStateResolver?.getInitialStateForCamera(cameraId) ?? null;
+
+    await this.cameraSystem.setCurrentCamera(cameraId, initialState);
     this.currentCameraId = this.cameraSystem.currentCameraId;
-    await this.cameraSystem.setCurrentCamera(cameraId);
+
+    await this.cameraStateResolver?.updateCurrentCameraView();
   }
 
   ensureCameraBlinkSound() {

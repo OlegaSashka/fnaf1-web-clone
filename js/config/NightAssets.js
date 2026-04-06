@@ -1,6 +1,5 @@
 export const NightAssetIds = Object.freeze({
   OFFICE_BASE: 'office-base',
-  OFFICE_ANIMATRONIC: 'office-animatronic',
   OFFICE_FREDDY: 'office-freddy',
   OFFICE_LIGHT: 'office-light',
 
@@ -37,7 +36,6 @@ export const NightAssetIds = Object.freeze({
 
 export const NightAssetPaths = Object.freeze({
   OFFICE_BASE: 'assets/images/office/Office_Base.png',
-  OFFICE_ANIMATRONIC: 'assets/images/office/Office_Animatronic.png',
   OFFICE_FREDDY: 'assets/images/office/Office_Freddy.png',
   OFFICE_LIGHT: 'assets/images/office/Office_Light.png',
 
@@ -80,7 +78,6 @@ export const NightAssetPaths = Object.freeze({
 
 export const COMMON_NIGHT_ASSETS = [
   { type: 'image', id: NightAssetIds.OFFICE_BASE, src: NightAssetPaths.OFFICE_BASE },
-  { type: 'image', id: NightAssetIds.OFFICE_ANIMATRONIC, src: NightAssetPaths.OFFICE_ANIMATRONIC },
   { type: 'image', id: NightAssetIds.OFFICE_FREDDY, src: NightAssetPaths.OFFICE_FREDDY },
   { type: 'image', id: NightAssetIds.OFFICE_LIGHT, src: NightAssetPaths.OFFICE_LIGHT },
 

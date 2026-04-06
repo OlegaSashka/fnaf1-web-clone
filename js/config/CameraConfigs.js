@@ -27,10 +27,15 @@ export const CameraConfigs = {
             default: 0,
             bonny_far: 1,
             bonny_close: 2,
-            bonny_freddy: 3,
-            chica_far: 4,
-            chica_close: 5,
-            freddy: 6,
+            chica_far: 3,
+            chica_close: 4,
+            freddy: 5,
+            chica_close_bonny_far: 6,
+            bonny_close_chica_far: 7,
+            bonny_chica: 8,
+            bonny_chica_freddy: 9,
+            chica_freddy: 10,
+            bonny_freddy: 11,
           }
         },
   '1C': { 
@@ -102,6 +107,7 @@ export const CameraConfigs = {
             freddy: 3,
             chica_far: 4,
             chica_close: 5,
+            chica_freddy: 6,
           }
         },
   '4B': { 
@@ -120,6 +126,7 @@ export const CameraConfigs = {
             chica_1: 6,
             chica_2: 7,
             freddy: 8,
+            chica_freddy: 9,
           }
         },
   '5':  { 
@@ -154,8 +161,10 @@ export const CameraConfigs = {
           states: {
             default: 0,
             chica_far: 1,
-            chica_look_at_camera: 2,
+            chica_close: 2,
             freddy: 3,
+            chica_close_freddy: 4,
+            chica_far_freddy: 5
           }
         }
 };

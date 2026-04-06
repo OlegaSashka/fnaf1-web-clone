@@ -5,6 +5,9 @@ import { NightAssetIds } from '../config/NightAssets.js';
 import Images from '../managers/ImageLibrary.js';
 import { cameraButtonIds } from '../config/CameraConfigs.js';
 
+import { CameraBehaviorConfigs } from '../config/CameraBehaviorConfigs.js';
+import CameraBehaviorManager from './CameraBehaviorManager.js';
+
 class CameraSystem {
   constructor(options = {}) {
     this.cameraWorld = options.cameraWorld ?? null;
@@ -37,7 +40,36 @@ class CameraSystem {
 
     this.CameraConfigs = CameraConfigs;
 
+    this.cameraBehaviorConfigs = options.cameraBehaviorConfigs ?? CameraBehaviorConfigs;
+    this.cameraBehaviorManager = new CameraBehaviorManager({
+      cameraSystem: this,
+      behaviorConfigs: this.cameraBehaviorConfigs
+    });
+        
     this.cameraButtonIds = [...cameraButtonIds];
+  }
+
+  startBehaviorForCurrentCamera() {
+    const config = this.cameraBehaviorConfigs?.[this.currentCameraId];
+    if (!config?.autoStart) return;
+
+    const variantKey = config.defaultVariant ?? 'default';
+    this.cameraBehaviorManager.start(this.currentCameraId, variantKey);
+  }
+
+  stopCurrentBehavior({ resetToFirstFrame = false } = {}) {
+    if (!this.cameraBehaviorManager) return;
+    this.cameraBehaviorManager.stop({ resetToFirstFrame });
+  }
+
+  setBehaviorVariant(cameraId, variantKey) {
+    if (!this.cameraBehaviorManager) return;
+    this.cameraBehaviorManager.setVariant(cameraId, variantKey);
+  }
+
+  resetBehaviorVariant(cameraId) {
+    if (!this.cameraBehaviorManager) return;
+    this.cameraBehaviorManager.resetVariant(cameraId);
   }
 
   async setupEffectSprites() {
@@ -278,9 +310,10 @@ class CameraSystem {
   }
 
   async setCurrentCamera(cameraId, stateKey = null) {
-    console.log("222");
     if (!this.CameraConfigs[cameraId] || this.currentCameraId === cameraId) return;
-    console.log("111");
+
+    this.stopCurrentBehavior({ resetToFirstFrame: false });
+
     this.currentCameraId = cameraId;
 
     const config = this.getCurrentConfig();
@@ -290,8 +323,12 @@ class CameraSystem {
     this.updateCameraTitle();
     this.updateActiveCameraButton();
 
-    await this.createCameraSprite();
-    await this.playBlinkEffect();
+    await Promise.all([
+      this.playBlinkEffect(),
+      this.createCameraSprite(),
+    ]);
+  
+    this.startBehaviorForCurrentCamera();
   }
 
   updateActiveCameraButton() {
@@ -364,6 +401,7 @@ class CameraSystem {
     this.applyOffset();
     this.startAutoOffset();
     this.updateActiveCameraButton();
+    this.startBehaviorForCurrentCamera();
   }
 }
 
