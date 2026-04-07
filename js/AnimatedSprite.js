@@ -1,3 +1,5 @@
+import Images from './managers/ImageLibrary.js';
+
 class AnimatedSprite {
   constructor(canvas, source, fps = 8, options = {}) {
     this.canvas = canvas;
@@ -249,6 +251,62 @@ class AnimatedSprite {
 
     if (clear) {
       this.clear();
+    }
+  }
+
+  async setSourceById(imageId, options = {}) {
+    const nextImg = Images.get(imageId);
+
+    if (!nextImg) {
+      throw new Error(`[AnimatedSprite] ImageLibrary: не найден imageId "${imageId}"`);
+    }
+
+    this.stop({ clear: options.clearBefore ?? true });
+    this.stopBehavior();
+
+    this.failed = false;
+    this.ready = false;
+
+    this.img = nextImg;
+
+    if (options.frameWidth != null) this.frameWidth = options.frameWidth;
+    if (options.frameHeight != null) this.frameHeight = options.frameHeight;
+    if (options.direction != null) this.direction = options.direction;
+
+    if (options.drawX != null) this.drawX = options.drawX;
+    if (options.drawY != null) this.drawY = options.drawY;
+    if (options.drawWidth != null) this.drawWidth = options.drawWidth;
+    if (options.drawHeight != null) this.drawHeight = options.drawHeight;
+
+    if (options.flipX != null) this.flipX = options.flipX;
+    if (options.fps != null) {
+      this.fps = options.fps;
+      this.frameTime = 1000 / this.fps;
+    }
+
+    this.currentFrame = 0;
+    this.lastTime = 0;
+
+    if (this.img.complete && this.img.naturalWidth > 0 && this.img.naturalHeight > 0) {
+      this.#calcFrames();
+    } else {
+      await new Promise((resolve, reject) => {
+        this.img.onload = () => {
+          this.#calcFrames();
+          resolve();
+        };
+
+        this.img.onerror = () => {
+          this.failed = true;
+          reject(new Error(`[AnimatedSprite] Ошибка загрузки imageId "${imageId}"`));
+        };
+      });
+    }
+
+    if (options.showFrame != null) {
+      await this.showFrame(options.showFrame);
+    } else if (options.redraw !== false) {
+      await this.showFrame(0);
     }
   }
 

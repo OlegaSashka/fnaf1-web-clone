@@ -393,6 +393,16 @@ class CameraSystem {
     ctx.fillRect(0, 0, this.cameraWorldCanvas.width, this.cameraWorldCanvas.height);
   }
 
+  async restartBehaviorForCurrentCamera(variantKey = null) {
+    const config = this.cameraBehaviorConfigs?.[this.currentCameraId];
+    if (!config?.autoStart) return;
+
+    this.stopCurrentBehavior({ resetToFirstFrame: false });
+
+    const finalVariantKey = variantKey ?? config.defaultVariant ?? 'default';
+    await this.cameraBehaviorManager.start(this.currentCameraId, finalVariantKey);
+  }
+
   async init() {
     this.applyViewportMode();
     this.updateCameraTitle();

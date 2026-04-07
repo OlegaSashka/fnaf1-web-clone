@@ -108,6 +108,11 @@ class NightScene extends BaseScene {
     this.animatronicMovementManager = null;
     this.cameraStateResolver = null;
 
+    this.leftControlsBroken = false;
+    this.bonnieMonitorPunishTimeout = null;
+
+    this.jumpscareSprite = null;
+
     this.onCameraButtonClick = this.onCameraButtonClick.bind(this);
     this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
     this.onMonitorCloseMouseEnter = this.onMonitorCloseMouseEnter.bind(this);
@@ -163,9 +168,6 @@ class NightScene extends BaseScene {
 
     const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
     const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
-
-    const monitorStaticCanvas = document.getElementById('camera-static-canvas');
-    const monitorBlinkCanvas = document.getElementById('camera-blink-canvas');
 
     if (menuScreen) menuScreen.hidden = true;
     if (gameScreen) gameScreen.hidden = false;
@@ -330,6 +332,14 @@ class NightScene extends BaseScene {
       }
     }
 
+    this.stopBonnieMonitorPunishTimer();
+    this.leftControlsBroken = false;
+
+    if (this.jumpscareSprite) {
+      this.jumpscareSprite.stop({ clear: true });
+      this.jumpscareSprite = null;
+    }
+
     if (monitorCloseCanvas) {
       monitorCloseCanvas.removeEventListener('mouseenter', this.onMonitorCloseMouseEnter);
     }
@@ -452,6 +462,8 @@ class NightScene extends BaseScene {
     const cameraStaticCanvas = document.getElementById('camera-static-canvas');
     const cameraBlinkCanvas = document.getElementById('camera-blink-canvas');
 
+    const jumpscareCanvas = document.getElementById('jumpscare-canvas');
+
     const worldWidth = Math.round(officeWorld.offsetWidth);
     const worldHeight = Math.round(officeWorld.offsetHeight);
 
@@ -466,7 +478,8 @@ class NightScene extends BaseScene {
       !officeUiLayer ||
       !officeLightCanvas ||
       !nightUsageCanvas || !monitorTransitionCanvas || 
-      !monitorUsageCanvas || !monitorCloseCanvas || !monitorToggleCanvas || !cameraStaticCanvas || !cameraBlinkCanvas
+      !monitorUsageCanvas || !monitorCloseCanvas || !monitorToggleCanvas || !cameraStaticCanvas || !cameraBlinkCanvas ||
+      !jumpscareCanvas
     ) {
       console.error('[NightScene] Не найдены office-элементы');
       return;
@@ -510,6 +523,10 @@ class NightScene extends BaseScene {
     officeRightPanelCanvas.width = 92;
     officeRightPanelCanvas.height = 247;
 
+    jumpscareCanvas.style.display = 'block';
+    jumpscareCanvas.width = worldWidth;
+    jumpscareCanvas.height = worldHeight;
+
     nightUsageCanvas.style.display = 'block';
 
     monitorUsageCanvas.style.display = 'block';
@@ -519,6 +536,7 @@ class NightScene extends BaseScene {
     monitorCloseCanvas.style.display = 'block';
     monitorTransitionCanvas.width = 1920;
     monitorTransitionCanvas.height = 1080;
+
     monitorTransitionCanvas.style.display = 'block';
 
     this.cameraSystem = new CameraSystem({
@@ -552,6 +570,18 @@ class NightScene extends BaseScene {
           await this.refreshOfficeLight();
         },
         onBonnieAttackSucceeded: async () => {
+          this.leftControlsBroken = true;
+
+          if (this.leftLightOn) {
+            this.leftLightOn = false;
+          }
+
+          if (this.leftDoorClosed) {
+            this.leftDoorClosed = false;
+          }
+
+          await this.updateControlPanels();
+          await this.updateNightHud();
           await this.refreshOfficeLight();
         }
       },
@@ -572,6 +602,23 @@ class NightScene extends BaseScene {
       animatronicStateManager: this.animatronicStateManager
     });
 
+    this.jumpscareSprite = new AnimatedSprite(
+      jumpscareCanvas,
+      Images.get(NightAssetIds.BONNIE_JUMPSCARE),
+      20,
+      {
+        frameWidth: 1600,
+        frameHeight: 720,
+        direction: 'vertical',
+        drawX: 0,
+        drawY: 0,
+        drawWidth: jumpscareCanvas.width,
+        drawHeight: jumpscareCanvas.height
+      }
+    );
+
+    this.jumpscareSprite.clear();
+
     this.monitorTransitionSprite = new AnimatedSprite(
       monitorTransitionCanvas,
       Images.get(NightAssetIds.MONITOR_TRANSITION),
@@ -582,8 +629,8 @@ class NightScene extends BaseScene {
         direction: 'vertical',
         drawX: 0,
         drawY: 0,
-        drawWidth: 1920,
-        drawHeight: 1080
+        drawWidth: monitorTransitionCanvas.width,
+        drawHeight: monitorTransitionCanvas.height
       }
     );
     
@@ -787,6 +834,40 @@ class NightScene extends BaseScene {
 
     this.stopNightClock();
     this.stopPowerDrain();
+  }
+
+  async runBonnieJumpscare() {
+    if (!this.jumpscareSprite) return;
+
+    const jumpscareCanvas = document.getElementById('jumpscare-canvas');
+    if (!jumpscareCanvas) return;
+
+    this.stopBonnieMonitorPunishTimer();
+
+    this.stopPhoneGuy();
+    this.stopBackgroundAmbience();
+    this.stopFanHum();
+
+    Sound.stop(NightAssetIds.JUMPSCARE_SOUND);
+    Sound.play(NightAssetIds.JUMPSCARE_SOUND);
+
+    await this.jumpscareSprite.setSourceById(NightAssetIds.BONNIE_JUMPSCARE, {
+      frameWidth: 1600,
+      frameHeight: 720,
+      direction: 'vertical',
+      drawWidth: jumpscareCanvas.width,
+      drawHeight: jumpscareCanvas.height,
+      fps: 25,
+      showFrame: 0
+    });
+
+    await this.jumpscareSprite.playOnce({
+      fromFrame: 0,
+      toFrame: this.jumpscareSprite.totalFrames - 1,
+      holdLastFrame: true
+    });
+
+    this.isMonitorAnimating = false;
   }
 
   async completeNight() {
@@ -1252,6 +1333,11 @@ class NightScene extends BaseScene {
   }
   
   async onLeftDoorHitboxClick() {
+    if (this.leftControlsBroken) {
+      this.playErrorButtonSound();
+      return;
+    }
+
     if (!this.leftDoorSprite || this.isLeftDoorAnimating) return;
 
     this.isLeftDoorAnimating = true;
@@ -1329,7 +1415,9 @@ class NightScene extends BaseScene {
   }
 
   async updateControlPanels() {
-    const leftFrame = this.getControlPanelFrame(this.leftDoorClosed, this.leftLightOn);
+      const leftFrame = this.leftControlsBroken
+                        ? 0
+                        : this.getControlPanelFrame(this.leftDoorClosed, this.leftLightOn);
     const rightFrame = this.getControlPanelFrame(this.rightDoorClosed, this.rightLightOn);
 
     if (this.leftControlPanelSprite) {
@@ -1342,6 +1430,11 @@ class NightScene extends BaseScene {
   }
 
   async onLeftLightHitboxClick() {
+    if (this.leftControlsBroken) {
+      this.playErrorButtonSound();
+      return;
+    }
+
     if (this.isLeftLightAnimating) return;
 
     this.isLeftLightAnimating = true;
@@ -1445,6 +1538,10 @@ class NightScene extends BaseScene {
   }
 
   async refreshOfficeLight() {
+    if (this.leftControlsBroken && this.leftLightOn) {
+      this.leftLightOn = false;
+    }
+
     const isAnyLightOn = this.leftLightOn || this.rightLightOn;
 
     if (!isAnyLightOn) {
@@ -1455,15 +1552,6 @@ class NightScene extends BaseScene {
     }
 
     this.activeLightSide = this.leftLightOn ? 'left' : 'right';
-
-    const bonnieState = this.animatronicStateManager?.get('bonnie');
-    const isBonnieAtDoor = bonnieState?.currentNode === 'office-attack';
-
-    if (this.leftLightOn && isBonnieAtDoor) {
-      await this.showOfficeBonnieAtDoor();
-      return;
-    }
-
     await this.playLightFlickerSequence();
   }
 
@@ -1484,6 +1572,14 @@ class NightScene extends BaseScene {
   }
 
   async lightOnStep() {
+    const bonnieState = this.animatronicStateManager?.get('bonnie');
+    const isBonnieAtDoor = bonnieState?.currentNode === 'office-attack';
+
+    if (this.activeLightSide === 'left' && isBonnieAtDoor) {
+      await this.showOfficeBonnieAtDoor();
+      return;
+    }
+
     await this.showOfficeLight(this.activeLightSide);
     this.playLightOnSound();
   }
@@ -1555,6 +1651,11 @@ class NightScene extends BaseScene {
 
     this.isMonitorAnimating = true;
 
+    const bonnieState = this.animatronicStateManager?.get('bonnie');
+    if (bonnieState?.attackPhase === 'in-office') {
+      this.startBonnieMonitorPunishTimer();
+    }
+
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = false;
     
     this.playMonitorToggleSound();
@@ -1581,6 +1682,13 @@ class NightScene extends BaseScene {
   }
 
   async closeMonitor() {
+    const bonnieState = this.animatronicStateManager?.get('bonnie');
+    const bonnieInOffice = bonnieState?.attackPhase === 'in-office';
+
+    if (bonnieInOffice) {
+      this.stopBonnieMonitorPunishTimer();
+    }
+
     if (this.isMonitorAnimating || !this.isMonitorOpen || !this.monitorTransitionSprite) return;
 
     const officeUiLayer = document.getElementById('office-ui-layer');
@@ -1589,6 +1697,10 @@ class NightScene extends BaseScene {
     const monitorUiLayer = document.getElementById('monitor-ui-layer');
 
     this.isMonitorAnimating = true;
+
+    if (bonnieInOffice) {
+      this.prepareForBonnieJumpscare();
+    }
 
     if (monitorScreenLayer) monitorScreenLayer.hidden = true;
     if (monitorUiLayer) monitorUiLayer.hidden = true;
@@ -1603,14 +1715,27 @@ class NightScene extends BaseScene {
     this.isMonitorOpen = false;
     await this.updateNightHud();
 
-    await this.monitorTransitionSprite.playOnceReverse({
+    const closePromise = this.monitorTransitionSprite.playOnceReverse({
       fromFrame: this.monitorTransitionSprite.totalFrames - 1,
       toFrame: 0,
       holdLastFrame: false,
       clearOnFinish: true
     });
 
+    let jumpscarePromise = null;
+
+    if (bonnieInOffice) {
+      jumpscarePromise = this.runBonnieJumpscare();
+    }
+
+    await closePromise;
+
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
+
+    if (jumpscarePromise) {
+      await jumpscarePromise;
+      return;
+    }
 
     this.isMonitorAnimating = false;
   }
@@ -1698,6 +1823,80 @@ class NightScene extends BaseScene {
     this.ensureCameraBlinkSound();
     Sound.stop(TransitionAssetIds.BLIP);
     Sound.play(TransitionAssetIds.BLIP, { volume: 0.3 });
+  }
+
+  startBonnieMonitorPunishTimer() {
+    this.stopBonnieMonitorPunishTimer();
+
+    const bonnieState = this.animatronicStateManager?.get('bonnie');
+    if (!bonnieState || bonnieState.attackPhase !== 'in-office') return;
+
+    this.bonnieMonitorPunishTimeout = setTimeout(async () => {
+      this.bonnieMonitorPunishTimeout = null;
+
+      if (!this.isMonitorOpen) return;
+
+      await this.forceCloseMonitorAndBonnieJumpscare();
+    }, 30000);
+  }
+
+  stopBonnieMonitorPunishTimer() {
+    if (this.bonnieMonitorPunishTimeout) {
+      clearTimeout(this.bonnieMonitorPunishTimeout);
+      this.bonnieMonitorPunishTimeout = null;
+    }
+  }
+
+  async forceCloseMonitorAndBonnieJumpscare() {
+    if (this.isMonitorAnimating) return;
+
+    if (this.isMonitorOpen) {
+      await this.closeMonitor();
+      return;
+    }
+
+    await this.runBonnieJumpscare();
+  }
+
+  ensureErrorButtonSound() {
+    if (!NightAssetPaths.ERROR_BUTTON_SOUND) return;
+
+    if (!Sounds.has(NightAssetIds.ERROR_BUTTON_SOUND)) {
+      Sounds.add(NightAssetIds.ERROR_BUTTON_SOUND, NightAssetPaths.ERROR_BUTTON_SOUND, {
+        loop: false,
+        volume: 0.5
+      });
+    }
+  }
+
+  playErrorButtonSound() {
+    if (!NightAssetPaths.ERROR_BUTTON_SOUND) return;
+
+    this.ensureErrorButtonSound();
+    Sound.stop(NightAssetIds.ERROR_BUTTON_SOUND);
+    Sound.play(NightAssetIds.ERROR_BUTTON_SOUND);
+  }
+
+  prepareForBonnieJumpscare() {
+    this.lookDirection = 0;
+    this.lookSpeedMultiplier = 0;
+    this.stopLookMovement();
+
+    this.setOfficeOffset(0);
+
+    const officeViewport = document.getElementById('office-viewport');
+    if (officeViewport) {
+      officeViewport.removeEventListener('mousemove', this.onOfficeViewportMouseMove);
+      officeViewport.removeEventListener('mouseleave', this.onOfficeViewportMouseLeave);
+    }
+  }
+
+  restoreOfficeLookControls() {
+    const officeViewport = document.getElementById('office-viewport');
+    if (officeViewport) {
+      officeViewport.addEventListener('mousemove', this.onOfficeViewportMouseMove);
+      officeViewport.addEventListener('mouseleave', this.onOfficeViewportMouseLeave);
+    }
   }
 } 
 

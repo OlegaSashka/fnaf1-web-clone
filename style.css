@@ -52,7 +52,7 @@ canvas {
 #menu-content {
   position: absolute;
   inset: 0;
-  z-index: 100;
+  z-index: 10;
   pointer-events: none;
   color: var(--color-primary);
 }
@@ -166,7 +166,7 @@ canvas {
 #loading-screen {
   position: absolute;
   inset: 0;
-  z-index: 300;
+  z-index: 30;
   background: #000;
   display: flex;
   align-items: center;
@@ -261,7 +261,7 @@ canvas {
 #test-scene {
   position: absolute;
   inset: 0;
-  z-index: 200;
+  z-index: 20;
   background: #000;
 }
 
@@ -350,7 +350,8 @@ canvas {
 }
 
 #office-world-canvas,
-#office-fan-canvas {
+#office-fan-canvas,
+#jumpscare-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -368,6 +369,10 @@ canvas {
 
 #office-fan-canvas {
   z-index: 3;
+}
+
+#jumpscare-canvas{
+   z-index: 10;
 }
 
 #office-look-zones {
@@ -494,17 +499,17 @@ canvas {
 }
 
 #office-left-panel-canvas {
-  z-index: 120;
+  z-index: 12;
 }
 
 #office-right-panel-canvas {
-  z-index: 120;
+  z-index: 12;
 }
 
 
 .office-panel-wrap {
   position: absolute;
-  z-index: 120;
+  z-index: 12;
   width: 92px;
   height: 247px;
   pointer-events: none;
@@ -586,7 +591,7 @@ canvas {
   width: 0.6%;
   height: 0.85%;
   transform: translate(-50%, -50%);
-  z-index: 130;
+  z-index: 13;
   border: none;
   background: transparent;
   pointer-events: auto;
@@ -654,7 +659,7 @@ canvas {
 #global-ui-layer-svg {
   position: absolute;
   inset: 0;
-  z-index: 200;
+  z-index: 20;
   pointer-events: none;
   display: none;
 }

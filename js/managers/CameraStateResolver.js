@@ -35,6 +35,7 @@ class CameraStateResolver {
   }
 
   setCameraBlackout(cameraId, durationMs = this.blackoutDurationMs) {
+    console.log('[BLACKOUT]', cameraId);
     if (!cameraId) return;
 
     const expiresAt = Date.now() + durationMs;
@@ -197,29 +198,36 @@ class CameraStateResolver {
   syncSpecialBehaviors() {
     if (!this.cameraSystem) return;
 
-    const bonnieNode = this.getAnimNode('bonnie');
+    if (this.cameraSystem.currentCameraId !== '2A') return;
 
-    if (bonnieNode === '2A') {
-      this.cameraSystem.setBehaviorVariant('2A', 'bonnie');
-    } else {
-      this.cameraSystem.resetBehaviorVariant('2A');
-    }
+    const variantKey = this.get2ABehaviorVariant();
+    this.cameraSystem.setBehaviorVariant('2A', variantKey);
+  }
+
+  get2ABehaviorVariant() {
+    const bonnieNode = this.getAnimNode('bonnie');
+    return bonnieNode === '2A' ? 'bonnie' : 'default';
   }
 
   async updateCurrentCameraView() {
     if (!this.cameraSystem) return;
 
-    this.syncSpecialBehaviors();
-
     const currentCameraId = this.cameraSystem.currentCameraId;
     if (!currentCameraId) return;
 
     if (this.isCameraBlackoutActive(currentCameraId)) {
+      this.cameraSystem.stopCurrentBehavior({ resetToFirstFrame: false });
       this.cameraSystem.fillBlack();
       return;
     }
 
-    if (currentCameraId === '2A') return;
+    if (currentCameraId === '2A') {
+      const variantKey = this.get2ABehaviorVariant();
+
+      await this.cameraSystem.createCameraSprite();
+      await this.cameraSystem.restartBehaviorForCurrentCamera(variantKey);
+      return;
+    }
 
     const stateKey = this.resolveCameraState(currentCameraId);
     if (!stateKey) return;

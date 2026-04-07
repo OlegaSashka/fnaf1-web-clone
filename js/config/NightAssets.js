@@ -12,6 +12,10 @@ export const NightAssetIds = Object.freeze({
   MONITOR_TOGGLE: 'monitor-toggle',
   MONITOR_TRANSITION: 'monitor-transition',
 
+  BONNIE_JUMPSCARE: 'bonnie-jumpscare',
+  ERROR_BUTTON_SOUND: 'error-button-sound',
+
+  JUMPSCARE_SOUND: 'bonnie-jumpscare-sound',
   DOOR_TOGGLE_SOUND: 'door-toggle',
   LIGHT_ON_SOUND: 'light-on',
   FREDDY_NOSE_SOUND: 'freddy-nose',
@@ -48,6 +52,12 @@ export const NightAssetPaths = Object.freeze({
   DOOR_CLOSE_SOUND: 'assets/sounds/game/door-close.wav',
   DOOR_OPEN_SOUND: 'assets/sounds/game/door-open.wav',
 
+  BONNIE_JUMPSCARE: 'assets/images/jumpscares/Bonnie_Jumpscare.png',
+
+  JUMPSCARE_SOUND: 'assets/sounds/jumpscares/jumpscare.wav',
+
+
+  ERROR_BUTTON_SOUND: 'assets/sounds/doors/error.wav',
   DOOR_TOGGLE_SOUND: 'assets/sounds/doors/door-toggle.wav',
   LIGHT_ON_SOUND: 'assets/sounds/light/light-on.wav',
   FREDDY_NOSE_SOUND: 'assets/sounds/FreddyNose/freddy-nose-honk.wav',
@@ -92,12 +102,16 @@ export const COMMON_NIGHT_ASSETS = [
 
   { type: 'image', id: NightAssetIds.MONITOR_BLINK, src: NightAssetPaths.MONITOR_BLINK},
 
+  { type: 'image', id: NightAssetIds.BONNIE_JUMPSCARE, src: NightAssetPaths.BONNIE_JUMPSCARE },
+
+  { type: 'audio', id: NightAssetIds.JUMPSCARE_SOUND, src: NightAssetPaths.JUMPSCARE_SOUND, options: { volume: 0.5 } },
   { type: 'audio', id: NightAssetIds.DOOR_TOGGLE_SOUND, src: NightAssetPaths.DOOR_TOGGLE_SOUND, options: { volume: 0.4 } },
   { type: 'audio', id: NightAssetIds.LIGHT_ON_SOUND, src: NightAssetPaths.LIGHT_ON_SOUND, options: { volume: 0.35 } },
   { type: 'audio', id: NightAssetIds.FREDDY_NOSE_SOUND, src: NightAssetPaths.FREDDY_NOSE_SOUND, options: { volume: 0.5 } },
   { type: 'audio', id: NightAssetIds.MONITOR_TOGGLE_SOUND, src: NightAssetPaths.MONITOR_TOGGLE_SOUND, options: { volume: 0.45 } },
   { type: 'audio', id: NightAssetIds.FAN_HUM_SOUND, src: NightAssetPaths.FAN_HUM, options: {loop:true, volume: 0.2 } },
   { type: 'audio', id: NightAssetIds.BACKGROUND_AMBIENCE_SOUND, src: NightAssetPaths.BACKGROUND_AMBIENCE_SOUND, options: {loop:true, volume: 0.5 } },
+  { type: 'audio', id: NightAssetIds.ERROR_BUTTON_SOUND, src: NightAssetPaths.ERROR_BUTTON_SOUND, options: { volume: 0.5 } },
 
   { type: 'image', id: NightAssetIds.CAM_1A, src: NightAssetPaths.CAM_1A },
   { type: 'image', id: NightAssetIds.CAM_1B, src: NightAssetPaths.CAM_1B },

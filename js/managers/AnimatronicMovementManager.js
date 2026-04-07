@@ -27,44 +27,46 @@ class AnimatronicMovementManager {
   }
 
   async resolveBonnieOfficeAttack() {
-        const state = this.stateManager.get('bonnie');
-        if (!state || state.currentNode !== 'office-attack') return;
+    const state = this.stateManager.get('bonnie');
+    if (!state || state.currentNode !== 'office-attack') return;
 
-        const doorClosed = this.hooks.isLeftDoorClosed?.() ?? false;
+    const doorClosed = this.hooks.isLeftDoorClosed?.() ?? false;
 
-        console.log(`[bonnie] office attack check | leftDoorClosed=${doorClosed}`);
+    console.log(`[bonnie] office attack check | leftDoorClosed=${doorClosed}`);
 
-        if (doorClosed) {
-            this.stateManager.setNode('bonnie', '1B');
-            this.stateManager.set('bonnie', { isMoving: false });
+    if (doorClosed) {
+        this.stateManager.setNode('bonnie', '1B');
+        this.stateManager.set('bonnie', { isMoving: false });
 
-            if (typeof this.hooks.onBonnieAttackFailed === 'function') {
-            await this.hooks.onBonnieAttackFailed();
-            }
-
-            if (typeof this.onAnimatronicMoved === 'function') {
-                await this.onAnimatronicMoved({
-                    animatronicId: 'bonnie',
-                    fromNode: 'office-attack',
-                    toNode: '1B',
-                    state: this.stateManager.get('bonnie')
-                });
-            }
-
-            return;
+        if (typeof this.hooks.onBonnieAttackFailed === 'function') {
+          await this.hooks.onBonnieAttackFailed();
         }
 
-        this.stateManager.set('bonnie', {
-            attackPhase: 'in-office',
-            isMoving: false
-        });
-
-        if (typeof this.hooks.onBonnieAttackSucceeded === 'function') {
-            await this.hooks.onBonnieAttackSucceeded();
+        if (typeof this.onAnimatronicMoved === 'function') {
+            await this.onAnimatronicMoved({
+                animatronicId: 'bonnie',
+                fromNode: 'office-attack',
+                toNode: '1B',
+                state: this.stateManager.get('bonnie')
+            });
         }
-
-        console.log('[bonnie] attack succeeded -> entered office');
+        return;
     }
+
+    this.stateManager.set('bonnie', {
+        attackPhase: 'in-office',
+        hasBrokenLeftControls: true,
+        isMoving: false
+    });
+
+    if (typeof this.hooks.onBonnieAttackSucceeded === 'function') {
+        await this.hooks.onBonnieAttackSucceeded();
+    }
+
+    this.stopAnimatronic('bonnie');
+
+    console.log('[bonnie] attack succeeded -> entered office');
+  }
 
   setForcedRoll(animatronicId, rollValue) {
         if (rollValue == null) {
@@ -91,7 +93,8 @@ class AnimatronicMovementManager {
       moveIntervalMs: config.baseMoveIntervalMs ?? 4970,
       isMoving: false,
       lastMoveAt: 0,
-      attackPhase: 'idle'
+      attackPhase: 'idle',
+      hasBrokenLeftControls: false
     });
 
     this.hourRulesApplied.set(animatronicId, new Set());
@@ -240,8 +243,6 @@ class AnimatronicMovementManager {
         state: this.stateManager.get(animatronicId)
       });
     }
-
-    this.syncCameraBehavior(animatronicId);
   }
 
   syncCameraBehavior(animatronicId) {
