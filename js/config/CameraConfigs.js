@@ -13,7 +13,7 @@ export const CameraConfigs = {
             chica_freddy: 2,
             bonny_freddy: 3,
             freddy: 4,
-            freddy_look: 5,
+            freddy_look_at_camera: 5,
             empty: 6,
           }
         },

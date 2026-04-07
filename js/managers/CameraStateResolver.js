@@ -196,6 +196,15 @@ class CameraStateResolver {
       case '2A':
         return 'dark';
 
+      case '1C':
+        return this.resolve1CState();
+
+      case '4A':
+        return this.resolve4AState(occupancy);
+
+      case '4B':
+        return this.resolve4BState();
+
       default:
         return null;
     }
@@ -254,6 +263,37 @@ class CameraStateResolver {
 
     this.cameraBlackoutRefreshTimers.clear();
     this.cameraBlackouts.clear();
+  }
+
+  resolve1CState() {
+  return 'default';
+}
+
+  resolve4AState(occupancy) {
+    const room = occupancy.get('4A') ?? [];
+
+    const hasChica = this.has(room, 'chica');
+    const hasFreddy = this.has(room, 'freddy');
+
+    if (hasChica && hasFreddy) return 'chica_freddy';
+    if (!hasChica && hasFreddy) return 'freddy';
+    if (hasChica) {
+      const chicaPrevNode = this.getAnimPrevNode('chica');
+      return chicaPrevNode === '1B' ? 'chica_close' : 'chica_far';
+    }
+
+    return 'default';
+  }
+
+  resolve4BState() {
+    const chicaNode = this.getAnimNode('chica');
+    const freddyNode = this.getAnimNode('freddy');
+
+    if (chicaNode === '4B' && freddyNode === '4B') return 'chica_freddy';
+    if (freddyNode === '4B') return 'freddy';
+    if (chicaNode === '4B') return 'chica';
+
+    return 'default';
   }
 }
 

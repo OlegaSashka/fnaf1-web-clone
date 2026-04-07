@@ -1,3 +1,7 @@
+import Sound from './SoundManager.js';
+import Sounds from './SoundLibrary.js';
+import { NightAssetIds, NightAssetPaths } from '../config/NightAssets.js';
+
 class AnimatronicMovementManager {
   constructor({
     animatronicConfigs = {},
@@ -10,6 +14,8 @@ class AnimatronicMovementManager {
     this.stateManager = stateManager;
     this.cameraSystem = cameraSystem;
     this.onAnimatronicMoved = onAnimatronicMoved ?? null;
+    this.sharedMoveSoundAnimatronics = new Set(['bonnie', 'chica']);
+    this.activeMoveSoundMeta = null;
 
     this.hooks = {
         isLeftDoorClosed: () => false,
@@ -261,6 +267,152 @@ class AnimatronicMovementManager {
 
   getState(animatronicId) {
     return this.stateManager.get(animatronicId);
+  }
+
+  ensureSharedAnimatronicMoveSound() {
+    if (!NightAssetPaths.ANIMATRONIC_MOVE_SOUND) return null;
+
+    if (!Sounds.has(NightAssetIds.ANIMATRONIC_MOVE_SOUND)) {
+      Sounds.add(
+        NightAssetIds.ANIMATRONIC_MOVE_SOUND,
+        NightAssetPaths.ANIMATRONIC_MOVE_SOUND,
+        {
+          loop: false,
+          volume: 0.35
+        }
+      );
+    }
+
+    return NightAssetIds.ANIMATRONIC_MOVE_SOUND;
+  }
+
+  getMoveSoundId(animatronicId) {
+    if (this.sharedMoveSoundAnimatronics.has(animatronicId)) {
+      return this.ensureSharedAnimatronicMoveSound();
+    }
+
+    return null;
+  }
+
+  getNodeBaseMoveVolume(animatronicId, node) {
+    if (animatronicId === 'bonnie') {
+      const levels = {
+        '1A': 0.18,
+        '5': 0.28,
+        '1B': 0.34,
+        '2A': 0.48,
+        '3': 0.58,
+        '2B': 0.72,
+        'office-attack': 0.9
+      };
+
+      return levels[node] ?? 0.35;
+    }
+
+    if (animatronicId === 'chica') {
+      const levels = {
+        '1A': 0.18,
+        '1B': 0.28,
+        '7': 0.42,
+        '4A': 0.58,
+        '4B': 0.78,
+        'office-right': 0.9
+      };
+
+      return levels[node] ?? 0.35;
+    }
+
+    return 0.35;
+  }
+
+  isCameraNode(node) {
+    return ['1A', '1B', '1C', '2A', '2B', '3', '4A', '4B', '5', '6', '7'].includes(node);
+  }
+
+  getMoveSoundVolume({
+    animatronicId,
+    fromNode,
+    toNode,
+    currentCameraId = null,
+    isMonitorOpen = false
+  }) {
+    const fromVolume = this.getNodeBaseMoveVolume(animatronicId, fromNode);
+    const toVolume = this.getNodeBaseMoveVolume(animatronicId, toNode);
+
+    let volume = Math.max(fromVolume, toVolume);
+
+    if (isMonitorOpen && currentCameraId) {
+      const watchingFrom = this.isCameraNode(fromNode) && currentCameraId === fromNode;
+      const watchingTo = this.isCameraNode(toNode) && currentCameraId === toNode;
+
+      if (watchingFrom || watchingTo) {
+        volume += 0.18;
+      }
+    }
+
+    return Math.max(0, Math.min(1, volume));
+  }
+
+  playMoveSound({
+    animatronicId,
+    fromNode,
+    toNode,
+    currentCameraId = null,
+    isMonitorOpen = false
+  } = {}) {
+    const soundId = this.getMoveSoundId(animatronicId);
+    if (!soundId) return;
+
+    const volume = this.getMoveSoundVolume({
+      animatronicId,
+      fromNode,
+      toNode,
+      currentCameraId,
+      isMonitorOpen
+    });
+
+    Sound.stop(soundId);
+
+    const sound = Sound.play(soundId, { volume });
+
+    if (sound) {
+      const durationMs =
+        typeof sound.duration === 'function'
+          ? sound.duration() * 1000
+          : 0;
+
+      this.activeMoveSoundMeta = {
+        animatronicId,
+        fromNode,
+        toNode,
+        soundId,
+        expiresAt: performance.now() + durationMs
+      };
+    }
+
+    console.log(
+      `[move-sound] ${animatronicId} ${fromNode} -> ${toNode} | volume=${volume.toFixed(2)} | monitor=${isMonitorOpen} | cam=${currentCameraId ?? 'none'}`
+    );
+  }
+
+  refreshMoveSoundMix({ currentCameraId = null, isMonitorOpen = false } = {}) {
+    const meta = this.activeMoveSoundMeta;
+    if (!meta) return;
+
+    if (performance.now() >= meta.expiresAt) {
+      this.activeMoveSoundMeta = null;
+      return;
+    }
+
+    const volume = this.getMoveSoundVolume({
+      animatronicId: meta.animatronicId,
+      fromNode: meta.fromNode,
+      toNode: meta.toNode,
+      currentCameraId,
+      isMonitorOpen
+    });
+
+    Sound.setVolume(meta.soundId, volume);
   }
 }
 

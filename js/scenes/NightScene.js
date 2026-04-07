@@ -95,6 +95,7 @@ class NightScene extends BaseScene {
     this.currentUsageLevel = 1;
 
     this.isNightComplete = false;
+    this.isVictorySequencePlaying = false;
 
     this.monitorTransitionSprite = null;
     this.isMonitorOpen = false;
@@ -111,14 +112,16 @@ class NightScene extends BaseScene {
     this.animatronicStateManager = null;
     this.animatronicMovementManager = null;
     this.cameraStateResolver = null;
-
+    
     this.leftControlsBroken = false;
     this.bonnieMonitorPunishTimeout = null;
 
     this.jumpscareManager = null;
     this.isGameOver = false;
-
+    
     this.rareEventManager = null;
+
+    this.doorScareCooldowns = new Map();
 
     this.onCameraButtonClick = this.onCameraButtonClick.bind(this);
     this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
@@ -135,6 +138,8 @@ class NightScene extends BaseScene {
     this.onPhoneGuyMuteClick = this.onPhoneGuyMuteClick.bind(this);
     this.onFreddyNoseClick = this.onFreddyNoseClick.bind(this);
     
+    this.threatTimers = new Map();
+
     this.cameraButtonIds = [...cameraButtonIds];
   }
 
@@ -342,7 +347,7 @@ class NightScene extends BaseScene {
     this.rareEventManager?.clear();
     this.rareEventManager = null;
 
-    this.stopBonnieMonitorPunishTimer();
+    this.clearAllThreatTimers();
     this.leftControlsBroken = false;
 
     if (this.jumpscareManager) {
@@ -435,6 +440,8 @@ class NightScene extends BaseScene {
     this.stopBackgroundAmbience();
     this.stopFanHum();
     this.stopPhoneGuy();
+
+    LoadingScreen.hideVictorySequence();
 
     this.root = null;
   }
@@ -567,6 +574,19 @@ class NightScene extends BaseScene {
 
     this.rareEventManager = new RareEventManager();
 
+    window.rareDebug = {
+      setRoll: (value) => this.rareEventManager?.setForcedRoll(value),
+      clearRoll: () => this.rareEventManager?.clearForcedRoll(),
+      setQueue: (...values) => this.rareEventManager?.setRollQueue(values),
+      clearQueue: () => this.rareEventManager?.clearRollQueue(),
+      state: () => ({
+        lastRoll: this.rareEventManager?.lastRoll ?? null,
+        lastCameraId: this.rareEventManager?.lastCameraId ?? null,
+        forcedRoll: this.rareEventManager?.debugForcedRoll ?? null,
+        queue: [...(this.rareEventManager?.debugQueue ?? [])]
+      })
+    };
+
     this.animatronicMovementManager = new AnimatronicMovementManager({
       animatronicConfigs: AnimatronicConfigs,
       stateManager: this.animatronicStateManager,
@@ -600,6 +620,14 @@ class NightScene extends BaseScene {
       onAnimatronicMoved: async ({ animatronicId, fromNode, toNode }) => {
         console.log(`[MOVE] ${animatronicId}: ${fromNode} -> ${toNode}`);
 
+        this.animatronicMovementManager?.playMoveSound({
+          animatronicId,
+          fromNode,
+          toNode,
+          currentCameraId: this.currentCameraId,
+          isMonitorOpen: this.isMonitorOpen
+        });
+
         this.cameraStateResolver?.setTransitionBlackout(fromNode, toNode);
         await this.cameraStateResolver?.updateCurrentCameraView();
       }
@@ -607,7 +635,7 @@ class NightScene extends BaseScene {
 
     this.animatronicMovementManager.initAnimatronic('bonnie');
 
-    // this.animatronicMovementManager.setForcedRoll('bonnie', 1);
+    this.animatronicMovementManager.setForcedRoll('bonnie', 1);
 
     this.cameraStateResolver = new CameraStateResolver({
       cameraSystem: this.cameraSystem,
@@ -865,7 +893,7 @@ class NightScene extends BaseScene {
   }
 
     async triggerGameOverByAnimatronic(animatronicId, options = {}) {
-      if (this.isNightComplete || this.isGameOver) return;
+      if (this.isNightComplete || this.isVictorySequencePlaying || this.isGameOver) return;
 
       const {
         hideHud = false,
@@ -895,56 +923,16 @@ class NightScene extends BaseScene {
 
       this.isMonitorAnimating = false;
 
+      if (this.isNightComplete || this.isVictorySequencePlaying) {
+        return;
+      }
+
       await this.goToGameOver();
     }
 
   async completeNight() {
-    if (this.isNightComplete) return;
-    this.isNightComplete = true;
-
-    this.stopNightClock();
-    this.stopPowerDrain();
-
-    this.stopPhoneGuy();
-    this.stopBackgroundAmbience();
-    this.stopFanHum();
-
-    const currentNight = this.config?.nightNumber ?? GameProgress.getCurrentNight() ?? 1;
-    const nextNight = currentNight + 1;
-    GameProgress.setCurrentNight(nextNight);
-
-    await SceneTransitionManager.go({
-      game: this.game,
-      skipSceneChange: true,
-      loading: {
-        background: '#000',
-        title: '6:00 AM',
-        text: 'Night Complete',
-        uiMode: 'center',
-        showProgress: false,
-        fadeIn: {
-          enabled: true,
-          from: 0,
-          to: 1,
-          duration: 3000
-        },
-        fadeOut: {
-          enabled: true,
-          from: 1,
-          to: 0,
-          duration: 1200
-        }
-      },
-      confirm: {
-        mode: 'auto',
-        minDuration: 1500
-      }
-    });
-
-    const menuScene = new MenuScene(this.game);
-    menuScene.setEntryMode('return');
-
-    await this.game.state.change(SceneNames.MENU, menuScene);
+    if (this.isNightComplete || this.isVictorySequencePlaying) return;
+    await this.triggerVictorySequence();
   }
 
   ensureBackgroundAmbienceSound() {
@@ -1600,11 +1588,18 @@ class NightScene extends BaseScene {
   }
 
   async lightOnStep() {
-    const bonnieState = this.animatronicStateManager?.get('bonnie');
-    const isBonnieAtDoor = bonnieState?.currentNode === 'office-attack';
+    const threat = this.getDoorThreatBySide(this.activeLightSide);
 
-    if (this.activeLightSide === 'left' && isBonnieAtDoor) {
-      await this.showOfficeBonnieAtDoor();
+    if (threat) {
+      await this.showDoorThreatBySide(threat);
+
+      if (!threat.doorClosed) {
+        this.playDoorScareSound({
+          animatronicId: threat.animatronicId,
+          side: threat.side
+        });
+      }
+
       return;
     }
 
@@ -1709,6 +1704,7 @@ class NightScene extends BaseScene {
     await this.updateNightHud();
     this.isMonitorAnimating = false;
     await this.cameraSystem.playBlinkEffect();
+    this.refreshAnimatronicMoveSoundMix();
   }
 
   async closeMonitor() {
@@ -1716,7 +1712,8 @@ class NightScene extends BaseScene {
     const bonnieInOffice = bonnieState?.attackPhase === 'in-office';
 
     if (bonnieInOffice) {
-      this.stopBonnieMonitorPunishTimer();
+      // this.stopBonnieMonitorPunishTimer();
+      this.clearAllThreatTimers();
     }
 
     if (this.isMonitorAnimating || !this.isMonitorOpen || !this.monitorTransitionSprite) return;
@@ -1773,6 +1770,7 @@ class NightScene extends BaseScene {
     }
 
     this.isMonitorAnimating = false;
+    this.refreshAnimatronicMoveSoundMix();
   }
 
   async onMonitorCloseMouseEnter() {
@@ -1843,6 +1841,8 @@ class NightScene extends BaseScene {
     
     this.currentCameraId = this.cameraSystem.currentCameraId;
 
+    this.refreshAnimatronicMoveSoundMix();
+
     await this.cameraStateResolver?.updateCurrentCameraView();
   }
 
@@ -1867,20 +1867,14 @@ class NightScene extends BaseScene {
     const bonnieState = this.animatronicStateManager?.get('bonnie');
     if (!bonnieState || bonnieState.attackPhase !== 'in-office') return;
 
-    this.bonnieMonitorPunishTimeout = setTimeout(async () => {
-      this.bonnieMonitorPunishTimeout = null;
-
+    this.setThreatTimer('bonnie-monitor-punish', async () => {
       if (!this.isMonitorOpen) return;
-
       await this.forceCloseMonitorAndBonnieJumpscare();
     }, 30000);
   }
 
   stopBonnieMonitorPunishTimer() {
-    if (this.bonnieMonitorPunishTimeout) {
-      clearTimeout(this.bonnieMonitorPunishTimeout);
-      this.bonnieMonitorPunishTimeout = null;
-    }
+    this.clearThreatTimer('bonnie-monitor-punish');
   }
 
   async forceCloseMonitorAndBonnieJumpscare() {
@@ -1891,7 +1885,12 @@ class NightScene extends BaseScene {
       return;
     }
 
-    await this.runBonnieJumpscare();
+    await this.triggerGameOverByAnimatronic('bonnie', {
+      hideHud: true,
+      keepMonitorTransitionVisible: true,
+      soundDelayMs: 40,
+      closePromise: Promise.resolve()
+    });
   }
 
   ensureErrorButtonSound() {
@@ -1946,7 +1945,7 @@ class NightScene extends BaseScene {
     this.lookSpeedMultiplier = 0;
     this.stopLookMovement();
 
-    this.stopBonnieMonitorPunishTimer();
+    this.clearAllThreatTimers();  
     this.stopNightClock();
     this.stopPowerDrain();
     this.clearLightFlicker();
@@ -2067,6 +2066,205 @@ class NightScene extends BaseScene {
 
     await this.cameraSystem.setCurrentState(finalState);
   }
+
+  pauseNightForVictory() {
+    this.lookDirection = 0;
+    this.lookSpeedMultiplier = 0;
+    this.stopLookMovement();
+
+    this.clearAllThreatTimers();
+    this.stopNightClock();
+    this.stopPowerDrain();
+    this.clearLightFlicker();
+
+    this.animatronicMovementManager?.stopAll();
+    this.cameraSystem?.stopStatic();
+
+    this.stopPhoneGuy();
+    this.stopBackgroundAmbience();
+    this.stopFanHum();
+
+    if (this.fanSprite) {
+      this.fanSprite.stop({ clear: false });
+    }
+
+    const officeViewport = document.getElementById('office-viewport');
+    if (officeViewport) {
+      officeViewport.removeEventListener('mousemove', this.onOfficeViewportMouseMove);
+      officeViewport.removeEventListener('mouseleave', this.onOfficeViewportMouseLeave);
+    }
+
+    const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
+    const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
+    const monitorScreenLayer = document.getElementById('monitor-screen-layer');
+    const monitorUiLayer = document.getElementById('monitor-ui-layer');
+    const monitorTransitionLayer = document.getElementById('monitor-transition-layer');
+
+    if (monitorToggleCanvas) {
+      monitorToggleCanvas.hidden = true;
+      monitorToggleCanvas.style.display = 'none';
+      monitorToggleCanvas.style.pointerEvents = 'none';
+    }
+
+    if (monitorCloseCanvas) {
+      monitorCloseCanvas.style.pointerEvents = 'none';
+    }
+
+    if (monitorScreenLayer) monitorScreenLayer.hidden = true;
+    if (monitorUiLayer) monitorUiLayer.hidden = true;
+    if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
+
+    this.isMonitorOpen = false;
+    this.isMonitorAnimating = false;
+
+    this.setHudVisible(false);
+  }
+
+  async triggerVictorySequence() {
+    if (this.isVictorySequencePlaying) return;
+
+    this.isVictorySequencePlaying = true;
+    this.isNightComplete = true;
+    this.isGameOver = false;
+
+    if (this.jumpscareManager) {
+      this.jumpscareManager.stop({ clear: true });
+    }
+
+    this.pauseNightForVictory();
+
+    const currentNight = this.config?.nightNumber ?? GameProgress.getCurrentNight() ?? 1;
+    const nextNight = currentNight + 1;
+    GameProgress.setCurrentNight(nextNight);
+
+    await LoadingScreen.playVictorySequence({
+      startHour: 5,
+      endHour: 6,
+      bellSoundId: NightAssetIds.VICTORY_BELLS_SOUND,
+      cheerSoundId: NightAssetIds.VICTORY_KIDS_CHEER_SOUND
+    });
+
+    this.isVictorySequencePlaying = false;
+
+    const menuScene = new MenuScene(this.game);
+    menuScene.setEntryMode('return');
+
+    await this.game.state.change(SceneNames.MENU, menuScene);
+  }
+
+  setThreatTimer(key, callback, delay) {
+    this.clearThreatTimer(key);
+
+    const timerId = setTimeout(async () => {
+      this.threatTimers.delete(key);
+      await callback();
+    }, delay);
+
+    this.threatTimers.set(key, timerId);
+    return timerId;
+  }
+
+  clearThreatTimer(key) {
+    const timerId = this.threatTimers.get(key);
+    if (!timerId) return;
+
+    clearTimeout(timerId);
+    this.threatTimers.delete(key);
+  }
+
+  clearAllThreatTimers() {
+    for (const timerId of this.threatTimers.values()) {
+      clearTimeout(timerId);
+    }
+
+    this.threatTimers.clear();
+  }
+
+  refreshAnimatronicMoveSoundMix() {
+    this.animatronicMovementManager?.refreshMoveSoundMix({
+      currentCameraId: this.currentCameraId,
+      isMonitorOpen: this.isMonitorOpen
+    });
+  }
+
+  getDoorThreatBySide(side) {
+    if (side === 'left') {
+      const bonnieState = this.animatronicStateManager?.get('bonnie');
+      const isAtDoor = bonnieState?.currentNode === 'office-attack';
+
+      if (isAtDoor) {
+        return {
+          animatronicId: 'bonnie',
+          side: 'left',
+          doorClosed: this.leftDoorClosed
+        };
+      }
+    }
+
+    if (side === 'right') {
+      const chicaState = this.animatronicStateManager?.get('chica');
+      const isAtDoor = chicaState?.currentNode === 'office-right';
+
+      if (isAtDoor) {
+        return {
+          animatronicId: 'chica',
+          side: 'right',
+          doorClosed: this.rightDoorClosed
+        };
+      }
+    }
+
+    return null;
+  }
+
+  async showDoorThreatBySide(threat) {
+    if (!threat) return false;
+
+    if (threat.animatronicId === 'bonnie' && threat.side === 'left') {
+      await this.showOfficeBonnieAtDoor();
+      return true;
+    }
+
+    if (threat.animatronicId === 'chica' && threat.side === 'right') {
+      await this.showOfficeChicaAtDoor?.();
+      return true;
+    }
+
+    return false;
+  }
+
+  ensureDoorScareSound() {
+    if (!NightAssetPaths.DOOR_SCARE_SOUND) return null;
+
+    if (!Sounds.has(NightAssetIds.DOOR_SCARE_SOUND)) {
+      Sounds.add(NightAssetIds.DOOR_SCARE_SOUND, NightAssetPaths.DOOR_SCARE_SOUND, {
+        loop: false,
+        volume: 0.7
+      });
+    }
+
+    return NightAssetIds.DOOR_SCARE_SOUND;
+  }
+
+  playDoorScareSound({ animatronicId, side } = {}) {
+    const soundId = this.ensureDoorScareSound();
+    if (!soundId) return;
+
+    const cooldownKey = `${animatronicId}:${side}`;
+    const now = performance.now();
+    const cooldownMs = 1200;
+
+    const lastAt = this.doorScareCooldowns.get(cooldownKey) ?? 0;
+    if (now - lastAt < cooldownMs) return;
+
+    this.doorScareCooldowns.set(cooldownKey, now);
+
+    Sound.stop(soundId);
+    Sound.play(soundId, { volume: 0.75 });
+
+    console.log(`[door-scare] ${animatronicId} side=${side}`);
+  }
+
 } 
 
 export default NightScene;

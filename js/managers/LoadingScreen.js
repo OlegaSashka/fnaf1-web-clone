@@ -55,7 +55,16 @@ class LoadingScreen {
       textNode: document.getElementById('loading-text'),
       progressNode: document.getElementById('loading-progress'),
       button: document.getElementById('loading-continue-btn'),
-      hint: document.getElementById('loading-continue-hint')
+      hint: document.getElementById('loading-continue-hint'),
+
+      victorySequence: document.getElementById('loading-victory-sequence'),
+      victoryBackdrop: document.getElementById('loading-victory-backdrop'),
+      victorySvg: document.getElementById('loading-victory-svg'),
+      victoryHourLabel: document.getElementById('loading-victory-hour-label'),
+      victoryHourCurrent: document.getElementById('loading-victory-hour-current'),
+      victoryHourNext: document.getElementById('loading-victory-hour-next'),
+      victoryHourClipRect: document.getElementById('loading-victory-hour-clip-rect'),
+      victoryHourClipDebug: document.getElementById('loading-victory-hour-clip-debug')
     };
   }
 
@@ -114,6 +123,8 @@ class LoadingScreen {
 
     this.cleanupHandlers();
     this.stopEffect();
+
+    this.hideVictorySequence();
 
     if (overlay) {
       overlay.classList.remove('loading-overlay--center', 'loading-overlay--bottom-right');
@@ -405,6 +416,245 @@ class LoadingScreen {
       progressNode.textContent = text;
     }
   }
+
+  static hideVictorySequence() {
+    const {
+      victorySequence,
+      victoryBackdrop,
+      victoryHourLabel,
+      victoryHourCurrent,
+      victoryHourNext
+    } = this.getNodes();
+
+    if (victorySequence) {
+      victorySequence.hidden = true;
+      victorySequence.style.display = 'none';
+    }
+
+    if (victoryBackdrop) {
+      victoryBackdrop.style.opacity = '0';
+    }
+
+    if (victoryHourLabel) {
+      victoryHourLabel.style.opacity = '0';
+    }
+
+    if (victoryHourCurrent) {
+      victoryHourCurrent.textContent = '5';
+      victoryHourCurrent.style.opacity = '1';
+    }
+
+    if (victoryHourNext) {
+      victoryHourNext.textContent = '6';
+      victoryHourNext.style.opacity = '1';
+    }
+
+    this.applyVictoryLayout({
+      clipX: 760,
+      clipY: 200,
+      clipSize: 220,
+      labelOffsetX: 50,
+      labelOffsetY: 50,
+      debug: true
+    });
+  }
+  
+  static async playVictorySequence({
+    startHour = 5,
+    endHour = 6,
+    bellSoundId = null,
+    cheerSoundId = null
+  } = {}) {
+    const {
+      screen,
+      overlay,
+      imageNode,
+      effectCanvas,
+      progressNode,
+      button,
+      hint,
+      victorySequence,
+      victoryBackdrop,
+      victoryHourLabel,
+      victoryHourCurrent,
+      victoryHourNext
+    } = this.getNodes();
+
+    if (
+      !screen ||
+      !victorySequence ||
+      !victoryBackdrop ||
+      !victoryHourLabel ||
+      !victoryHourCurrent ||
+      !victoryHourNext
+    ) {
+      return;
+    }
+
+    this.cleanupHandlers();
+    this.stopEffect();
+    this.hideVictorySequence();
+
+    screen.classList.remove('hidden');
+    screen.style.background = '#000';
+    screen.style.opacity = '1';
+
+    if (overlay) overlay.style.display = 'none';
+    if (imageNode) imageNode.style.display = 'none';
+    if (effectCanvas) effectCanvas.style.display = 'none';
+    if (progressNode) progressNode.hidden = true;
+    if (button) button.hidden = true;
+    if (hint) hint.hidden = true;
+
+    victorySequence.hidden = false;
+    victorySequence.style.display = 'block';
+
+    victoryHourCurrent.textContent = String(startHour);
+    victoryHourNext.textContent = String(endHour);
+
+    const layout = this.applyVictoryLayout({
+      clipX: 760,
+      clipY: 360,
+      clipSize: 220,
+      labelOffsetX: -20,
+      labelOffsetY: 120,
+      debug: false
+    });
+
+    if (bellSoundId) {
+      Sound.stop(bellSoundId);
+      Sound.play(bellSoundId);
+    }
+
+    if (cheerSoundId) {
+      Sound.stop(cheerSoundId);
+      Sound.play(cheerSoundId);
+    }
+
+    await new Promise((resolve) => {
+      anime.timeline({
+        easing: 'easeInOutSine',
+        complete: resolve
+      })
+      .add({
+        targets: victoryBackdrop,
+        opacity: [0, 1],
+        duration: 1400,
+        easing: 'easeOutQuad'
+      }, 0)
+      .add({
+        targets: [victoryHourLabel, victoryHourCurrent],
+        opacity: [0, 1],
+        duration: 900,
+        easing: 'easeOutSine'
+      }, 250)
+      .add({
+        targets: victoryHourCurrent,
+        y: [layout.centerY, layout.centerY - layout.clipSize],
+        duration: 5000,
+        easing: 'linear'
+      }, 1300)
+      .add({
+        targets: victoryHourNext,
+        y: [layout.nextStartY, layout.centerY],
+        duration: 5000,
+        easing: 'linear'
+      }, 1300)
+    });
+
+    await Promise.all([
+      this.waitForSoundEnd(bellSoundId),
+      this.waitForSoundEnd(cheerSoundId)
+    ]);
+  }
+
+  static waitForSoundEnd(soundId) {
+    return new Promise((resolve) => {
+      if (!soundId) {
+        resolve();
+        return;
+      }
+
+      const sound = Sounds.get(soundId);
+      if (!sound) {
+        resolve();
+        return;
+      }
+
+      const durationMs =
+        typeof sound.duration === 'function'
+          ? Math.max(0, sound.duration() * 1000)
+          : 0;
+
+      if (durationMs <= 0) {
+        resolve();
+        return;
+      }
+
+      setTimeout(resolve, durationMs);
+    });
+  }
+  
+  static applyVictoryLayout({
+    clipX = 760,
+    clipY = 300,
+    clipSize = 220,
+    labelOffsetX = 50,
+    labelOffsetY = 10,
+    debug = false
+  } = {}) {
+    const {
+      victoryHourLabel,
+      victoryHourCurrent,
+      victoryHourNext,
+      victoryHourClipRect,
+      victoryHourClipDebug
+    } = this.getNodes();
+
+    const centerX = clipX + clipSize / 2;
+    const centerY = clipY + clipSize / 2;
+    const nextStartY = centerY + clipSize;
+
+    if (victoryHourClipRect) {
+      victoryHourClipRect.setAttribute('x', String(clipX));
+      victoryHourClipRect.setAttribute('y', String(clipY));
+      victoryHourClipRect.setAttribute('width', String(clipSize));
+      victoryHourClipRect.setAttribute('height', String(clipSize));
+    }
+
+    if (victoryHourClipDebug) {
+      victoryHourClipDebug.setAttribute('x', String(clipX));
+      victoryHourClipDebug.setAttribute('y', String(clipY));
+      victoryHourClipDebug.setAttribute('width', String(clipSize));
+      victoryHourClipDebug.setAttribute('height', String(clipSize));
+      victoryHourClipDebug.style.display = debug ? 'block' : 'none';
+    }
+
+    if (victoryHourLabel) {
+      victoryHourLabel.setAttribute('x', String(clipX + clipSize + labelOffsetX));
+      victoryHourLabel.setAttribute('y', String(clipY + labelOffsetY));
+    }
+
+    if (victoryHourCurrent) {
+      victoryHourCurrent.setAttribute('x', String(centerX));
+      victoryHourCurrent.setAttribute('y', String(centerY));
+    }
+
+    if (victoryHourNext) {
+      victoryHourNext.setAttribute('x', String(centerX));
+      victoryHourNext.setAttribute('y', String(nextStartY));
+    }
+
+    return {
+      clipX,
+      clipY,
+      clipSize,
+      centerX,
+      centerY,
+      nextStartY
+    };
+  }
+
 }
 
 export default LoadingScreen;

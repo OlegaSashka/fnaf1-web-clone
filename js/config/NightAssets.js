@@ -22,6 +22,12 @@ export const NightAssetIds = Object.freeze({
   MONITOR_TOGGLE_SOUND: 'monitor-toggle-sound',
   FAN_HUM_SOUND: 'fan-hum-sound',
   BACKGROUND_AMBIENCE_SOUND: 'background-ambience-sound',
+  
+  ANIMATRONIC_MOVE_SOUND: 'bonnie-move-sound',
+  DOOR_SCARE_SOUND: 'door-scare-sound',
+
+  VICTORY_BELLS_SOUND: 'victory-bells-sound',
+  VICTORY_KIDS_CHEER_SOUND: 'victory-kids-cheer-sound',
 
   MONITOR_BLINK: 'menu-blink-camera',
 
@@ -56,7 +62,6 @@ export const NightAssetPaths = Object.freeze({
 
   JUMPSCARE_SOUND: 'assets/sounds/jumpscares/jumpscare.wav',
 
-
   ERROR_BUTTON_SOUND: 'assets/sounds/doors/error.wav',
   DOOR_TOGGLE_SOUND: 'assets/sounds/doors/door-toggle.wav',
   LIGHT_ON_SOUND: 'assets/sounds/light/light-on.wav',
@@ -65,6 +70,12 @@ export const NightAssetPaths = Object.freeze({
   MONITOR_TOGGLE_SOUND: 'assets/sounds/camera/monitor-toggle.wav',
   BACKGROUND_AMBIENCE_SOUND: 'assets/sounds/ambience/background-ambience.wav',
 
+  ANIMATRONIC_MOVE_SOUND: 'assets/sounds/animatronics/deep_steps.wav',
+  DOOR_SCARE_SOUND: 'assets/sounds/doors/door-scare.wav',
+
+  VICTORY_BELLS_SOUND: 'assets/sounds/win/victory-bells.wav',
+  VICTORY_KIDS_CHEER_SOUND: 'assets/sounds/win/victory-kids-cheer.wav',
+
   USAGE_METER: 'assets/images/camera/PowerUsege_103x32.png',
 
   MONITOR_TOGGLE: 'assets/images/camera/monitor-toggle_598x45.png',
@@ -72,7 +83,7 @@ export const NightAssetPaths = Object.freeze({
   MONITOR_TRANSITION: 'assets/images/camera/cameraOpenClose.png',
 
   MONITOR_BLINK:'assets/images/ui/Blink/Menu-blink-camera.png',
-
+  
   CAM_1A: 'assets/images/camera/cam-1a.png',
   CAM_1B: 'assets/images/camera/cam-1b.png',
   CAM_1C: 'assets/images/camera/cam-1c.png',
@@ -112,6 +123,12 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'audio', id: NightAssetIds.FAN_HUM_SOUND, src: NightAssetPaths.FAN_HUM, options: {loop:true, volume: 0.2 } },
   { type: 'audio', id: NightAssetIds.BACKGROUND_AMBIENCE_SOUND, src: NightAssetPaths.BACKGROUND_AMBIENCE_SOUND, options: {loop:true, volume: 0.5 } },
   { type: 'audio', id: NightAssetIds.ERROR_BUTTON_SOUND, src: NightAssetPaths.ERROR_BUTTON_SOUND, options: { volume: 0.5 } },
+
+  { type: 'audio', id: NightAssetIds.VICTORY_BELLS_SOUND, src: NightAssetPaths.VICTORY_BELLS_SOUND, options: { volume: 0.6 } },
+  { type: 'audio', id: NightAssetIds.VICTORY_KIDS_CHEER_SOUND, src: NightAssetPaths.VICTORY_KIDS_CHEER_SOUND, options: { volume: 0.6 } },
+
+  { type: 'audio', id: NightAssetIds.ANIMATRONIC_MOVE_SOUND, src: NightAssetPaths.ANIMATRONIC_MOVE_SOUND, options: { volume: 0.35 } },
+  { type: 'audio', id: NightAssetIds.DOOR_SCARE_SOUND, src: NightAssetPaths.DOOR_SCARE_SOUND, options: { volume: 0.7 } },
 
   { type: 'image', id: NightAssetIds.CAM_1A, src: NightAssetPaths.CAM_1A },
   { type: 'image', id: NightAssetIds.CAM_1B, src: NightAssetPaths.CAM_1B },
