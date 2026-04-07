@@ -61,6 +61,15 @@ class SoundManager {
     if (sound) sound.stop();
   }
 
+  stopAll({ exceptIds = [] } = {}) {
+    const except = new Set(exceptIds);
+
+    for (const id of Object.keys(Sounds.sounds ?? {})) {
+      if (except.has(id)) continue;
+      this.stop(id);
+    }
+  }
+
   pause(id) {
     const sound = Sounds.get(id);
     if (sound) sound.pause();

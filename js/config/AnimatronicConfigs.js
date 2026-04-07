@@ -16,19 +16,25 @@ export const AnimatronicConfigs = {
               { hour: 2, delta: 1 },
               { hour: 3, delta: 1 },
               { hour: 4, delta: 1 },
-              { hour: 5, delta: 1 }
             ]
           },
   chica: {
             id: 'chica',
             label: 'Chica',
             startNode: '1A',
+            baseMoveIntervalMs: 4980,
+            activitySchedule: [
+              { hour: 3, delta: 1 },
+              { hour: 4, delta: 1 }
+            ],
             moveGraph: {
               '1A': ['1B'],
-              '1B': ['7', '4A'],
-              '7': ['4A'],
-              '4A': ['4B'],
-              '4B': ['office-right']
+              '1B': ['7', '6'],
+              '7': ['6', '4A'],
+              '6': ['7', '4A'],
+              '4A': ['1B', '4B'],
+              '4B': ['office-attack'],
+              'office-attack': ['4A']
             }
           },
   freddy: {

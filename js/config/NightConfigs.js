@@ -28,11 +28,11 @@ export const NightConfigs = Object.freeze({
     
 
     power: {
-      start: 1000
+      start: 10
     },
 
     time: {
-      startHour: 2,
+      startHour: 3,
       endHour: 6,
       hourDurationMs: 90000
     }

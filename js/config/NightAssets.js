@@ -13,6 +13,7 @@ export const NightAssetIds = Object.freeze({
   MONITOR_TRANSITION: 'monitor-transition',
 
   BONNIE_JUMPSCARE: 'bonnie-jumpscare',
+  CHICA_JUMPSCARE: 'chica-jumpscare',
   ERROR_BUTTON_SOUND: 'error-button-sound',
 
   JUMPSCARE_SOUND: 'bonnie-jumpscare-sound',
@@ -22,7 +23,14 @@ export const NightAssetIds = Object.freeze({
   MONITOR_TOGGLE_SOUND: 'monitor-toggle-sound',
   FAN_HUM_SOUND: 'fan-hum-sound',
   BACKGROUND_AMBIENCE_SOUND: 'background-ambience-sound',
-  
+
+  POWER_DOWN_SOUND: 'power-down-sound',
+
+  KITCHEN_SOUND_1: 'kitchen-sound-1',
+  KITCHEN_SOUND_2: 'kitchen-sound-2',
+  KITCHEN_SOUND_3: 'kitchen-sound-3',
+  KITCHEN_SOUND_4: 'kitchen-sound-4',
+
   ANIMATRONIC_MOVE_SOUND: 'bonnie-move-sound',
   DOOR_SCARE_SOUND: 'door-scare-sound',
 
@@ -59,7 +67,7 @@ export const NightAssetPaths = Object.freeze({
   DOOR_OPEN_SOUND: 'assets/sounds/game/door-open.wav',
 
   BONNIE_JUMPSCARE: 'assets/images/jumpscares/Bonnie_Jumpscare.png',
-
+  CHICA_JUMPSCARE: 'assets/images/jumpscares/Chica_Jumpscare.png',
   JUMPSCARE_SOUND: 'assets/sounds/jumpscares/jumpscare.wav',
 
   ERROR_BUTTON_SOUND: 'assets/sounds/doors/error.wav',
@@ -69,6 +77,13 @@ export const NightAssetPaths = Object.freeze({
   FAN_HUM: 'assets/sounds/fan/FanHum.wav',
   MONITOR_TOGGLE_SOUND: 'assets/sounds/camera/monitor-toggle.wav',
   BACKGROUND_AMBIENCE_SOUND: 'assets/sounds/ambience/background-ambience.wav',
+
+  POWER_DOWN_SOUND: 'assets/sounds/office/power-down.wav',
+
+  KITCHEN_SOUND_1: 'assets/sounds/kitchen/kitchen-1.wav',
+  KITCHEN_SOUND_2: 'assets/sounds/kitchen/kitchen-2.wav',
+  KITCHEN_SOUND_3: 'assets/sounds/kitchen/kitchen-3.wav',
+  KITCHEN_SOUND_4: 'assets/sounds/kitchen/kitchen-4.wav',
 
   ANIMATRONIC_MOVE_SOUND: 'assets/sounds/animatronics/deep_steps.wav',
   DOOR_SCARE_SOUND: 'assets/sounds/doors/door-scare.wav',
@@ -114,6 +129,7 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'image', id: NightAssetIds.MONITOR_BLINK, src: NightAssetPaths.MONITOR_BLINK},
 
   { type: 'image', id: NightAssetIds.BONNIE_JUMPSCARE, src: NightAssetPaths.BONNIE_JUMPSCARE },
+  { type: 'image', id: NightAssetIds.CHICA_JUMPSCARE, src: NightAssetPaths.CHICA_JUMPSCARE },
 
   { type: 'audio', id: NightAssetIds.JUMPSCARE_SOUND, src: NightAssetPaths.JUMPSCARE_SOUND, options: { volume: 0.5 } },
   { type: 'audio', id: NightAssetIds.DOOR_TOGGLE_SOUND, src: NightAssetPaths.DOOR_TOGGLE_SOUND, options: { volume: 0.4 } },
@@ -124,12 +140,19 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'audio', id: NightAssetIds.BACKGROUND_AMBIENCE_SOUND, src: NightAssetPaths.BACKGROUND_AMBIENCE_SOUND, options: {loop:true, volume: 0.5 } },
   { type: 'audio', id: NightAssetIds.ERROR_BUTTON_SOUND, src: NightAssetPaths.ERROR_BUTTON_SOUND, options: { volume: 0.5 } },
 
+  { type: 'audio', id: NightAssetIds.POWER_DOWN_SOUND, src: NightAssetPaths.POWER_DOWN_SOUND, options: { volume: 0.7 } },
+
+  { type: 'audio', id: NightAssetIds.KITCHEN_SOUND_1, src: NightAssetPaths.KITCHEN_SOUND_1, options: { volume: 0.35 } },
+  { type: 'audio', id: NightAssetIds.KITCHEN_SOUND_2, src: NightAssetPaths.KITCHEN_SOUND_2, options: { volume: 0.35 } },
+  { type: 'audio', id: NightAssetIds.KITCHEN_SOUND_3, src: NightAssetPaths.KITCHEN_SOUND_3, options: { volume: 0.35 } },
+  { type: 'audio', id: NightAssetIds.KITCHEN_SOUND_4, src: NightAssetPaths.KITCHEN_SOUND_4, options: { volume: 0.35 } },
+
   { type: 'audio', id: NightAssetIds.VICTORY_BELLS_SOUND, src: NightAssetPaths.VICTORY_BELLS_SOUND, options: { volume: 0.6 } },
   { type: 'audio', id: NightAssetIds.VICTORY_KIDS_CHEER_SOUND, src: NightAssetPaths.VICTORY_KIDS_CHEER_SOUND, options: { volume: 0.6 } },
 
   { type: 'audio', id: NightAssetIds.ANIMATRONIC_MOVE_SOUND, src: NightAssetPaths.ANIMATRONIC_MOVE_SOUND, options: { volume: 0.35 } },
   { type: 'audio', id: NightAssetIds.DOOR_SCARE_SOUND, src: NightAssetPaths.DOOR_SCARE_SOUND, options: { volume: 0.7 } },
-
+  
   { type: 'image', id: NightAssetIds.CAM_1A, src: NightAssetPaths.CAM_1A },
   { type: 'image', id: NightAssetIds.CAM_1B, src: NightAssetPaths.CAM_1B },
   { type: 'image', id: NightAssetIds.CAM_1C, src: NightAssetPaths.CAM_1C },

@@ -548,7 +548,7 @@ canvas {
   left: 23%;
   height: 22%;
   width: 43%;
-  border: yellow 1px solid;
+  /* border: yellow 1px solid; */
 }
 
 .panel-hitbox--light-r {
@@ -556,7 +556,7 @@ canvas {
   left: 23%;
   height: 23%;
   width: 43%;
-  border: yellow 1px solid;
+  /* border: yellow 1px solid; */
 }
 
 .panel-hitbox--door-l {
@@ -564,7 +564,7 @@ canvas {
   left: 33%;
   height: 22%;
   width: 43%;
-  border: rgb(255, 255, 255) 1px solid;
+  /* border: rgb(255, 255, 255) 1px solid; */
 }
 
 .panel-hitbox--light-l {
@@ -572,7 +572,7 @@ canvas {
   left: 33%;
   height: 23%;
   width: 43%;
-  border: rgb(255, 255, 255) 1px solid;
+  /* border: rgb(255, 255, 255) 1px solid; */
 }
 
 #office-light-canvas {

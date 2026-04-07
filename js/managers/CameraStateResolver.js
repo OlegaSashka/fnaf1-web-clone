@@ -2,7 +2,7 @@ class CameraStateResolver {
   constructor({
     cameraSystem,
     animatronicStateManager,
-    blackoutDurationMs = 1000,
+    blackoutDurationMs = 3000,
     resolveStateOverride = null
   } = {}) {
     this.cameraSystem = cameraSystem ?? null;
@@ -174,6 +174,27 @@ class CameraStateResolver {
     return this.getAnimNode('bonnie') === '2B' ? 'bonny' : 'default';
   }
 
+  resolve7State(occupancy) {
+    const room = occupancy.get('7') ?? [];
+
+    const hasChica = this.has(room, 'chica');
+    const hasFreddy = this.has(room, 'freddy');
+
+    if (hasChica && hasFreddy) {
+      const chicaPrevNode = this.getAnimPrevNode('chica');
+      return chicaPrevNode === '1B' ? 'chica_close_freddy' : 'chica_far_freddy';
+    }
+
+    if (hasFreddy) return 'freddy';
+
+    if (hasChica) {
+      const chicaPrevNode = this.getAnimPrevNode('chica');
+      return chicaPrevNode === '1B' ? 'chica_close' : 'chica_far';
+    }
+
+    return 'default';
+  }
+
   resolveCameraState(cameraId) {
     const occupancy = this.getOccupancy();
 
@@ -204,6 +225,9 @@ class CameraStateResolver {
 
       case '4B':
         return this.resolve4BState();
+
+      case '7':
+        return this.resolve7State(occupancy);
 
       default:
         return null;

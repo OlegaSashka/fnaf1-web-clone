@@ -94,6 +94,19 @@ class JumpscareManager {
     });
   }
 
+  async playChica({ soundDelayMs = 40 } = {}) {
+    return this.play({
+      imageId: NightAssetIds.CHICA_JUMPSCARE,
+      soundId: NightAssetIds.JUMPSCARE_SOUND,
+      soundDelayMs,
+      frameWidth: 1600,
+      frameHeight: 720,
+      direction: 'vertical',
+      fps: 25,
+      hideOnStop: false
+    });
+  }
+
   stop({ clear = true } = {}) {
     if (!this.sprite) return;
     this.sprite.stop({ clear });

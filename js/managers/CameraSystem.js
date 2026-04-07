@@ -305,7 +305,12 @@ class CameraSystem {
       }
     );
 
-    const frameIndex = this.getStateFrameIndex(config);
+    if (this.currentCameraState == null) {
+      this.fillBlack();
+      return;
+    }
+
+    const frameIndex = this.getStateFrameIndex(config, this.currentCameraState);
     await this.cameraSprite.showFrame(frameIndex);
   }
 
@@ -317,7 +322,7 @@ class CameraSystem {
     this.currentCameraId = cameraId;
 
     const config = this.getCurrentConfig();
-    this.currentCameraState = stateKey ?? this.getDefaultStateKey(config);
+    this.currentCameraState = stateKey;
 
     this.applyViewportMode();
     this.updateCameraTitle();
@@ -346,6 +351,12 @@ class CameraSystem {
     if (!config) return;
 
     this.currentCameraState = stateKey;
+
+    if (stateKey == null) {
+      this.stopCurrentBehavior({ resetToFirstFrame: false });
+      this.fillBlack();
+      return;
+    }
 
     if (!this.cameraSprite) {
       await this.createCameraSprite();
