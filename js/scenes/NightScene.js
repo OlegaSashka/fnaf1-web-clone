@@ -32,6 +32,10 @@ import { AnimatronicConfigs } from '../config/AnimatronicConfigs.js';
 
 import CameraStateResolver from '../managers/CameraStateResolver.js';
 
+import JumpscareManager from '../managers/JumpscareManager.js';
+
+import RareEventManager from '../managers/RareEventManager.js';
+
 class NightScene extends BaseScene {
   constructor(game, config) {
     super(game);
@@ -111,7 +115,10 @@ class NightScene extends BaseScene {
     this.leftControlsBroken = false;
     this.bonnieMonitorPunishTimeout = null;
 
-    this.jumpscareSprite = null;
+    this.jumpscareManager = null;
+    this.isGameOver = false;
+
+    this.rareEventManager = null;
 
     this.onCameraButtonClick = this.onCameraButtonClick.bind(this);
     this.onMonitorToggleMouseEnter = this.onMonitorToggleMouseEnter.bind(this);
@@ -127,7 +134,7 @@ class NightScene extends BaseScene {
 
     this.onPhoneGuyMuteClick = this.onPhoneGuyMuteClick.bind(this);
     this.onFreddyNoseClick = this.onFreddyNoseClick.bind(this);
-
+    
     this.cameraButtonIds = [...cameraButtonIds];
   }
 
@@ -332,12 +339,15 @@ class NightScene extends BaseScene {
       }
     }
 
+    this.rareEventManager?.clear();
+    this.rareEventManager = null;
+
     this.stopBonnieMonitorPunishTimer();
     this.leftControlsBroken = false;
 
-    if (this.jumpscareSprite) {
-      this.jumpscareSprite.stop({ clear: true });
-      this.jumpscareSprite = null;
+    if (this.jumpscareManager) {
+      this.jumpscareManager.destroy();
+      this.jumpscareManager = null;
     }
 
     if (monitorCloseCanvas) {
@@ -534,9 +544,9 @@ class NightScene extends BaseScene {
     monitorToggleCanvas.style.display = 'block';
 
     monitorCloseCanvas.style.display = 'block';
+
     monitorTransitionCanvas.width = 1920;
     monitorTransitionCanvas.height = 1080;
-
     monitorTransitionCanvas.style.display = 'block';
 
     this.cameraSystem = new CameraSystem({
@@ -554,6 +564,8 @@ class NightScene extends BaseScene {
     await this.cameraSystem.init();
 
     this.animatronicStateManager = new AnimatronicStateManager();
+
+    this.rareEventManager = new RareEventManager();
 
     this.animatronicMovementManager = new AnimatronicMovementManager({
       animatronicConfigs: AnimatronicConfigs,
@@ -595,34 +607,31 @@ class NightScene extends BaseScene {
 
     this.animatronicMovementManager.initAnimatronic('bonnie');
 
-    this.animatronicMovementManager.setForcedRoll('bonnie', 1);
+    // this.animatronicMovementManager.setForcedRoll('bonnie', 1);
 
     this.cameraStateResolver = new CameraStateResolver({
       cameraSystem: this.cameraSystem,
-      animatronicStateManager: this.animatronicStateManager
+      animatronicStateManager: this.animatronicStateManager,
+      resolveStateOverride: ({ cameraId, baseState }) => {
+        const rareState = this.rareEventManager?.resolveRareState({
+          cameraId,
+          baseState
+        });
+
+        return rareState ?? baseState;
+      }
     });
 
-    this.jumpscareSprite = new AnimatedSprite(
-      jumpscareCanvas,
-      Images.get(NightAssetIds.BONNIE_JUMPSCARE),
-      20,
-      {
-        frameWidth: 1600,
-        frameHeight: 720,
-        direction: 'vertical',
-        drawX: 0,
-        drawY: 0,
-        drawWidth: jumpscareCanvas.width,
-        drawHeight: jumpscareCanvas.height
-      }
-    );
+    this.jumpscareManager = new JumpscareManager({
+      canvas: jumpscareCanvas
+    });
 
-    this.jumpscareSprite.clear();
+    await this.jumpscareManager.init();
 
     this.monitorTransitionSprite = new AnimatedSprite(
       monitorTransitionCanvas,
       Images.get(NightAssetIds.MONITOR_TRANSITION),
-      25,
+      35,
       {
         frameWidth: 1280,
         frameHeight: 720,
@@ -836,39 +845,58 @@ class NightScene extends BaseScene {
     this.stopPowerDrain();
   }
 
-  async runBonnieJumpscare() {
-    if (!this.jumpscareSprite) return;
+  async playJumpscareByAnimatronic(animatronicId, options = {}) {
+    if (!this.jumpscareManager) return;
 
-    const jumpscareCanvas = document.getElementById('jumpscare-canvas');
-    if (!jumpscareCanvas) return;
+    const { soundDelayMs = 0 } = options;
 
-    this.stopBonnieMonitorPunishTimer();
+    switch (animatronicId) {
+      case 'bonnie':
+        await this.jumpscareManager.playBonnie({ soundDelayMs });
+        return;
 
-    this.stopPhoneGuy();
-    this.stopBackgroundAmbience();
-    this.stopFanHum();
+      case 'chica':
+        await this.jumpscareManager.playChica?.({ soundDelayMs });
+        return;
 
-    Sound.stop(NightAssetIds.JUMPSCARE_SOUND);
-    Sound.play(NightAssetIds.JUMPSCARE_SOUND);
-
-    await this.jumpscareSprite.setSourceById(NightAssetIds.BONNIE_JUMPSCARE, {
-      frameWidth: 1600,
-      frameHeight: 720,
-      direction: 'vertical',
-      drawWidth: jumpscareCanvas.width,
-      drawHeight: jumpscareCanvas.height,
-      fps: 25,
-      showFrame: 0
-    });
-
-    await this.jumpscareSprite.playOnce({
-      fromFrame: 0,
-      toFrame: this.jumpscareSprite.totalFrames - 1,
-      holdLastFrame: true
-    });
-
-    this.isMonitorAnimating = false;
+      default:
+        console.warn(`[NightScene] Неизвестный jumpscare для animatronicId="${animatronicId}"`);
+    }
   }
+
+    async triggerGameOverByAnimatronic(animatronicId, options = {}) {
+      if (this.isNightComplete || this.isGameOver) return;
+
+      const {
+        hideHud = false,
+        keepMonitorTransitionVisible = false,
+        soundDelayMs = 0,
+        closePromise = null
+      } = options;
+
+      this.isGameOver = true;
+
+      this.disableGameplayForJumpscare({
+        hideHud,
+        disableMonitorToggle: true,
+        stopAmbientSounds: true,
+        clearMonitorView: false,
+        keepMonitorTransitionVisible
+      });
+
+      const jumpscarePromise = this.playJumpscareByAnimatronic(animatronicId, {
+        soundDelayMs
+      });
+
+      await Promise.all([
+        jumpscarePromise,
+        closePromise
+      ]);
+
+      this.isMonitorAnimating = false;
+
+      await this.goToGameOver();
+    }
 
   async completeNight() {
     if (this.isNightComplete) return;
@@ -1668,6 +1696,8 @@ class NightScene extends BaseScene {
 
     this.setFanHumVolume(0.1);
 
+    await this.applyResolvedStateToCurrentCamera();
+
     if (officeUiLayer) officeUiLayer.hidden = true;
     if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
     if (monitorScreenLayer) monitorScreenLayer.hidden = false;
@@ -1698,6 +1728,10 @@ class NightScene extends BaseScene {
 
     this.isMonitorAnimating = true;
 
+    if (!bonnieInOffice && !this.isGameOver) {
+      this.rareEventManager?.rollForCamera(this.currentCameraId);
+    }
+
     if (bonnieInOffice) {
       this.prepareForBonnieJumpscare();
     }
@@ -1718,23 +1752,24 @@ class NightScene extends BaseScene {
     const closePromise = this.monitorTransitionSprite.playOnceReverse({
       fromFrame: this.monitorTransitionSprite.totalFrames - 1,
       toFrame: 0,
-      holdLastFrame: false,
-      clearOnFinish: true
+      holdLastFrame: true,
+      clearOnFinish: false
     });
 
-    let jumpscarePromise = null;
-
     if (bonnieInOffice) {
-      jumpscarePromise = this.runBonnieJumpscare();
+      await this.triggerGameOverByAnimatronic('bonnie', {
+        hideHud: true,
+        keepMonitorTransitionVisible: true,
+        soundDelayMs: 40,
+        closePromise
+      });
+      return;
     }
 
     await closePromise;
 
-    if (monitorTransitionLayer) monitorTransitionLayer.hidden = true;
-
-    if (jumpscarePromise) {
-      await jumpscarePromise;
-      return;
+    if (monitorTransitionLayer) {
+      monitorTransitionLayer.hidden = true;
     }
 
     this.isMonitorAnimating = false;
@@ -1802,9 +1837,10 @@ class NightScene extends BaseScene {
       .replace('cam-btn-', '')
       .toUpperCase();
 
-    const initialState = this.cameraStateResolver?.getInitialStateForCamera(cameraId) ?? null;
+    const initialState = this.getResolvedCameraStateFor(cameraId);
 
     await this.cameraSystem.setCurrentCamera(cameraId, initialState);
+    
     this.currentCameraId = this.cameraSystem.currentCameraId;
 
     await this.cameraStateResolver?.updateCurrentCameraView();
@@ -1897,6 +1933,139 @@ class NightScene extends BaseScene {
       officeViewport.addEventListener('mousemove', this.onOfficeViewportMouseMove);
       officeViewport.addEventListener('mouseleave', this.onOfficeViewportMouseLeave);
     }
+  }
+
+  disableGameplayForJumpscare({
+    hideHud = false,
+    disableMonitorToggle = true,
+    stopAmbientSounds = true,
+    clearMonitorView = false,
+    keepMonitorTransitionVisible = false
+  } = {}) {
+    this.lookDirection = 0;
+    this.lookSpeedMultiplier = 0;
+    this.stopLookMovement();
+
+    this.stopBonnieMonitorPunishTimer();
+    this.stopNightClock();
+    this.stopPowerDrain();
+    this.clearLightFlicker();
+
+    if (stopAmbientSounds) {
+      this.stopPhoneGuy();
+      this.stopBackgroundAmbience();
+      this.stopFanHum();
+    }
+
+    this.animatronicMovementManager?.stopAll();
+    this.cameraSystem?.stopStatic();
+
+    const officeViewport = document.getElementById('office-viewport');
+    if (officeViewport) {
+      officeViewport.removeEventListener('mousemove', this.onOfficeViewportMouseMove);
+      officeViewport.removeEventListener('mouseleave', this.onOfficeViewportMouseLeave);
+    }
+
+    const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
+    const monitorCloseCanvas = document.getElementById('monitor-close-canvas');
+    const monitorScreenLayer = document.getElementById('monitor-screen-layer');
+    const monitorUiLayer = document.getElementById('monitor-ui-layer');
+
+    if (disableMonitorToggle && monitorToggleCanvas) {
+      monitorToggleCanvas.hidden = true;
+      monitorToggleCanvas.style.display = 'none';
+      monitorToggleCanvas.style.pointerEvents = 'none';
+    }
+
+    if (monitorCloseCanvas) {
+      monitorCloseCanvas.style.pointerEvents = 'none';
+    }
+
+    if (clearMonitorView) {
+      if (monitorScreenLayer) monitorScreenLayer.hidden = true;
+      if (monitorUiLayer) monitorUiLayer.hidden = true;
+    }
+
+    this.isMonitorOpen = false;
+
+    if (hideHud) {
+      this.setHudVisible(false);
+    }
+  }
+
+  setHudVisible(isVisible) {
+    const officeUiLayer = document.getElementById('office-ui-layer');
+    if (officeUiLayer) {
+      officeUiLayer.hidden = !isVisible;
+    }
+  }
+
+  setMonitorToggleVisible(isVisible) {
+    const monitorToggleCanvas = document.getElementById('monitor-toggle-canvas');
+    if (!monitorToggleCanvas) return;
+
+    monitorToggleCanvas.hidden = !isVisible;
+    monitorToggleCanvas.style.display = isVisible ? 'block' : 'none';
+    monitorToggleCanvas.style.pointerEvents = isVisible ? 'auto' : 'none';
+  }
+
+  async goToGameOver() {
+    await SceneTransitionManager.go({
+      game: this.game,
+      skipSceneChange: true,
+      loading: {
+        background: '#000',
+        title: '',
+        text: '',
+        uiMode: 'center',
+        showProgress: false,
+        fadeIn: {
+          enabled: true,
+          from: 0,
+          to: 1,
+          duration: 600
+        },
+        fadeOut: {
+          enabled: false,
+          from: 1,
+          to: 1,
+          duration: 0
+        }
+      },
+      confirm: {
+        mode: 'auto',
+        minDuration: 1000
+      }
+    });
+
+    const menuScene = new MenuScene(this.game);
+    menuScene.setEntryMode('return');
+
+    await this.game.state.change(SceneNames.MENU, menuScene);
+  }
+
+  getResolvedCameraStateFor(cameraId) {
+    const baseState = this.cameraStateResolver?.getInitialStateForCamera(cameraId) ?? null;
+    if (!baseState) return null;
+
+    const rareState = this.rareEventManager?.resolveRareState({
+      cameraId,
+      baseState
+    });
+
+    return rareState ?? baseState;
+  }
+
+  async applyResolvedStateToCurrentCamera() {
+    if (!this.cameraSystem) return;
+
+    const cameraId = this.cameraSystem.currentCameraId;
+    if (!cameraId) return;
+
+    const finalState = this.getResolvedCameraStateFor(cameraId);
+    if (!finalState) return;
+
+    await this.cameraSystem.setCurrentState(finalState);
   }
 } 
 

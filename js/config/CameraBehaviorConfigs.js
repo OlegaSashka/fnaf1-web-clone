@@ -24,14 +24,4 @@ export const CameraBehaviorConfigs = {
     intervalMaxMs: 180,
     restartFromFirstFrame: true
   },
-
-  '5': {
-    type: 'rare_swap',
-    autoStart: false,
-    variants: {
-      default: ['bonny'],
-      rare_event: ['bonny_look_at_camera']
-    },
-    chance: 0.05
-  }
 };

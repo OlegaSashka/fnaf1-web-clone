@@ -1,7 +1,13 @@
 class CameraStateResolver {
-  constructor({ cameraSystem, animatronicStateManager, blackoutDurationMs = 1000 } = {}) {
+  constructor({
+    cameraSystem,
+    animatronicStateManager,
+    blackoutDurationMs = 1000,
+    resolveStateOverride = null
+  } = {}) {
     this.cameraSystem = cameraSystem ?? null;
     this.animatronicStateManager = animatronicStateManager ?? null;
+    this.resolveStateOverride = resolveStateOverride ?? null;
 
     this.cameraBlackouts = new Map();
     this.cameraBlackoutRefreshTimers = new Map();
@@ -229,10 +235,16 @@ class CameraStateResolver {
       return;
     }
 
-    const stateKey = this.resolveCameraState(currentCameraId);
-    if (!stateKey) return;
+    const baseState = this.resolveCameraState(currentCameraId);
+    if (!baseState) return;
 
-    await this.cameraSystem.setCurrentState(stateKey);
+    const finalState =
+      this.resolveStateOverride?.({
+        cameraId: currentCameraId,
+        baseState
+      }) ?? baseState;
+
+    await this.cameraSystem.setCurrentState(finalState);
   }
 
   clearAllBlackouts() {
