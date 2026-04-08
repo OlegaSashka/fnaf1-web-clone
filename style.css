@@ -672,11 +672,12 @@ canvas {
 
 #phone-guy-mute-btn {
   position: absolute;
-  top: 2%;
-  left: 2%;
-  width: 100%;
-  height: 100%;
-  display: block;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   pointer-events: auto;
 
   padding: 0;
@@ -692,6 +693,7 @@ canvas {
   line-height: 1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  text-align: center;
 
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.15),

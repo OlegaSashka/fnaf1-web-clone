@@ -13,6 +13,8 @@ class CameraSystem {
     this.cameraWorld = options.cameraWorld ?? null;
     this.cameraWorldCanvas = options.cameraWorldCanvas ?? null;
     this.cameraNameText = options.cameraNameText ?? null;
+    
+    this.audioOnlyNoticeEl = options.audioOnlyNoticeEl ?? document.getElementById('monitor-audio-only-notice');
 
     this.currentCameraId = options.initialCameraId ?? '1A';
     this.currentCameraState = options.initialCameraState ?? null;
@@ -47,6 +49,13 @@ class CameraSystem {
     });
         
     this.cameraButtonIds = [...cameraButtonIds];
+  }
+
+  updateAudioOnlyNotice() {
+    if (!this.audioOnlyNoticeEl) return;
+
+    const shouldShow = this.currentCameraId === '6';
+    this.audioOnlyNoticeEl.setAttribute('display', shouldShow ? 'block' : 'none');
   }
 
   startBehaviorForCurrentCamera() {
@@ -328,6 +337,8 @@ class CameraSystem {
     this.updateCameraTitle();
     this.updateActiveCameraButton();
 
+    this.updateAudioOnlyNotice();
+
     await Promise.all([
       this.playBlinkEffect(),
       this.createCameraSprite(),
@@ -422,6 +433,7 @@ class CameraSystem {
     this.applyOffset();
     this.startAutoOffset();
     this.updateActiveCameraButton();
+    this.updateAudioOnlyNotice();
     this.startBehaviorForCurrentCamera();
   }
 }
