@@ -54,7 +54,7 @@ class SceneTransitionManager {
       mode = 'auto',
       minDuration = 0,
       buttonText = 'Continue',
-      continueText = 'Click anywhere to continue'
+      continueText = 'Нажмите в любом месте, чтобы продолжить'
     } = confirm;
 
     const startedAt = performance.now();

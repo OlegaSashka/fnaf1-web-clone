@@ -4,7 +4,7 @@ export const NightConfigs = Object.freeze({
 
     intro: {
       title: '12:00 AM',
-      subtitle: '1st Night',
+      subtitle: 'Ночь 1',
       duration: 4000
     },
 
@@ -43,7 +43,7 @@ export const NightConfigs = Object.freeze({
 
     intro: {
       title: '12:00 AM',
-      subtitle: '2nd Night',
+      subtitle: 'Ночь 2',
       duration: 4000
     },
 
@@ -81,7 +81,7 @@ export const NightConfigs = Object.freeze({
 
     intro: {
       title: '12:00 AM',
-      subtitle: '3rd Night',
+      subtitle: 'Ночь 3',
       duration: 4000
     },
 
@@ -119,7 +119,7 @@ export const NightConfigs = Object.freeze({
 
     intro: {
       title: '12:00 AM',
-      subtitle: '4th Night',
+      subtitle: 'Ночь 4',
       duration: 4000
     },
 
@@ -160,7 +160,7 @@ export const NightConfigs = Object.freeze({
 
     intro: {
       title: '12:00 AM',
-      subtitle: '5th Night',
+      subtitle: 'Ночь 5',
       duration: 4000
     },
 

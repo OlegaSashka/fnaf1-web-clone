@@ -266,7 +266,7 @@ class NightScene extends BaseScene {
       
       confirm: {
         mode: 'screen',
-        continueText: 'Click anywhere to continue'
+        continueText: 'Нажмите в любом месте, чтобы продолжить'
       },
 
       onFadeOutStart: async () => {

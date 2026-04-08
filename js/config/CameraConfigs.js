@@ -2,7 +2,7 @@ import { NightAssetPaths } from './NightAssets.js';
 
 export const CameraConfigs = {
   '1A': {
-          name: 'Show Stage',
+          name: 'Главная сцена',
           buttonId: 'cam-btn-1a',
           image: NightAssetPaths.CAM_1A,
           viewportMode: 'world', // 'world' | 'screen'
@@ -18,7 +18,7 @@ export const CameraConfigs = {
           }
         },
   '1B': { 
-          name: 'Dining Area', 
+          name: 'Обеденная зона', 
           buttonId: 'cam-btn-1b',
           image: NightAssetPaths.CAM_1B,
           viewportMode: 'world', // 'world' | 'screen'
@@ -39,7 +39,7 @@ export const CameraConfigs = {
           }
         },
   '1C': { 
-          name: 'Pirate Cove', 
+          name: 'Пиратская бухта', 
           buttonId: 'cam-btn-1c',
           image: NightAssetPaths.CAM_1C, 
           viewportMode: 'world', // 'world' | 'screen'
@@ -53,7 +53,7 @@ export const CameraConfigs = {
           }
         },
   '2A': { 
-          name: 'West Hall', 
+          name: 'Западный коридор', 
           buttonId: 'cam-btn-2a',
           image: NightAssetPaths.CAM_2A,
           viewportMode: 'world', // 'world' | 'screen'
@@ -69,7 +69,7 @@ export const CameraConfigs = {
           }
         },
   '2B': { 
-          name: 'W. Hall Corner', 
+          name: 'Западный угол', 
           buttonId: 'cam-btn-2b',
           image: NightAssetPaths.CAM_2B,
           viewportMode: 'world', // 'world' | 'screen'
@@ -84,7 +84,7 @@ export const CameraConfigs = {
           }
         },
   '3':  { 
-          name: 'Supply Closet', 
+          name: 'Кладовая', 
           buttonId: 'cam-btn-3',
           image: NightAssetPaths.CAM_3,
           viewportMode: 'screen', // 'world' | 'screen'
@@ -95,7 +95,7 @@ export const CameraConfigs = {
           }
         },
   '4A': { 
-          name: 'East Hall',
+          name: 'Восточный коридор',
           buttonId: 'cam-btn-4a',
           image: NightAssetPaths.CAM_4A,
           viewportMode: 'world', // 'world' | 'screen'
@@ -111,7 +111,7 @@ export const CameraConfigs = {
           }
         },
   '4B': { 
-          name: 'E. Hall Corner', 
+          name: 'Восточный угол', 
           buttonId: 'cam-btn-4b',
           image: NightAssetPaths.CAM_4B,
           viewportMode: 'world', // 'world' | 'screen'
@@ -130,7 +130,7 @@ export const CameraConfigs = {
           }
         },
   '5':  { 
-          name: 'Backstage', 
+          name: 'Закулисье', 
           buttonId: 'cam-btn-5',
           image: NightAssetPaths.CAM_5,
           viewportMode: 'world', // 'world' | 'screen'
@@ -143,7 +143,7 @@ export const CameraConfigs = {
           }
         },
   '6': {
-          name: 'Kitchen',
+          name: 'Кухня',
           buttonId: 'cam-btn-6',
           image: null,
           viewportMode: 'screen',
@@ -153,7 +153,7 @@ export const CameraConfigs = {
           }
         },
   '7':  { 
-          name: 'Restrooms', 
+          name: 'Туалеты', 
           buttonId: 'cam-btn-7',
           image: NightAssetPaths.CAM_7,
           viewportMode: 'world', // 'world' | 'screen'

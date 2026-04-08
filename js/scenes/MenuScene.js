@@ -64,9 +64,9 @@ class MenuScene extends BaseScene {
 
       loading: {
         background: '#000',
-        title: isBootEntry ? 'WARNING' : '',
+        title: isBootEntry ? 'ПРЕДУПРЕЖДЕНИЕ' : '',
         text: isBootEntry
-          ? 'This game contains loud sounds, flashing lights and jump scares.'
+          ? 'Эта игра содержит громкие звуки, мигающие огни и скримеры.'
           : '',
         uiMode: 'center',
         showProgress: isBootEntry,
@@ -89,7 +89,7 @@ class MenuScene extends BaseScene {
       confirm: isBootEntry
         ? {
             mode: 'button',
-            buttonText: 'Start'
+            buttonText: 'Начать'
           }
         : {
             mode: 'auto',
@@ -402,7 +402,7 @@ class MenuScene extends BaseScene {
 
     if (hint) {
       hint.hidden = true;
-      hint.textContent = canContinue ? `Night ${continueNight}` : '';
+      hint.textContent = canContinue ? `Ночь ${continueNight}` : '';
     }
   }
 
@@ -412,7 +412,7 @@ class MenuScene extends BaseScene {
 
     if (!hint || continueNight === null) return;
 
-    hint.textContent = `Night ${continueNight}`;
+    hint.textContent = `Ночь ${continueNight}`;
     hint.hidden = false;
   }
 

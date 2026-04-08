@@ -107,20 +107,20 @@
           <canvas id="blink-canvas" width="1920" height="1080"></canvas>
 
           <div id="menu-content">
-            <h1 class="title">Пять ночей<br />с Эпштейном</h1>
+            <h1 class="title">Пять ночей<br />с Фредди</h1>
 
             <div class="start-buttons">
-              <button class="menu-btn" data-action="new">New Game</button>
+              <button class="menu-btn" data-action="new">Новая игра</button>
               <button
                 class="menu-btn"
                 data-action="continue"
               >
-                Continue
+                Продолжить
               </button>
             </div>
 
             <div class="about">
-              <div class="version">V. 1.0</div>
+              <div class="version">V. 0.5</div>
               <div class="copyright">©2026 Scott Cawthon/OlegSashKa</div>
             </div>
           </div>
@@ -254,7 +254,7 @@
                 </foreignObject>
 
                 <!-- Название текущей камеры -->
-                <text id="monitor-camera-name-text" x="1320" y="490" text-anchor="start">Show Stage</text>
+                <text id="monitor-camera-name-text" x="1250" y="490" text-anchor="start">Show Stage</text>
 
                 <!-- Карта -->
                 <image
@@ -266,6 +266,21 @@
                   height="500"
                   preserveAspectRatio="none"
                 />
+
+                <g id="monitor-audio-only-notice" display="none" pointer-events="none">
+                  <text
+                    x="50%"
+                    y="22%"
+                    text-anchor="middle"
+                    fill="#ffffff"
+                    font-size="32"
+                    font-weight="700"
+                    font-family="monospace"
+                  >
+                    <tspan x="50%" dy="0">- КАМЕРА ОТКЛЮЧЕНА -</tspan>
+                    <tspan x="50%" dy="34">ТОЛЬКО АУДИО</tspan>
+                  </text>
+                </g>
 
                 <!-- CAM 1A -->
                 <foreignObject id="cam-btn-1a-fo" x="1480" y="555" width="72" height="42">

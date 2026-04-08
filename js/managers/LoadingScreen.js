@@ -165,7 +165,7 @@ class LoadingScreen {
     uiMode = 'center',
     buttonText = 'Continue',
     waitForScreenClick = false,
-    continueText = 'Click anywhere to continue',
+    continueText = 'Нажмите в любом месте, чтобы продолжить',
     onContinue = null,
     fadeIn = {
       enabled: false,
@@ -333,7 +333,7 @@ class LoadingScreen {
     const { progressNode } = this.getNodes();
     if (progressNode) {
       progressNode.hidden = false;
-      progressNode.textContent = `Loading... ${progress}%`;
+      progressNode.textContent = `Загрузка... ${progress}%`;
     }
   }
 
