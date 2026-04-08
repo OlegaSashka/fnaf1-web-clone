@@ -28,11 +28,11 @@ export const NightConfigs = Object.freeze({
     
 
     power: {
-      start: 10
+      start: 1000
     },
 
     time: {
-      startHour: 3,
+      startHour: 12,
       endHour: 6,
       hourDurationMs: 90000
     }
@@ -98,8 +98,8 @@ export const NightConfigs = Object.freeze({
 
     ai: {
       freddy: 1,
-      bonnie: 5,
-      chica: 3,
+      bonnie: 0,
+      chica: 5,
       foxy: 2
     },
 
@@ -139,9 +139,9 @@ export const NightConfigs = Object.freeze({
 
     ai: {
       freddy: 2,
-      bonnie: 7,
-      chica: 6,
-      foxy: 4
+      bonnie: 2,
+      chica: 4,
+      foxy: 6
     },
 
     power: {
@@ -176,10 +176,10 @@ export const NightConfigs = Object.freeze({
     extraAssets: [],
 
     ai: {
-      freddy: 4,
-      bonnie: 10,
-      chica: 10,
-      foxy: 7
+      freddy: 3,
+      bonnie: 5,
+      chica: 7,
+      foxy: 5
     },
 
     power: {

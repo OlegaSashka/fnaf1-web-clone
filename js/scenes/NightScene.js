@@ -132,6 +132,10 @@ class NightScene extends BaseScene {
     this.powerOutManager = null;
     this.isPowerOut = false;
 
+    this.powerOutOverlayEl = null;
+    this.powerOutFreddyBlinkTimeout = null;
+    this.powerOutFreddyBlinkFrame = 0;
+
     this.doorScareCooldowns = new Map();
 
     this.onCameraButtonClick = this.onCameraButtonClick.bind(this);
@@ -365,6 +369,10 @@ class NightScene extends BaseScene {
         btn.removeEventListener('click', this.onCameraButtonClick);
       }
     }
+
+    this.stopPowerOutFreddyBlink();
+    this.stopFreddyPowerOutMusic();
+    this.setPowerOutOverlayVisible(false);
 
     this.powerOutManager?.stop();
     this.powerOutManager = null;
@@ -2618,6 +2626,210 @@ class NightScene extends BaseScene {
     }
 
     await this.updateControlPanels();
+  }
+
+  ensurePowerOutOverlay() {
+    let overlay = document.getElementById('office-powerout-overlay');
+    if (overlay) {
+      this.powerOutOverlayEl = overlay;
+      return overlay;
+    }
+
+    const officeLayer = document.getElementById('office-layer') ?? document.getElementById('game-screen');
+    if (!officeLayer) return null;
+
+    overlay = document.createElement('div');
+    overlay.id = 'office-powerout-overlay';
+
+    Object.assign(overlay.style, {
+      position: 'absolute',
+      inset: '0',
+      background: '#000',
+      opacity: '0',
+      display: 'none',
+      pointerEvents: 'none',
+      zIndex: '20',
+      transition: 'opacity 300ms linear'
+    });
+
+    officeLayer.appendChild(overlay);
+    this.powerOutOverlayEl = overlay;
+    return overlay;
+  }
+
+  setPowerOutOverlayVisible(isVisible, opacity = 1) {
+    const overlay = this.ensurePowerOutOverlay();
+    if (!overlay) return;
+
+    if (!isVisible) {
+      overlay.style.opacity = '0';
+      overlay.style.display = 'none';
+      return;
+    }
+
+    overlay.style.display = 'block';
+    overlay.style.opacity = String(opacity);
+  }
+
+  async setPowerOutFreddyFrame(frame = 0) {
+    if (!this.officeBaseSprite) return;
+    await this.officeBaseSprite.showFrame(frame);
+  }
+
+  startPowerOutFreddyBlink() {
+    this.stopPowerOutFreddyBlink();
+
+    const tick = async () => {
+      if (!this.isPowerOut) return;
+
+      this.powerOutFreddyBlinkFrame = this.powerOutFreddyBlinkFrame === 0 ? 1 : 0;
+      await this.setPowerOutFreddyFrame(this.powerOutFreddyBlinkFrame);
+
+      const nextDelay = 120 + Math.floor(Math.random() * 260);
+
+      this.powerOutFreddyBlinkTimeout = setTimeout(() => {
+        tick();
+      }, nextDelay);
+    };
+
+    this.powerOutFreddyBlinkFrame = 0;
+    this.setPowerOutFreddyFrame(0);
+
+    const firstDelay = 180 + Math.floor(Math.random() * 240);
+    this.powerOutFreddyBlinkTimeout = setTimeout(() => {
+      tick();
+    }, firstDelay);
+  }
+
+  stopPowerOutFreddyBlink() {
+    if (this.powerOutFreddyBlinkTimeout) {
+      clearTimeout(this.powerOutFreddyBlinkTimeout);
+      this.powerOutFreddyBlinkTimeout = null;
+    }
+
+    this.powerOutFreddyBlinkFrame = 0;
+  }
+
+  ensureFreddyPowerOutMusicSound() {
+    if (!NightAssetPaths.FREDDY_POWEROUT_MUSIC_SOUND) return false;
+
+    if (!Sounds.has(NightAssetIds.FREDDY_POWEROUT_MUSIC_SOUND)) {
+      Sounds.add(
+        NightAssetIds.FREDDY_POWEROUT_MUSIC_SOUND,
+        NightAssetPaths.FREDDY_POWEROUT_MUSIC_SOUND,
+        {
+          loop: false,
+          volume: 0.8
+        }
+      );
+    }
+
+    return true;
+  }
+
+  playFreddyPowerOutMusic() {
+    if (!this.ensureFreddyPowerOutMusicSound()) return;
+
+    Sound.stop(NightAssetIds.FREDDY_POWEROUT_MUSIC_SOUND);
+    Sound.play(NightAssetIds.FREDDY_POWEROUT_MUSIC_SOUND);
+  }
+
+  stopFreddyPowerOutMusic() {
+    if (!Sounds.has(NightAssetIds.FREDDY_POWEROUT_MUSIC_SOUND)) return;
+    Sound.stop(NightAssetIds.FREDDY_POWEROUT_MUSIC_SOUND);
+  }
+
+  playFreddyPowerOutStepSound() {
+    if (this.isFreddyPowerOutMusicPlaying()) return;
+
+    if (!NightAssetIds.ANIMATRONIC_MOVE_SOUND) return;
+    if (!Sounds.has(NightAssetIds.ANIMATRONIC_MOVE_SOUND)) return;
+
+    Sound.stop(NightAssetIds.ANIMATRONIC_MOVE_SOUND);
+    Sound.play(NightAssetIds.ANIMATRONIC_MOVE_SOUND, { volume: 0.55 });
+  }
+
+  isFreddyPowerOutMusicPlaying() {
+    const sound = Sounds.get(NightAssetIds.FREDDY_POWEROUT_MUSIC_SOUND);
+    return Boolean(sound?.playing?.());
+  }
+
+  async triggerFreddyPowerOutJumpscare() {
+    if (this.isGameOver || this.isNightComplete || this.isVictorySequencePlaying) return;
+    if (!this.jumpscareManager) return;
+
+    this.isGameOver = true;
+
+    this.disableGameplayForJumpscare({
+      hideHud: true,
+      disableMonitorToggle: true,
+      stopAmbientSounds: true,
+      clearMonitorView: true
+    });
+
+    this.stopPowerOutFreddyBlink();
+    this.stopFreddyPowerOutMusic();
+    this.setPowerOutOverlayVisible(false);
+
+    this.setJumpscareCanvasScreenSpace();
+    
+    await this.jumpscareManager.play({
+      imageId: NightAssetIds.FREDDY_JUMPSCARE_ALT,
+      soundId: NightAssetIds.JUMPSCARE_SOUND,
+      soundDelayMs: 40,
+      frameWidth: 1280,
+      frameHeight: 720,
+      direction: 'vertical',
+      fps: 25,
+      hideOnStop: false
+    });
+
+    await this.goToGameOver();
+  }
+
+  setJumpscareCanvasWorldSpace() {
+    const jumpscareCanvas = document.getElementById('jumpscare-canvas');
+    const officeWorld = document.getElementById('office-world');
+
+    if (!jumpscareCanvas || !officeWorld) return;
+
+    const worldWidth = Math.round(officeWorld.offsetWidth);
+    const worldHeight = Math.round(officeWorld.offsetHeight);
+
+    jumpscareCanvas.width = worldWidth;
+    jumpscareCanvas.height = worldHeight;
+
+    jumpscareCanvas.style.width = `${worldWidth}px`;
+    jumpscareCanvas.style.height = `${worldHeight}px`;
+
+    jumpscareCanvas.style.left = '';
+    jumpscareCanvas.style.top = '';
+    jumpscareCanvas.style.right = '';
+    jumpscareCanvas.style.bottom = '';
+    jumpscareCanvas.style.inset = '';
+    jumpscareCanvas.style.transform = '';
+  }
+
+  setJumpscareCanvasScreenSpace() {
+    const jumpscareCanvas = document.getElementById('jumpscare-canvas');
+    const officeViewport = document.getElementById('office-viewport');
+
+    if (!jumpscareCanvas || !officeViewport) return;
+
+    const screenWidth = Math.round(officeViewport.offsetWidth);
+    const screenHeight = Math.round(officeViewport.offsetHeight);
+
+    jumpscareCanvas.width = screenWidth;
+    jumpscareCanvas.height = screenHeight;
+
+    jumpscareCanvas.style.width = `${screenWidth}px`;
+    jumpscareCanvas.style.height = `${screenHeight}px`;
+
+    jumpscareCanvas.style.position = 'absolute';
+    jumpscareCanvas.style.left = '0';
+    jumpscareCanvas.style.top = '0';
+    jumpscareCanvas.style.inset = '0';
+    jumpscareCanvas.style.transform = 'none';
   }
 
 }   

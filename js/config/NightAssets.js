@@ -26,6 +26,9 @@ export const NightAssetIds = Object.freeze({
 
   POWER_DOWN_SOUND: 'power-down-sound',
 
+  FREDDY_POWEROUT_MUSIC_SOUND: 'freddy-powerout-music-sound',
+  FREDDY_JUMPSCARE_ALT: 'freddy-jumpscare-alt',
+
   KITCHEN_SOUND_1: 'kitchen-sound-1',
   KITCHEN_SOUND_2: 'kitchen-sound-2',
   KITCHEN_SOUND_3: 'kitchen-sound-3',
@@ -79,6 +82,9 @@ export const NightAssetPaths = Object.freeze({
   BACKGROUND_AMBIENCE_SOUND: 'assets/sounds/ambience/background-ambience.wav',
 
   POWER_DOWN_SOUND: 'assets/sounds/office/power-down.wav',
+
+  FREDDY_POWEROUT_MUSIC_SOUND: 'assets/sounds/office/music-box.wav',
+  FREDDY_JUMPSCARE_ALT: 'assets/images/jumpscares/Freddy_Jumpscare_ALT.png',
 
   KITCHEN_SOUND_1: 'assets/sounds/kitchen/kitchen-1.wav',
   KITCHEN_SOUND_2: 'assets/sounds/kitchen/kitchen-2.wav',
@@ -146,6 +152,9 @@ export const COMMON_NIGHT_ASSETS = [
   { type: 'audio', id: NightAssetIds.KITCHEN_SOUND_2, src: NightAssetPaths.KITCHEN_SOUND_2, options: { volume: 0.35 } },
   { type: 'audio', id: NightAssetIds.KITCHEN_SOUND_3, src: NightAssetPaths.KITCHEN_SOUND_3, options: { volume: 0.35 } },
   { type: 'audio', id: NightAssetIds.KITCHEN_SOUND_4, src: NightAssetPaths.KITCHEN_SOUND_4, options: { volume: 0.35 } },
+
+  { type: 'audio', id: NightAssetIds.FREDDY_POWEROUT_MUSIC_SOUND, src: NightAssetPaths.FREDDY_POWEROUT_MUSIC_SOUND, options: { volume: 0.8 } },
+  { type: 'image', id: NightAssetIds.FREDDY_JUMPSCARE_ALT, src: NightAssetPaths.FREDDY_JUMPSCARE_ALT },
 
   { type: 'audio', id: NightAssetIds.VICTORY_BELLS_SOUND, src: NightAssetPaths.VICTORY_BELLS_SOUND, options: { volume: 0.6 } },
   { type: 'audio', id: NightAssetIds.VICTORY_KIDS_CHEER_SOUND, src: NightAssetPaths.VICTORY_KIDS_CHEER_SOUND, options: { volume: 0.6 } },
