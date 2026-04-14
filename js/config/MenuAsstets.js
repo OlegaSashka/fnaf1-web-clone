@@ -1,8 +1,10 @@
-export const MenuAssets = {
-  MENU_FREDDY: 'assets/images/ui/Background/Menu-freddy.png',
-  MENU_BLINK: 'assets/images/ui/Blink/Menu-blink.png',
+const asset = (relativePath) => new URL('../../assets/${relativePath}', import.meta.url).href;
 
-  MAIN_DARKNESS_SOUND: 'assets/sounds/music/main-darkness-music.wav',
+export const MenuAssets = {
+  MENU_FREDDY: asset('images/ui/Background/Menu-freddy.png'),
+  MENU_BLINK: asset('images/ui/Blink/Menu-blink.png'),
+
+  MAIN_DARKNESS_SOUND: asset('sounds/music/main-darkness-music.wav'),
 };
 
 export const MenuAssetIds = Object.freeze({
