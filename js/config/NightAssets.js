@@ -93,7 +93,7 @@ export const NightAssetPaths = Object.freeze({
   KITCHEN_SOUND_3: asset('sounds/kitchen/kitchen-3.wav'),
   KITCHEN_SOUND_4: asset('sounds/kitchen/kitchen-4.wav'),
 
-  ANIMATRONIC_MOVE_SOUND: 'sounds/animatronics/deep_steps.wav'),
+  ANIMATRONIC_MOVE_SOUND: asset('sounds/animatronics/deep_steps.wav'),
   DOOR_SCARE_SOUND: asset('sounds/doors/door-scare.wav'),
 
   VICTORY_BELLS_SOUND: asset('sounds/win/victory-bells.wav'),
