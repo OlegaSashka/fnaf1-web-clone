@@ -1,4 +1,4 @@
-const asset = (relativePath) => new URL('../../assets/${relativePath}', import.meta.url).href;
+const asset = (relativePath) => new URL(`../../assets/${relativePath}`, import.meta.url).href;
 
 
 export const TransitionAssets = {
