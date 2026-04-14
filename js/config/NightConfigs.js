@@ -1,3 +1,5 @@
+const asset = (relativePath) => new URL('../../assets/${relativePath}', import.meta.url).href;
+
 export const NightConfigs = Object.freeze({
   1: {
     nightNumber: 1,
@@ -10,7 +12,7 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: {
       id: 'phone-guy-night-1',
-      src: 'assets/sounds/PhoneGuy/night1.wav'
+      src: asset('sounds/PhoneGuy/night1.wav')
     },
 
     phoneGuyUi: {
@@ -49,7 +51,7 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: {
       id: 'phone-guy-night-2',
-      src: 'assets/sounds/PhoneGuy/night2.wav'
+      src: asset('sounds/PhoneGuy/night2.wav')
     },
 
     phoneGuyUi: {
@@ -87,7 +89,7 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: {
       id: 'phone-guy-night-3',
-      src: 'assets/sounds/PhoneGuy/night3.wav'
+      src: asset('sounds/PhoneGuy/night3.wav')
     },
 
     phoneGuyUi: {
@@ -125,7 +127,7 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: {
       id: 'phone-guy-night-4',
-      src: 'assets/sounds/PhoneGuy/night4.wav'
+      src: asset('sounds/PhoneGuy/night4.wav')
     },
 
     phoneGuyUi: {
@@ -133,8 +135,8 @@ export const NightConfigs = Object.freeze({
     },
 
     extraAssets: [
-      { type: 'audio', src: 'assets/sounds/animatronics/freddy/laugh-1.wav' },
-      { type: 'audio', src: 'assets/sounds/animatronics/freddy/laugh-2.wav' }
+      { type: 'audio', src: asset('sounds/animatronics/freddy/laugh-1.wav') },
+      { type: 'audio', src: asset('sounds/animatronics/freddy/laugh-2.wav') }
     ],
 
     ai: {
@@ -166,7 +168,7 @@ export const NightConfigs = Object.freeze({
 
     phoneGuy: {
       id: 'phone-guy-night-5',
-      src: 'assets/sounds/PhoneGuy/night5.wav'
+      src: asset('sounds/PhoneGuy/night5.wav')
     },
 
     phoneGuyUi: {
