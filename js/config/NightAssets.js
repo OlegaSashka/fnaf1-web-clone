@@ -55,67 +55,69 @@ export const NightAssetIds = Object.freeze({
   CAM_7: 'cam-7',
 });
 
+const asset = (relativePath) => new URL('../../assets/${relativePath}', import.meta.url).href;
+
 export const NightAssetPaths = Object.freeze({
-  OFFICE_BASE: 'assets/images/office/Office_Base.png',
-  OFFICE_FREDDY: 'assets/images/office/Office_Freddy.png',
-  OFFICE_LIGHT: 'assets/images/office/Office_Light.png',
+  OFFICE_BASE: asset('images/office/Office_Base.png'),
+  OFFICE_FREDDY: asset('images/office/Office_Freddy.png'),
+  OFFICE_LIGHT: asset('images/office/Office_Light.png'),
 
-  FAN: 'assets/images/Fan/Fan.png',
+  FAN: asset('images/Fan/Fan.png'),
 
-  DOOR_SHEET: 'assets/images/OpenCloseDoor/OpenCloseDoor_229x720.png',
-  LEFT_DOOR_BUTTON: 'assets/images/BtnDoorOpenCLose/DoorOpenCLoseBtn_left_92x247.png',
-  RIGHT_DOOR_BUTTON: 'assets/images/BtnDoorOpenCLose/DoorOpenCLoseBtn_right_92x247.png',
+  DOOR_SHEET: asset('images/OpenCloseDoor/OpenCloseDoor_229x720.png'),
+  LEFT_DOOR_BUTTON: asset('images/BtnDoorOpenCLose/DoorOpenCLoseBtn_left_92x247.png'),
+  RIGHT_DOOR_BUTTON: asset('images/BtnDoorOpenCLose/DoorOpenCLoseBtn_right_92x247.png'),
 
-  DOOR_CLOSE_SOUND: 'assets/sounds/game/door-close.wav',
-  DOOR_OPEN_SOUND: 'assets/sounds/game/door-open.wav',
+  DOOR_CLOSE_SOUND: asset('sounds/game/door-close.wav'),
+  DOOR_OPEN_SOUND: asset('sounds/game/door-open.wav'),
 
-  BONNIE_JUMPSCARE: 'assets/images/jumpscares/Bonnie_Jumpscare.png',
-  CHICA_JUMPSCARE: 'assets/images/jumpscares/Chica_Jumpscare.png',
-  JUMPSCARE_SOUND: 'assets/sounds/jumpscares/jumpscare.wav',
+  BONNIE_JUMPSCARE: asset('images/jumpscares/Bonnie_Jumpscare.png'),
+  CHICA_JUMPSCARE: asset('images/jumpscares/Chica_Jumpscare.png'),
+  JUMPSCARE_SOUND: asset('sounds/jumpscares/jumpscare.wav'),
 
-  ERROR_BUTTON_SOUND: 'assets/sounds/doors/error.wav',
-  DOOR_TOGGLE_SOUND: 'assets/sounds/doors/door-toggle.wav',
-  LIGHT_ON_SOUND: 'assets/sounds/light/light-on.wav',
-  FREDDY_NOSE_SOUND: 'assets/sounds/FreddyNose/freddy-nose-honk.wav',
-  FAN_HUM: 'assets/sounds/fan/FanHum.wav',
-  MONITOR_TOGGLE_SOUND: 'assets/sounds/camera/monitor-toggle.wav',
-  BACKGROUND_AMBIENCE_SOUND: 'assets/sounds/ambience/background-ambience.wav',
+  ERROR_BUTTON_SOUND: asset('sounds/doors/error.wav'),
+  DOOR_TOGGLE_SOUND: asset('sounds/doors/door-toggle.wav'),
+  LIGHT_ON_SOUND: asset('sounds/light/light-on.wav'),
+  FREDDY_NOSE_SOUND: asset('sounds/FreddyNose/freddy-nose-honk.wav'),
+  FAN_HUM: asset('sounds/fan/FanHum.wav'),
+  MONITOR_TOGGLE_SOUND: asset('sounds/camera/monitor-toggle.wav'),
+  BACKGROUND_AMBIENCE_SOUND: asset('sounds/ambience/background-ambience.wav'),
 
-  POWER_DOWN_SOUND: 'assets/sounds/office/power-down.wav',
+  POWER_DOWN_SOUND: asset('sounds/office/power-down.wav'),
 
-  FREDDY_POWEROUT_MUSIC_SOUND: 'assets/sounds/office/music-box.wav',
-  FREDDY_JUMPSCARE_ALT: 'assets/images/jumpscares/Freddy_Jumpscare_ALT.png',
+  FREDDY_POWEROUT_MUSIC_SOUND: asset('sounds/office/music-box.wav'),
+  FREDDY_JUMPSCARE_ALT: asset('images/jumpscares/Freddy_Jumpscare_ALT.png'),
 
-  KITCHEN_SOUND_1: 'assets/sounds/kitchen/kitchen-1.wav',
-  KITCHEN_SOUND_2: 'assets/sounds/kitchen/kitchen-2.wav',
-  KITCHEN_SOUND_3: 'assets/sounds/kitchen/kitchen-3.wav',
-  KITCHEN_SOUND_4: 'assets/sounds/kitchen/kitchen-4.wav',
+  KITCHEN_SOUND_1: asset('sounds/kitchen/kitchen-1.wav'),
+  KITCHEN_SOUND_2: asset('sounds/kitchen/kitchen-2.wav'),
+  KITCHEN_SOUND_3: asset('sounds/kitchen/kitchen-3.wav'),
+  KITCHEN_SOUND_4: asset('sounds/kitchen/kitchen-4.wav'),
 
-  ANIMATRONIC_MOVE_SOUND: 'assets/sounds/animatronics/deep_steps.wav',
-  DOOR_SCARE_SOUND: 'assets/sounds/doors/door-scare.wav',
+  ANIMATRONIC_MOVE_SOUND: 'sounds/animatronics/deep_steps.wav'),
+  DOOR_SCARE_SOUND: asset('sounds/doors/door-scare.wav'),
 
-  VICTORY_BELLS_SOUND: 'assets/sounds/win/victory-bells.wav',
-  VICTORY_KIDS_CHEER_SOUND: 'assets/sounds/win/victory-kids-cheer.wav',
+  VICTORY_BELLS_SOUND: asset('sounds/win/victory-bells.wav'),
+  VICTORY_KIDS_CHEER_SOUND: asset('sounds/win/victory-kids-cheer.wav'),
 
-  USAGE_METER: 'assets/images/camera/PowerUsege_103x32.png',
+  USAGE_METER: asset('images/camera/PowerUsege_103x32.png'),
 
-  MONITOR_TOGGLE: 'assets/images/camera/monitor-toggle_598x45.png',
+  MONITOR_TOGGLE: asset('images/camera/monitor-toggle_598x45.png'),
 
-  MONITOR_TRANSITION: 'assets/images/camera/cameraOpenClose.png',
+  MONITOR_TRANSITION: asset('images/camera/cameraOpenClose.png'),
 
-  MONITOR_BLINK:'assets/images/ui/Blink/Menu-blink-camera.png',
+  MONITOR_BLINK: asset('images/ui/Blink/Menu-blink-camera.png'),
   
-  CAM_1A: 'assets/images/camera/cam-1a.png',
-  CAM_1B: 'assets/images/camera/cam-1b.png',
-  CAM_1C: 'assets/images/camera/cam-1c.png',
-  CAM_2A: 'assets/images/camera/cam-2a.png',
-  CAM_2A_FOXY_RUN_ANIM: 'assets/images/camera/cam-2A-foxy.png',
-  CAM_2B: 'assets/images/camera/cam-2b.png',
-  CAM_3: 'assets/images/camera/cam-3.png',
-  CAM_4A: 'assets/images/camera/cam-4a.png',
-  CAM_4B: 'assets/images/camera/cam-4b.png',
-  CAM_5: 'assets/images/camera/cam-5.png',
-  CAM_7: 'assets/images/camera/cam-7.png',
+  CAM_1A: asset('images/camera/cam-1a.png'),
+  CAM_1B: asset('images/camera/cam-1b.png'),
+  CAM_1C: asset('images/camera/cam-1c.png'),
+  CAM_2A: asset('images/camera/cam-2a.png'),
+  CAM_2A_FOXY_RUN_ANIM: asset('images/camera/cam-2A-foxy.png'),
+  CAM_2B: asset('images/camera/cam-2b.png'),
+  CAM_3: asset('images/camera/cam-3.png'),
+  CAM_4A: asset('images/camera/cam-4a.png'),
+  CAM_4B: asset('images/camera/cam-4b.png'),
+  CAM_5: asset('images/camera/cam-5.png'),
+  CAM_7: asset('images/camera/cam-7.png'),
 });
 
 export const COMMON_NIGHT_ASSETS = [
