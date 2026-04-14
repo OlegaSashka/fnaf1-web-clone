@@ -1,5 +1,6 @@
 const asset = (relativePath) => new URL('../../assets/${relativePath}', import.meta.url).href;
 
+
 export const TransitionAssets = {
   NEW_GAME: asset('images/ui/Loading/StartFirstNight.png'),
   NIGHT_COMPLETE: asset('images/ui/Loading/Win.png'),
