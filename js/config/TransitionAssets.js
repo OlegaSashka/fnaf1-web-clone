@@ -1,12 +1,14 @@
+const asset = (relativePath) => new URL('../../assets/${relativePath}', import.meta.url).href;
+
 export const TransitionAssets = {
-  NEW_GAME: 'assets/images/ui/Loading/StartFirstNight.png',
-  NIGHT_COMPLETE: 'assets/images/ui/Loading/Win.png',
-  GAME_OVER: 'assets/images/ui/Loading/Lose.png',
+  NEW_GAME: asset('images/ui/Loading/StartFirstNight.png'),
+  NIGHT_COMPLETE: asset('images/ui/Loading/Win.png'),
+  GAME_OVER: asset('images/ui/Loading/Lose.png'),
 
-  TV_NOISE: 'assets/images/ui/NoiseTV/Noise.png',
+  TV_NOISE: asset('images/ui/NoiseTV/Noise.png'),
 
-  MUSIC_TV_SOUND: 'assets/sounds/music/static2-menu.wav',
-  BLIP: 'assets/sounds/ui/blip3.wav',
+  MUSIC_TV_SOUND: asset('sounds/music/static2-menu.wav'),
+  BLIP: asset('sounds/ui/blip3.wav'),
 };
 
 export const TransitionAssetIds = Object.freeze({
