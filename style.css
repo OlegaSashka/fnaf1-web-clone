@@ -1013,3 +1013,73 @@ canvas {
 #loading-victory-hour-next {
   font-size: 128px;
 }
+
+#menu-ui-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+#menu-ui-svg foreignObject {
+  overflow: visible;
+}
+
+.menu-canvas-btn {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  display: block;
+}
+
+.menu-canvas-btn canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.menu-continue-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.night-hint-wrapper {
+  margin-top: 10px; 
+  padding-left: 60px;
+  pointer-events: none;
+}
+
+.night-hint-wrapper canvas {
+  display: block;
+}
+
+.menu-continue-group {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.night-hint-block {
+  opacity: 0;
+  transition: opacity 0s ease-in-out;
+  transition-delay: 0s;
+}
+
+.menu-continue-group:hover .night-hint-block {
+  opacity: 1;
+}
+
+.night-hint-block canvas {
+  width: 100%;
+  height: 50px;
+  display: block;
+}

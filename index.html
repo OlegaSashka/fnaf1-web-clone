@@ -103,26 +103,37 @@
         <div id="menu-screen" class="screen">
           <canvas id="freddy-canvas" width="1920" height="1080"></canvas>
           <canvas id="static-canvas" width="1920" height="1080"></canvas>
-          <div id="scanline-sweep" width="1920" height="1080"></div>
+          <div id="scanline-sweep"></div>
           <canvas id="blink-canvas" width="1920" height="1080"></canvas>
 
           <div id="menu-content">
-            <h1 class="title">Пять ночей<br />с Фредди</h1>
+            <svg id="menu-ui-svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+              
+              <foreignObject id="menu-title-fo" x="150" y="90" width="800" height="300">
+                <canvas id="menu-title-canvas" width="800" height="300"></canvas>
+              </foreignObject>
 
-            <div class="start-buttons">
-              <button class="menu-btn" data-action="new">Новая игра</button>
-              <button
-                class="menu-btn"
-                data-action="continue"
-              >
-                Продолжить
-              </button>
-            </div>
+              <foreignObject id="menu-new-game-fo" x="50" y="540" width="700" height="80">
+                <button xmlns="http://www.w3.org/1999/xhtml" class="menu-canvas-btn" data-action="new">
+                  <canvas id="menu-new-game-canvas" width="700" height="80"></canvas>
+                </button>
+              </foreignObject>
 
-            <div class="about">
-              <div class="version">V. 0.5</div>
-              <div class="copyright">©2026 Scott Cawthon/OlegSashKa</div>
-            </div>
+              <foreignObject id="menu-continue-fo" x="50" y="650" width="700" height="140">
+                <button xmlns="http://www.w3.org/1999/xhtml" class="menu-canvas-btn" data-action="continue">
+                  <canvas id="menu-continue-canvas" width="700" height="140"></canvas>
+                </button>
+              </foreignObject>
+
+              <foreignObject id="menu-version-fo" x="60" y="1010" width="200" height="50">
+                <canvas id="menu-version-canvas" width="200" height="50"></canvas>
+              </foreignObject>
+
+              <foreignObject id="menu-copyright-fo" x="1060" y="1010" width="800" height="50">
+                <canvas id="menu-copyright-canvas" width="800" height="50"></canvas>
+              </foreignObject>
+
+            </svg>
           </div>
         </div>
 

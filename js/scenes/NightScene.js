@@ -33,10 +33,9 @@ import AnimatronicMovementManager from '../managers/AnimatronicMovementManager.j
 import { AnimatronicConfigs } from '../config/AnimatronicConfigs.js';
 
 import CameraStateResolver from '../managers/CameraStateResolver.js';
-
 import JumpscareManager from '../managers/JumpscareManager.js';
-
 import RareEventManager from '../managers/RareEventManager.js';
+import TimePowerManager from '../managers/TimePowerManager.js'
 
 class NightScene extends BaseScene {
   constructor(game, config) {
@@ -83,18 +82,7 @@ class NightScene extends BaseScene {
     this.lightFlickerTimeouts = [];
     this.activeLightSide = null;
 
-    this.currentPower = this.config?.power?.start ?? 1000;
-    this.maxPower = this.config?.power?.max ?? this.currentPower;
-
-    this.currentHour = this.config?.time?.startHour ?? 12;
-    this.endHour = this.config?.time?.endHour ?? 6;
-    this.hourDurationMs = this.config?.time?.hourDurationMs ?? 90000;
-
-    this.nightTimeInterval = null;
-    this.powerDrainInterval = null;
-
     this.usageSprite = null;
-    this.currentUsageLevel = 1;
 
     this.isNightComplete = false;
     this.isVictorySequencePlaying = false;
@@ -275,8 +263,7 @@ class NightScene extends BaseScene {
         this.playFanHum();
         this.fanSprite.play();
 
-        this.startNightClock();
-        this.startPowerDrain();
+        this.timePowerManager.start();
 
         this.animatronicMovementManager?.startAnimatronic('bonnie');
         this.animatronicMovementManager?.startAnimatronic('chica');
@@ -520,6 +507,9 @@ class NightScene extends BaseScene {
 
     const jumpscareCanvas = document.getElementById('jumpscare-canvas');
 
+    this.timePowerManager = new TimePowerManager(this, this.config);
+    await this.timePowerManager.updateNightHud();
+
     const worldWidth = Math.round(officeWorld.offsetWidth);
     const worldHeight = Math.round(officeWorld.offsetHeight);
 
@@ -660,7 +650,7 @@ class NightScene extends BaseScene {
           }
 
           await this.updateControlPanels();
-          await this.updateNightHud();
+          this.timePowerManager.updateNightHud();
           await this.refreshOfficeLight();
         },
 
@@ -926,10 +916,9 @@ class NightScene extends BaseScene {
     await this.monitorUsageSprite.showFrame(0);
 
     await this.updateControlPanels();
-    await this.updateNightHud();
+    await this.timePowerManager.updateNightHud();
 
-    this.stopNightClock();
-    this.stopPowerDrain();
+    this.timePowerManager.stop();
   }
 
   async playJumpscareByAnimatronic(animatronicId, options = {}) {
@@ -1005,122 +994,10 @@ class NightScene extends BaseScene {
     }
   }
 
-  startPowerDrain() {
-    this.stopPowerDrain();
-
-    this.powerDrainInterval = setInterval(async () => {
-      const usage = this.calculateUsageLevel();
-
-      this.currentPower = Math.max(0, this.currentPower - usage);
-      await this.updateNightHud();
-
-      if (this.currentPower <= 0) {
-        this.currentPower = 0;
-        await this.updateNightHud();
-        await this.triggerPowerOut();
-      }
-    }, 1000);
-  }
-
-  stopPowerDrain() {
-    if (this.powerDrainInterval) {
-      clearInterval(this.powerDrainInterval);
-      this.powerDrainInterval = null;
-    }
-  }
-
-  startNightClock() {
-    this.stopNightClock();
-
-    this.animatronicMovementManager?.onHourChanged(this.currentHour);
-
-    this.nightTimeInterval = setInterval(async () => {
-      const nextHour = this.getNextNightHour(this.currentHour);
-
-      this.currentHour = nextHour;
-      this.animatronicMovementManager?.onHourChanged(this.currentHour);
-      await this.updateNightHud();
-
-      if (this.currentHour === this.endHour) {
-        await this.completeNight();
-      }
-    }, this.hourDurationMs);
-  }
-
   getNextNightHour(hour) {
     if (hour === 12) return 1;
     if (hour >= 1 && hour < 6) return hour + 1;
     return this.endHour;
-  }
-
-  stopNightClock() {
-    if (this.nightTimeInterval) {
-      clearInterval(this.nightTimeInterval);
-      this.nightTimeInterval = null;
-    }
-  }
-
-  async updateNightHud() {
-    this.updateNightLabel();
-    this.updateNightTimeText();
-    this.updatePowerText();
-    await this.updateUsage();
-
-    this.updateHudTexts();
-  }
-
-  updateNightLabel() {
-    const nightLabelText = document.getElementById('night-label-text');
-    if (!nightLabelText) return;
-
-    const nightNumber = this.config?.nightNumber ?? 1;
-    nightLabelText.textContent = `Night ${nightNumber}`;
-  }
-
-  updateNightTimeText() {
-    const nightTimeText = document.getElementById('night-time-text');
-    if (!nightTimeText) return;
-
-    const displayHour = this.currentHour === 0 ? 12 : this.currentHour;
-    nightTimeText.textContent = `${displayHour} AM`;
-  }
-
-  updatePowerText() {
-    const powerValueText = document.getElementById('night-power-value-text');
-    if (!powerValueText) return;
-
-    const percent = Math.max(
-      0,
-      Math.ceil((this.currentPower / this.maxPower) * 100)
-    );
-
-    powerValueText.textContent = `${percent}%`;
-  }
-
-  calculateUsageLevel() {
-    let usage = 1;
-
-    if (this.leftDoorClosed) usage += 1;
-    if (this.rightDoorClosed) usage += 1;
-    if (this.leftLightOn) usage += 1;
-    if (this.rightLightOn) usage += 1;
-    if (this.isMonitorOpen) usage += 1;
-
-    return Math.min(usage, 5);
-  }
-
-  async updateUsage() {
-    this.currentUsageLevel = this.calculateUsageLevel();
-
-    const frameIndex = Math.max(0, this.currentUsageLevel - 1);
-
-    if (this.usageSprite) {
-      await this.usageSprite.showFrame(frameIndex);
-    }
-
-    if (this.monitorUsageSprite) {
-      await this.monitorUsageSprite.showFrame(frameIndex);
-    }
   }
 
   playBackgroundAmbience() {
@@ -1426,7 +1303,7 @@ class NightScene extends BaseScene {
     const nextClosed = !this.leftDoorClosed;
     this.leftDoorClosed = nextClosed;
     await this.updateControlPanels();
-    await this.updateNightHud();
+    await this.timePowerManager.updateNightHud();
 
     this.playDoorToggleSound();
 
@@ -1468,7 +1345,7 @@ class NightScene extends BaseScene {
     const nextClosed = !this.rightDoorClosed;
     this.rightDoorClosed = nextClosed;
     await this.updateControlPanels();
-    await this.updateNightHud();
+    await this.timePowerManager.updateNightHud();
 
     this.playDoorToggleSound();
 
@@ -1545,7 +1422,7 @@ class NightScene extends BaseScene {
       }
 
       await this.updateControlPanels();
-      await this.updateNightHud();
+      await this.timePowerManager.updateNightHud();
       await this.refreshOfficeLight();
     } finally {
       this.isLeftLightAnimating = false;
@@ -1577,7 +1454,7 @@ class NightScene extends BaseScene {
       }
 
       await this.updateControlPanels();
-      await this.updateNightHud();
+      await this.timePowerManager.updateNightHud();
       await this.refreshOfficeLight();
     } finally {
       this.isRightLightAnimating = false;
@@ -1820,7 +1697,7 @@ class NightScene extends BaseScene {
     await this.cameraSystem.startStatic();
 
     this.isMonitorOpen = true;  
-    await this.updateNightHud();
+    await this.timePowerManager.updateNightHud();
     this.isMonitorAnimating = false;
     await this.cameraSystem.playBlinkEffect();
     this.refreshAnimatronicMoveSoundMix();
@@ -1863,7 +1740,7 @@ class NightScene extends BaseScene {
     this.setFanHumVolume(0.2);
 
     this.isMonitorOpen = false;
-    await this.updateNightHud();
+    await this.timePowerManager.updateNightHud();
 
     const closePromise = this.monitorTransitionSprite.playOnceReverse({
       fromFrame: this.monitorTransitionSprite.totalFrames - 1,
@@ -1903,24 +1780,6 @@ class NightScene extends BaseScene {
     if (el) {
       el.textContent = value;
     }
-  }
-
-  updateHudTexts() {
-    const nightNumber = this.config?.nightNumber ?? 1;
-    const displayHour = this.currentHour === 0 ? 12 : this.currentHour;
-    const percent = Math.max(
-      0,
-      Math.ceil((this.currentPower / this.maxPower) * 100)
-    );
-
-    this.setTextIfExists('night-label-text', `Night ${nightNumber}`);
-    this.setTextIfExists('monitor-night-text', `Night ${nightNumber}`);
-
-    this.setTextIfExists('night-time-text', `${displayHour} AM`);
-    this.setTextIfExists('monitor-time-text', `${displayHour} AM`);
-
-    this.setTextIfExists('night-power-value-text', `${percent}%`);
-    this.setTextIfExists('monitor-power-value-text', `${percent}%`);
   }
 
   ensureMonitorSounds() {
@@ -2038,8 +1897,7 @@ class NightScene extends BaseScene {
     this.stopLookMovement();
 
     this.clearAllThreatTimers();  
-    this.stopNightClock();
-    this.stopPowerDrain();
+    this.timePowerManager.stop();
     this.clearLightFlicker();
     this.stopKitchenSoundLoop();
 
@@ -2166,8 +2024,7 @@ class NightScene extends BaseScene {
     this.stopLookMovement();
 
     this.clearAllThreatTimers();
-    this.stopNightClock();
-    this.stopPowerDrain();
+    this.timePowerManager.stop();
     this.clearLightFlicker();
     this.stopKitchenSoundLoop();
 
@@ -2505,7 +2362,7 @@ class NightScene extends BaseScene {
     await this.cameraSystem?.stopStatic();
 
     this.isMonitorOpen = false;
-    await this.updateNightHud();
+    await this.timePowerManager.updateNightHud();
 
     await this.monitorTransitionSprite.playOnceReverse({
       fromFrame: this.monitorTransitionSprite.totalFrames - 1,
