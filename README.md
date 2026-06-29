@@ -16,13 +16,13 @@
 ## Демонстрация игрового процесса
 
 ### Главное меню
-![Главное меню игры](assets/images/readme/menu.png)
+![Главное меню игры](assets/images/readme/menu.jpg)
 
 ### Игровой интерфейс офиса
-![Обзор офиса и HUD](assets/images/readme/office.png)
+![Обзор офиса и HUD](assets/images/readme/office.jpg)
 
 ### Игровой интерфейс камер
-![Обзор камер и HUD](assets/images/readme/office_cam.png)
+![Обзор камер и HUD](assets/images/readme/office_cam.jpg)
 
 ## Технологический стек & Библиотеки
 
